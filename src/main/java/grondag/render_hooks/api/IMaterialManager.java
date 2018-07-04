@@ -2,6 +2,10 @@ package grondag.render_hooks.api;
 
 import javax.annotation.Nonnull;
 
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
+
+@SideOnly(Side.CLIENT)
 public interface IMaterialManager
 {
     public static final int MAX_MATERIAL_COUNT = 1024;

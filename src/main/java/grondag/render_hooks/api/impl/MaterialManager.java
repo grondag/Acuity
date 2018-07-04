@@ -3,7 +3,10 @@ package grondag.render_hooks.api.impl;
 import grondag.render_hooks.api.IMaterialManager;
 import grondag.render_hooks.api.IMaterialRenderer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SideOnly(Side.CLIENT)
 public class MaterialManager implements IMaterialManager
 {
     private ObjectArrayList<IMaterialRenderer> list = new ObjectArrayList<>();

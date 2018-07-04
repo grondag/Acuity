@@ -49,6 +49,8 @@ minecraft {
     mappings = "snapshot_20171003"
     useDepAts = true
     
+    clientJvmArgs += '-Dfml.coreMods.load=grondag.render_hooks.FMLPlugin'
+    
     replaceIn "Reference.java"
     replace "@VERSION@", project.version
 }

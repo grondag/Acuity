@@ -5,22 +5,25 @@ import java.util.Map;
 import javax.annotation.Nullable;
 
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SideOnly(Side.CLIENT)
 @IFMLLoadingPlugin.MCVersion("1.12.2")
 @IFMLLoadingPlugin.SortingIndex(Integer.MAX_VALUE)
 public class FMLPlugin implements IFMLLoadingPlugin
 {
-    public static boolean runtimeDeobfEnabled = false;
     @Override
     public String[] getASMTransformerClass()
     {
         return new String[]{"grondag.render_hooks.ASMTransformer"};
     }
 
+    @SuppressWarnings("null")
     @Override
     public String getModContainerClass()
     {
-        return "grondag.render_hooks.RenderHooks";
+        return null;
     }
 
     @Override
