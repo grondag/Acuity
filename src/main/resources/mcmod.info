@@ -1,0 +1,16 @@
+[
+{
+  "modid": "render_hooks",
+  "name": "Render Hooks",
+  "description": "Core mod to enable advanced render features",
+  "version": "0.1",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["Grondag (aka Zaerudath)"],
+  "credits": "The Forge team and all the other mod authors who went before.",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]

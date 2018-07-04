@@ -1,0 +1,294 @@
+#MISC
+itemGroup.exotic_matter=Exotic Matter
+misc.mode_set=Mode set to %s
+misc.rotate="Rotate"
+misc.connection="Connect"
+misc.unassigned="Unassigned"
+misc.offensive=["b1", "fu", "h0", "ky", "uk", "wn", "ab0", "a55", "bra", "cum", "d1e", "d1x", "er0", "evl", "fag", "fat", "f0k", "fuc", "fuk", "gay", "g1n", "g0b", "g0d", "g0y", "gun", "gyp", "h1v", "jap", "jew", "k1d", "kkk", "kum", "lez", "l5d", "mad", "n1g", "n1p", "pee", "p0m", "p00", "p0t", "pud", "5ex", "50b", "505", "t1t", "tnt", "uck", "wab", "w0g", "w0p", "wtf", "xtc", "xxx", "abb0", "alla", "anal", "anu5", "arab", "ar5e", "babe", "barf", "ba5t", "bl0w", "b0mb", "b0md", "b0ng", "b00b", "b00m", "burn", "butt", "chav", "ch1n", "c1g5", "cl1t", "c0ck", "c00n", "crap", "cumm", "cunn", "cunt", "dag0", "damn", "dead", "deg0", "deth", "d1ck", "d1ed", "d1e5", "d1ke", "d1nk", "d1ve", "d0ng", "d00m", "d0pe", "drug", "dumb", "dyke", "fart", "fear", "f1re", "fl00", "f0re", "fuck", "fuk5", "geez", "gen1", "g1pp", "g00k", "gr0e", "gyp0", "gypp", "hapa", "hebe", "heeb", "hell", "h0b0", "h0e5", "h0le", "h0m0", "h0nk", "h00k", "h0re", "h0rk", "h0rn", "1key", "1tch", "jade", "jeez", "j1ga", "j1gg", "j15m", "j1z ", "j1zz", "jug5", "k1ke", "k1ll", "k1nk", "k0ck", "k00n", "krap", "kum5", "kunt", "kyke", "la1d", "lezz", "l1e5", "l1my", "mam5", "meth", "m1lf", "m0f0", "m0ky", "muff", "munt", "naz1", "n1gg", "n1gr", "n00k", "nude", "nuke", "0ral", "0rga", "0rgy", "pak1", "pay0", "peck", "perv", "phuk", "phu0", "p155", "p1ky", "p1mp", "p155", "p1xy", "p0hm", "p00n", "p00p", "p0rn", "pr1c", "pr05", "pube", "pudd", "puke", "pu55", "pu5y", "0u1m", "ra85", "rape", "rere", "rump", "5cag", "5cat", "5cum", "5exy", "5hag", "5hat", "5hav", "5h1t", "51ck", "5kum", "5lav", "5lut", "5mut", "5n0t", "5p1c", "5p1g", "5p1k", "5p1t", "5uck", "taff", "tang", "tard", "teat", "t1t5", "turd", "twat", "v1br", "wank", "wetb", "wh1t", "wh1z", "wh0p", "wu55", "717", "7n7", "7aff", "7ang", "7ard", "7ea7", "7175", "7urd", "7wa7", "w7f", "x7c", "17ch", "fa7", "p07", "bu77", "de7h", "me7h", "we7b", "ba57", "cl17", "cun7", "far7", "kun7", "mun7", "5ca7", "5ha7", "5h17", "5lu7", "5mu7", "5n07", "5p17", "wh17", "3r0", "3vl", "t3at", "d3th", "m3th", "w3tb", "j3w", "l3z", "p33", "53x", "d3ad", "d3g0", "f3ar", "g33z", "g3n1", "h3b3", "h33b", "h3ll", "j33z", "l3zz", "p3ck", "p3rv", "r3r3", "53xy", "d13d", "d135", "h035", "1k3y", "l135", "d13", "ar53", "bab3", "d1k3", "d1v3", "d0p3", "dyk3", "f1r3", "f0r3", "gr03", "h0l3", "h0r3", "jad3", "k1k3", "kyk3", "nud3", "nuk3", "pub3", "puk3", "rap3", "73a7", "d37h", "m37h", "w37b"]
+misc.default_domain_template=Default domain for %s
+
+#CONFIG LABELS
+config.execution=General Settings
+config.substance=Material Properties
+config.render=Render Settings
+config.blocks=Block Settings
+config.hypermaterial=Hypermatter Properties
+
+#GUI LABELS
+label.accept=Accept
+label.axis=Axis
+label.axis_inverted=Axis Inverted
+label.base_color=Base Color
+label.base_texture=Base Texture
+label.cancel=Cancel
+label.color=Color
+label.cuts_count=Cuts
+label.cuts_on_edge=Cuts on Edge
+label.middle_color=Middle Layer Color
+label.middle_texture=Middle Layer Texture
+label.half_slab=Half Slab
+label.material=Material
+label.meta=Meta Data
+label.outer_color=Outer Layer Color
+label.outer_texture=Outer Layer Texture
+label.shape=Shape
+label.species=Species
+label.thickness=Thickness
+label.toughness=Toughness
+label.translucency=Translucency
+label.position=Position
+label.model_rotation=Model Rotation
+label.full_block=Full Block
+
+#THE ONE PROBE
+probe.machine.domain=Domain: %s
+
+#JEI
+
+#KEYS
+key.placement_preview=Toggle Block Placement Preview Mode
+key.placement_cycle_block_orientation=Change Block Orientation
+key.placement_cycle_filter_mode=Change Filter Mode
+key.placement_cycle_region_orientation=Change Region Orientation
+key.placement_cycle_selection_target=Floating/Normal Block Selection
+key.placement_cycle_species_handling=Change Join Behavior
+key.placement_cycle_target_mode=Change Target Mode
+key.placement_decrease_depth=Decrease Region Depth
+key.placement_decrease_height=Decrease Region Height
+key.placement_decrease_width=Decrease Region Width
+key.placement_display_gui=Display Item GUI
+key.placement_history_back=History Previous
+key.placement_history_forward=History Next
+key.placement_increase_depth=Increase Region Depth
+key.placement_increase_height=Increase Region Height
+key.placement_increase_width=Increase Region Width
+key.placement_undo=Undo Placement Action
+key.placement_launch_build=Launch Current Build
+
+#PLACEMENT
+placement.message.range_normal=Block targeting set to normal Minecraft behavior.
+placement.message.range_floating=Block targeting set to %d blocks in direction player is looking.
+placement.message.orientation_block=Block orientation set to %s
+placement.message.orientation_region=Region orientation set to %s
+placement.message.target_mode=Changed target mode: %s
+placement.message.preview_set=Placement preview mode set to %s
+placement.message.region_single=Placement region is a single block
+placement.message.region_additive=Placement region is determined by existing blocks.
+placement.message.region_box=Placement region is %d x %d x %d blocks
+placement.message.species_mode=Changed join behavior: %s
+placement.message.filter_mode=Changed filter mode: %s
+placement.message.delete_on=Excavation mode is enabled!
+placement.message.delete_off=Excavation mode is disabled.
+placement.message.fixed_region_on=Using fixed selection for region operations.
+placement.message.fixed_region_off=Using dynamic selection for region operations.
+placement.message.launch_build=Closing and launching current build. New build will be created when you place a virtual block.
+placement.message.launch_build_confirm=Launched build %d
+placement.message.launch_build_fail=Unable to launch build - active build in this dimension may be empty or you may not have construction rights in your current domain.
+placement.message.no_build=Unable to place virtual block(s) - make sure you have construction rights in your active domain.
+
+
+placement.preview.none=NONE
+placement.preview.outline=OUTLINE
+#placement.preview.ghost=GHOST
+
+placement.target_mode.on_clicked_face=Place single block on clicked face (normal Minecraft)
+placement.target_mode.fill_region=Replace blocks in selected region that match filter
+placement.target_mode.hollow_region=Replace blocks on outside of selected region that match filter
+placement.target_mode.complete_region=Replace all blocks in selected region if all match filter
+placement.target_mode.match_clicked_block=Replace clicked blocks and matching blocks connected to it (like an Exchanger)
+placement.target_mode.on_clicked_surface=Place block on clicked face and connected faces that match it (like a Builder's wand)
+
+placement.species_mode.match_clicked=Join with clicked face if possible (hold Alt key to break instead)
+placement.species_mode.counter_most=Break with nearby blocks if possible (hold Alt key to join clicked face)
+placement.species_mode.match_most=Join with nearby blocks if possible - prefer clicked face (hold Alt key to break instead)
+
+placement.orientation.region.automatic=Adjust to avoid obstacles (Default)
+placement.orientation.region.fixed=Fixed location
+placement.orientation.region.xyz=Width / Height / Depth (Original)
+placement.orientation.region.zyx=Width = Depth / Height / Depth = Width 
+placement.orientation.region.zxy=Width = Depth / Height = Width / Depth = Height
+placement.orientation.region.xzy=Width / Depth / Height = Depth = Height
+placement.orientation.region.yxz=Width = Height / Height = Width / Depth
+placement.orientation.region.yzx=Width = Height / Height = Depth / Depth = Width
+
+placement.orientation.none=NONE
+placement.orientation.axis.dynamic=DYNAMIC
+placement.orientation.axis.match_closest=MATCH CLOSEST
+placement.orientation.axis.x=EAST/WEST
+placement.orientation.axis.y=UP/DOWN
+placement.orientation.axis.z=NORTH/SOUTH
+
+placement.orientation.face.dynamic=DYNAMIC
+placement.orientation.face.match_closest=MATCH CLOSEST
+placement.orientation.face.up=UP
+placement.orientation.face.down=DOWN
+placement.orientation.face.east=EAST
+placement.orientation.face.west=WEST
+placement.orientation.face.north=NORTH
+placement.orientation.face.south=SOUTH
+
+placement.orientation.edge.dynamic=DYNAMIC
+placement.orientation.edge.match_closest=MATCH CLOSEST
+placement.orientation.edge.up_east=UP / EAST
+placement.orientation.edge.up_west=UP / WEST
+placement.orientation.edge.up_north=UP / NORTH
+placement.orientation.edge.up_south=UP / SOUTH
+placement.orientation.edge.north_east=NORTH / EAST
+placement.orientation.edge.north_west=NORTH / WEST
+placement.orientation.edge.south_east=SOUTH / EAST
+placement.orientation.edge.south_west=SOUTH / WEST
+placement.orientation.edge.down_east=DOWN / EAST
+placement.orientation.edge.down_west=DOWN / WEST
+placement.orientation.edge.down_north=DOWN / NORTH
+placement.orientation.edge.down_south=DOWN / SOUTH
+
+placement.orientation.corner.dynamic=DYNAMIC
+placement.orientation.corner.match_closest=MATCH CLOSEST
+placement.orientation.edge.up_north_east=UP / NORTH / EAST
+placement.orientation.edge.up_north_west=UP / NORTH / WEST
+placement.orientation.edge.up_south_east=UP / SOUTH / EAST
+placement.orientation.edge.up_south_west=UP / SOUTH / WEST
+placement.orientation.edge.down_north_east=DOWN / NORTH / EAST
+placement.orientation.edge.down_north_west=DOWN / NORTH / WEST
+placement.orientation.edge.down_south_east=DOWN / SOUTH / EAST
+placement.orientation.edge.down_south_west=DOWN / SOUTH / WEST
+
+placement.filter_mode.fill_replaceable=Fill spaces containing air, water, plants and other replaceable blocks.
+placement.filter_mode.replace_solid=Replace solid blocks only (leave air, water, etc.)
+placement.filter_mode.replace_all=Replace all solid blocks and fill empty spaces
+placement.filter_mode.replace_only=Replace specific block...  (Ctrl-left click to choose)
+placement.filter_mode.replace_all_except=Replace all blocks except... (Ctrl-left clock to choose)
+
+#SHAPES
+shape.box=Box
+shape.column_square=Square Column
+shape.cone=Cone
+shape.cube=Cube
+shape.cylinder=Cylinder
+shape.dodecahedron=Dodecahedron
+shape.dome=Dome
+shape.icosahedron=Icosahedron
+shape.pyramid=Pyramid
+shape.sphere=Sphere
+shape.staked_plates=Stacked Plates
+shape.terrain_filler=Flowing Terrain Filler
+shape.terrain_height=Flowing Terrain
+shape.tetrahedron=Tetrahedron
+shape.torus=Torus
+shape.tube=Tube
+
+
+#ITEMS
+
+#BLOCKS
+tile.super_model_block.name=SuperModel Block
+
+#COLORS
+# Java format string that defines order and punctuation for displaying colors. 1=hue, 2=chroma, 3=luminance
+color.format.color=%3$s %2$s %1$s
+color.format.pure_neutral=%3$s %2$s
+color.hue.infrared=Infrared
+color.hue.cherry=Cherry
+color.hue.rose=Rose
+color.hue.pomegranate=Pomegranate
+color.hue.crimson=Crimson
+color.hue.scarlet=Scarlet
+color.hue.red=Red
+color.hue.vermillion=Vermillion
+color.hue.tangerine=Tangerine
+color.hue.orange=Orange
+color.hue.ember=Ember
+color.hue.sunset=Sunset
+color.hue.pumpkin=Pumpkin
+color.hue.cheddar=Cheddar
+color.hue.mango=Mango
+color.hue.sunflower=Sunflower
+color.hue.gold=Gold
+color.hue.torch=Torch
+color.hue.yellow=Yellow
+color.hue.lemon=Lemon
+color.hue.lime=Lime
+color.hue.peridot=Peridot
+color.hue.chartreuse=Chartreuse
+color.hue.cactus=Cactus
+color.hue.green=Green
+color.hue.foliage=Foliage
+color.hue.mint=Mint
+color.hue.sage=Sage
+color.hue.juniper=Juniper
+color.hue.celadon=Celadon
+color.hue.emerald=Emerald
+color.hue.verdigris=Verdigris
+color.hue.turquoise=Turquoise
+color.hue.sea_foam=Sea Foam
+color.hue.cyan=Cyan
+color.hue.ice=Ice
+color.hue.beryl=Beryl
+color.hue.apatite=Apatite
+color.hue.marine=Marine
+color.hue.aqua=Aqua
+color.hue.robin_egg=Robin Egg
+color.hue.morning=Morning
+color.hue.cerulean=Cerulean
+color.hue.topaz=Topaz
+color.hue.sky=Sky
+color.hue.sapphire=Sapphire
+color.hue.periwinkle=Periwinkle
+color.hue.twilight=Twilight
+color.hue.azure=Azure
+color.hue.ocean=Ocean
+color.hue.cobalt=Cobalt
+color.hue.blue=Blue
+color.hue.lapis=Lapis
+color.hue.indigo=Indigo
+color.hue.violet=Violet
+color.hue.purple=Purple
+color.hue.amethyst=Amethyst
+color.hue.lilac=Lilac
+color.hue.magenta=Magenta
+color.hue.fuschia=Fuschia
+color.hue.tulip=Tulip
+color.hue.pink=Pink
+color.hue.peony=Peony
+color.luminance.brilliant=Brilliant
+color.luminance.extra_bright=Extra Bright
+color.luminance.bright=Bright
+color.luminance.extra_light=Extra Light
+color.luminance.light=Light
+color.luminance.medium_light=Medium Light
+color.luminance.medium_dark=Medium Dark
+color.luminance.dark=Dark
+color.luminance.extra_dark=Extra Dark
+color.chroma.pure_netural=Pure Neutral
+color.chroma.white=White
+color.chroma.grey=Grey
+color.chroma.neutral=Neutral
+color.chroma.rich=Rich
+color.chroma.deep=Deep
+color.chroma.extra_deep=Extra Deep
+color.chroma.bold=Bold
+color.chroma.extra_bold=Extra Bold
+color.chroma.accent=Accent
+color.chroma.intense_accent=Intense Accent
+color.chroma.ultra_accent=Ultra Intense
+
+#PAINT LAYERS
+paintlayer.base=Base Surface
+paintlayer.middle=Middle Layer
+paintlayer.outer=Outer Layer
+paintlayer.lamp=Lamp Surface
+paintlayer.cut=Cut Surface
+
+#TEXTURES
+texture.cobble=Cobblestone
+texture.none=Default Noise
+texture.zoom2x_format=%s Zoom X2
+texture.zoom4x_format=%s Zoom X4
+texture.bigtex_single=Single BigTex Test Texture
+texture.bigtex=Varied BigTex Test Texture
+texture.noise_strong=Strong Noise
+texture.noise_moderate=Moderate Noise
+texture.noise_subtle=Subtle Noise
+
+#SUBSTANCES
+material.default=Shaped Stone
