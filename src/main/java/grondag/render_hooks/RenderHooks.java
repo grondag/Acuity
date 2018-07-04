@@ -1,25 +1,22 @@
 package grondag.render_hooks;
 
-import javax.annotation.Nonnull;
+import java.util.Optional;
+import java.util.function.Function;
+
 import javax.annotation.Nullable;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.item.ItemStack;
+import grondag.render_hooks.api.IRenderHookRuntime;
+import grondag.render_hooks.api.impl.RenderHookRuntime;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
-import net.minecraftforge.fml.common.SidedProxy;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.event.FMLInterModComms;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 @Mod(   modid = RenderHooks.MODID, 
         name = RenderHooks.MODNAME,
@@ -36,6 +33,8 @@ public class RenderHooks
 	@Instance
 	public static RenderHooks INSTANCE = new RenderHooks();
 
+	public final RenderHookRuntime runtime = new RenderHookRuntime();
+	
     @Nullable
     private static Logger log;
     
@@ -69,4 +68,20 @@ public class RenderHooks
 	{
 
 	}
+	
+	@Mod.EventHandler
+    public void imcCallback(FMLInterModComms.IMCEvent event)
+	{
+        for (FMLInterModComms.IMCMessage message : event.getMessages())
+        {
+            if (message.key.equalsIgnoreCase("getRenderHookRuntime"))
+            {
+                Optional<Function<IRenderHookRuntime, Void>> value = message.getFunctionValue(IRenderHookRuntime.class, Void.class);
+                if (value.isPresent()) 
+                    value.get().apply(runtime);
+                else 
+                    log.warn("Error in inter-mod communication request for RenderHooks runtime.");
+            }
+        }
+    }
 }
