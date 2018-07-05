@@ -32,7 +32,7 @@ public class RenderHooks
 	
 	@Instance
 	public static RenderHooks INSTANCE = new RenderHooks();
-
+	
 	public final RenderHookRuntime runtime = new RenderHookRuntime();
 	
     @Nullable

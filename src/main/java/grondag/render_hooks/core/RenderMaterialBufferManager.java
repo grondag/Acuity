@@ -7,7 +7,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.math.BlockPos;
 
-public class MaterialBufferManager
+public class RenderMaterialBufferManager
 {
     private static BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[IMaterialManager.MAX_MATERIAL_COUNT];
     
@@ -16,6 +16,11 @@ public class MaterialBufferManager
     private int nextBufferIndex;
     
     private BufferBuilder[] materialBuffers = new BufferBuilder[IMaterialManager.MAX_MATERIAL_COUNT];
+    
+    public RenderMaterialBufferManager()
+    {
+        System.out.println("boop");
+    }
     
     public void prepare()
     {
