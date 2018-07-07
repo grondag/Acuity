@@ -9,7 +9,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public interface IMaterialRenderer
+public interface IRenderPipeline
 {
     public void initializeBuffer(BufferBuilder buffer);
     
@@ -18,7 +18,7 @@ public interface IMaterialRenderer
     public void postDraw();
     
     /**
-     * GL mode  format to be used for this material.
+     * GL mode  format to be used for this pipeline.
      * Defaults to GL_QUADS
      */
     public default int glMode()
@@ -27,11 +27,15 @@ public interface IMaterialRenderer
     }
     
     /**
-     * Vertex buffer format to be used for this material.
+     * Target vertex buffer format to be used for this pipeline.
      * Defaults to BLOCK format.
      */
     public default VertexFormat vertexFormat()
     {
         return DefaultVertexFormats.BLOCK;
     }
+
+    public int getIndex();
+
+    public void assignIndex(int n);
 }

@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import grondag.render_hooks.api.IRenderHookRuntime;
 import grondag.render_hooks.api.impl.RenderHookRuntime;
+import grondag.render_hooks.core.RenderChunk;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -37,6 +38,10 @@ public class RenderHooks
 	
     @Nullable
     private static Logger log;
+    
+    
+    //FIXME: remove
+    RenderChunk testChunk = new RenderChunk(null, null, 0);
     
     public Logger getLog()
     {

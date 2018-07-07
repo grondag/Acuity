@@ -120,6 +120,7 @@ sourceSets {
     }
 }
 jar.manifest {
+	attributes 'FMLAT': 'render_hooks_at.cfg'
     attributes 'FMLCorePlugin': 'grondag.render_hooks.FMLPlugin'
 	attributes 'FMLCorePluginContainsFMLMod': 'true'
 }
