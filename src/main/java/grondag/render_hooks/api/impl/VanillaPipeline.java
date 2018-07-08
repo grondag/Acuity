@@ -4,7 +4,10 @@ import javax.annotation.Nonnull;
 
 import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
+@SideOnly(Side.CLIENT)
 public class VanillaPipeline implements IRenderPipeline
 {
     private int index;

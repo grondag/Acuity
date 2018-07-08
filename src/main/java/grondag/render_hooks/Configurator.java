@@ -6,9 +6,12 @@ import net.minecraftforge.common.config.Config.LangKey;
 import net.minecraftforge.common.config.Config.RangeInt;
 import net.minecraftforge.common.config.Config.RequiresMcRestart;
 import net.minecraftforge.common.config.Config.Type;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 @LangKey("config.general")
 @Config(modid = RenderHooks.MODID, type = Type.INSTANCE)
+@SideOnly(Side.CLIENT)
 public class Configurator
 {
     @RequiresMcRestart

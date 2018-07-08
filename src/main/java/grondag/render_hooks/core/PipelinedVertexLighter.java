@@ -12,10 +12,13 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * A heavily-modified version of Forge vertex lighter that supports multiple render paths in same quad stream.
  */
+@SideOnly(Side.CLIENT)
 public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 {
     protected final IRenderPipeline pipeline;

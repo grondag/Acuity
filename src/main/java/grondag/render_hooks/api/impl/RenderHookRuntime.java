@@ -15,5 +15,4 @@ public class RenderHookRuntime implements IRenderHookRuntime
     {
         return pipelineManager;
     }
-
 }
