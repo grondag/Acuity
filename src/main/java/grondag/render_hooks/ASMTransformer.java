@@ -13,6 +13,7 @@ import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
+import org.objectweb.asm.tree.VarInsnNode;
 
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraftforge.fml.relauncher.Side;
@@ -44,6 +45,7 @@ public class ASMTransformer implements IClassTransformer
                 for (int i = 0; i < m.instructions.size(); i++)
                 {
                     AbstractInsnNode next = m.instructions.get(i);
+                    // public, so will always be INVOKEVIRTUAL
                     if(next.getOpcode() == INVOKEVIRTUAL)
                     {
                         MethodInsnNode op = (MethodInsnNode)next;
@@ -96,6 +98,7 @@ public class ASMTransformer implements IClassTransformer
                             newCount++;
                         }
                     }
+                    // constructors are always INVOKESPECIAL
                     else if(next.getOpcode() == INVOKESPECIAL)
                     {
                         MethodInsnNode op = (MethodInsnNode)next;
@@ -143,6 +146,7 @@ public class ASMTransformer implements IClassTransformer
                             newWorked = true;
                         }
                     }
+                    // constructors are always INVOKESPECIAL
                     else if(next.getOpcode() == INVOKESPECIAL)
                     {
                         MethodInsnNode op = (MethodInsnNode)next;
@@ -189,6 +193,7 @@ public class ASMTransformer implements IClassTransformer
                             newWorked = true;
                         }
                     }
+                    // constructors are always INVOKESPECIAL
                     else if(next.getOpcode() == INVOKESPECIAL)
                     {
                         MethodInsnNode op = (MethodInsnNode)next;
@@ -206,6 +211,132 @@ public class ASMTransformer implements IClassTransformer
         if(!newWorked || !invokedWorked)
         {
             RenderHooks.INSTANCE.getLog().error("Unable to locate ListedRenderChunk instance in ListChunkFactory.<init>");
+            allPatchesSuccessful = false;
+        }
+    };
+    
+    private Consumer<ClassNode> patchChunkRenderDispatcher = classNode ->
+    {
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+        
+        boolean worked = false;
+        
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            if (m.name.equals("func_188245_a") || m.name.equals("uploadChunk"))
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    if(next.getOpcode() == INVOKESTATIC)
+                    {
+                        MethodInsnNode op = (MethodInsnNode)next;
+                        
+                        // conditional block we want to modify starts with a check for vbo enabled
+                        if(op.owner.equals("net/minecraft/client/renderer/OpenGlHelper")
+                                && (op.name.equals("func_176075_f") || op.name.equals("useVbo")))
+                        {
+                            // next one should be IFEQ, confirm
+                            int j = i+1;
+                            
+                            next = m.instructions.get(j++);
+                            if(next.getOpcode() != IFEQ)
+                                break;
+                            
+                            // skip labels and line numbers
+                            do
+                            {
+                                next = m.instructions.get(j++);
+                            } while(next.getOpcode() != ALOAD && j < m.instructions.size());
+                            
+                            if(next.getOpcode() != ALOAD)
+                                break;
+                            
+                            // push this on stack before the other arguments
+                            m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
+                            
+                            // skip until call to vbo upload instance method
+                            // might be INVOKESPECIAL or might be INVOKEVIRTUAL if access transfomer made public
+                            // so check the node class instead of the op code
+                            boolean looking = true;
+                            do
+                            {
+                                next = m.instructions.get(j++);
+                                if(next instanceof MethodInsnNode)
+                                {
+                                    MethodInsnNode ins = (MethodInsnNode)next;
+                                    if(ins.owner.equals("net/minecraft/client/renderer/chunk/ChunkRenderDispatcher")
+                                            && (ins.name.equals("func_178506_a") || ins.name.equals("uploadVertexBuffer"))
+                                            && ins.desc.equals("(Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/client/renderer/vertex/VertexBuffer;)V"))
+                                    {
+                                        ins.setOpcode(INVOKESTATIC);
+                                        ins.owner = "grondag/render_hooks/core/PipelineHooks";
+                                        ins.name = "uploadVertexBuffer";
+                                        ins.itf = false;
+                                        looking = false;
+                                    }
+                                }
+                            } while(looking && j < m.instructions.size());
+
+                            if(looking)
+                                break;
+                            
+                            // skip to next ALOAD
+                            do
+                            {
+                                next = m.instructions.get(j++);
+                            } while(next.getOpcode() != ALOAD && j < m.instructions.size());
+                            
+                            if(next.getOpcode() != ALOAD)
+                                break;
+                            
+                            // push this on stack before the other arguments
+                            m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
+                            
+                            // skip until call to display list upload instance method
+                            // might be INVOKESPECIAL or might be INVOKEVIRTUAL if access transfomer made public
+                            // so check the node class instead of the op code
+                            looking = true;
+                            do
+                            {
+                                next = m.instructions.get(j++);
+                                if(next instanceof MethodInsnNode)
+                                {
+                                    MethodInsnNode ins = (MethodInsnNode)next;
+                                    if(ins.owner.equals("net/minecraft/client/renderer/chunk/ChunkRenderDispatcher")
+                                            && (ins.name.equals("func_178510_a") || ins.name.equals("uploadDisplayList"))
+                                            && ins.desc.equals("(Lnet/minecraft/client/renderer/BufferBuilder;ILnet/minecraft/client/renderer/chunk/RenderChunk;)V"))
+                                    {
+                                        ins.setOpcode(INVOKESTATIC);
+                                        ins.owner = "grondag/render_hooks/core/PipelineHooks";
+                                        ins.name = "uploadDisplayList";
+                                        ins.itf = false;
+                                        looking = false;
+                                    }
+                                }
+                            } while(looking && j < m.instructions.size());
+
+                            if(looking)
+                                break;
+
+                            worked = true;
+                            break;
+                        }
+                    }
+                }
+                if(!worked)
+                {
+                    RenderHooks.INSTANCE.getLog().error("Unable to patch net/minecraft/client/renderer/chunk/ChunkRenderDispatcher.uploadChunk");
+                    allPatchesSuccessful = false;
+                    return;
+                }
+            }
+        }
+        if(!worked)
+        {
+            RenderHooks.INSTANCE.getLog().error("Unable to locate net/minecraft/client/renderer/chunk/ChunkRenderDispatcher.uploadChunk");
             allPatchesSuccessful = false;
         }
     };
@@ -231,11 +362,18 @@ public class ASMTransformer implements IClassTransformer
         if (transformedName.equals("net.minecraft.client.renderer.chunk.ListChunkFactory"))
             return patch(name, basicClass, obfuscated, patchListChunkFactory); 
         
+        if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher"))
+            return patch(name, basicClass, obfuscated, patchChunkRenderDispatcher, ClassWriter.COMPUTE_FRAMES); 
         
         return basicClass;
     }
     
     public byte[] patch(String name, byte[] bytes, boolean obfuscated, Consumer<ClassNode> patcher)
+    {
+        return patch(name, bytes, obfuscated, patcher, 0);
+    }
+    
+    public byte[] patch(String name, byte[] bytes, boolean obfuscated, Consumer<ClassNode> patcher, int flags)
     {
         RenderHooks.INSTANCE.getLog().info("Patching " + name);
 
@@ -246,9 +384,12 @@ public class ASMTransformer implements IClassTransformer
             ClassReader classReader = new ClassReader(bytes);
             classReader.accept(classNode, 0);
             patcher.accept(classNode);
-            ClassWriter classWriter = new ClassWriter(0);
-            classNode.accept(classWriter);
-            result = classWriter.toByteArray();
+            if(allPatchesSuccessful)
+            {
+                ClassWriter classWriter = new ClassWriter(flags);
+                classNode.accept(classWriter);
+                result = classWriter.toByteArray();
+            }
         }
         catch(Exception e)
         {
