@@ -33,6 +33,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     public CompoundBufferBuilder(int bufferSizeIn)
     {
         super(bufferSizeIn);
+        childBuffers.add(this);
     }
 
     @Override
@@ -78,10 +79,12 @@ public class CompoundBufferBuilder extends BufferBuilder
     public void finishDrawing()
     {
         super.finishDrawing();
-        for(BufferBuilder b : this.pipelineBuffers)
+        if(nextAvailableBufferIndex > IPipelineManager.FIRST_CUSTOM_PIPELINE_INDEX)
         {
-            if(b != null)
-                b.finishDrawing();
+            for(int i = IPipelineManager.FIRST_CUSTOM_PIPELINE_INDEX; i < nextAvailableBufferIndex; i++)
+            {
+                this.childBuffers.get(i).finishDrawing();
+            }
         }
     }
 }
