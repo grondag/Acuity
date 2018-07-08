@@ -9,4 +9,11 @@ public class CompoundVertexBuffer extends VertexBuffer
     {
         super(vertexFormatIn);
     }
+
+    @Override
+    public void deleteGlBuffers()
+    {
+        // TODO delete child buffers
+        super.deleteGlBuffers();
+    }
 }

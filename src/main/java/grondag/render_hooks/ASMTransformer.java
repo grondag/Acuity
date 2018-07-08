@@ -22,10 +22,19 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ASMTransformer implements IClassTransformer
 {
+    private static boolean allPatchesSuccessful = true;
+    
+    public static boolean allPatchesSuccessful()
+    {
+        return allPatchesSuccessful;
+    }
+    
     private Consumer<ClassNode> patchBlockRendererDispatcher = classNode ->
     {
         Iterator<MethodNode> methods = classNode.methods.iterator();
-
+        
+        boolean worked = false;
+        
         while (methods.hasNext())
         {
             MethodNode m = methods.next();
@@ -46,6 +55,7 @@ public class ASMTransformer implements IClassTransformer
                             op.name = "renderModel";
                             op.desc = "(Lnet/minecraft/client/renderer/BlockModelRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/client/renderer/block/model/IBakedModel;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;Z)Z";
                             op.itf = false;
+                            worked = true;
                             break;
                         }
                     }
@@ -53,12 +63,19 @@ public class ASMTransformer implements IClassTransformer
                 break;
             }
         }
+        if(!worked)
+        {
+            RenderHooks.INSTANCE.getLog().error("Unable to locate net/minecraft/client/renderer/BlockModelRenderer.renderBlock");
+            allPatchesSuccessful = false;
+        }
     };
     
     private Consumer<ClassNode> patchRegionRenderCacheBuilder = classNode ->
     {
         Iterator<MethodNode> methods = classNode.methods.iterator();
-
+        int newCount = 0;
+        int invokeCount = 0;
+        
         while (methods.hasNext())
         {
             MethodNode m = methods.next();
@@ -76,6 +93,7 @@ public class ASMTransformer implements IClassTransformer
                         if(op.desc.equals("net/minecraft/client/renderer/BufferBuilder"))
                         {
                             op.desc = "grondag/render_hooks/core/CompoundBufferBuilder";
+                            newCount++;
                         }
                     }
                     else if(next.getOpcode() == INVOKESPECIAL)
@@ -85,11 +103,16 @@ public class ASMTransformer implements IClassTransformer
                         {
                             op.owner = "grondag/render_hooks/core/CompoundBufferBuilder";
                             op.itf = false;
-                            break;
+                            invokeCount++;
                         }
                     }
                 }
             }
+        }
+        if(newCount != 4 || invokeCount != 4)
+        {
+            RenderHooks.INSTANCE.getLog().error("Unable to locate four expected BufferBuilder instances in RegionRenderCacheBuilder.<init>");
+            allPatchesSuccessful = false;
         }
     };
     
@@ -97,7 +120,9 @@ public class ASMTransformer implements IClassTransformer
     private Consumer<ClassNode> patchRenderChunk = classNode ->
     {
         Iterator<MethodNode> methods = classNode.methods.iterator();
-
+        boolean newWorked = false;
+        boolean invokedWorked = false;
+        
         while (methods.hasNext())
         {
             MethodNode m = methods.next();
@@ -115,6 +140,7 @@ public class ASMTransformer implements IClassTransformer
                         if(op.desc.equals("net/minecraft/client/renderer/vertex/VertexBuffer"))
                         {
                             op.desc = "grondag/render_hooks/core/CompoundVertexBuffer";
+                            newWorked = true;
                         }
                     }
                     else if(next.getOpcode() == INVOKESPECIAL)
@@ -124,11 +150,63 @@ public class ASMTransformer implements IClassTransformer
                         {
                             op.owner = "grondag/render_hooks/core/CompoundVertexBuffer";
                             op.itf = false;
+                            invokedWorked = true;
                             break;
                         }
                     }
                 }
             }
+        }
+        if(!newWorked || !invokedWorked)
+        {
+            RenderHooks.INSTANCE.getLog().error("Unable to locate VertexBuffer instance in RenderChunk.<init>");
+            allPatchesSuccessful = false;
+        }
+    };
+    
+    private Consumer<ClassNode> patchListChunkFactory = classNode ->
+    {
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+        boolean newWorked = false;
+        boolean invokedWorked = false;
+        
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            if (m.name.equals("func_189565_a") || m.name.equals("create")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    if(next.getOpcode() == NEW)
+                    {
+                        TypeInsnNode op = (TypeInsnNode)next;
+                        if(op.desc.equals("net/minecraft/client/renderer/chunk/ListedRenderChunk"))
+                        {
+                            op.desc = "grondag/render_hooks/core/CompoundListedRenderChunk";
+                            newWorked = true;
+                        }
+                    }
+                    else if(next.getOpcode() == INVOKESPECIAL)
+                    {
+                        MethodInsnNode op = (MethodInsnNode)next;
+                        if(op.owner.equals("net/minecraft/client/renderer/chunk/ListedRenderChunk") && op.name.equals("<init>"))
+                        {
+                            op.owner = "grondag/render_hooks/core/CompoundListedRenderChunk";
+                            op.itf = false;
+                            invokedWorked = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if(!newWorked || !invokedWorked)
+        {
+            RenderHooks.INSTANCE.getLog().error("Unable to locate ListedRenderChunk instance in ListChunkFactory.<init>");
+            allPatchesSuccessful = false;
         }
     };
     
@@ -136,6 +214,9 @@ public class ASMTransformer implements IClassTransformer
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass)
     {
+        // give up if we had a failure
+        if(!allPatchesSuccessful) return basicClass;
+        
         final boolean obfuscated = name.compareTo(transformedName) != 0;
         
         if(transformedName.equals("net.minecraft.client.renderer.BlockRendererDispatcher"))
@@ -147,18 +228,40 @@ public class ASMTransformer implements IClassTransformer
         if (transformedName.equals("net.minecraft.client.renderer.chunk.RenderChunk"))
             return patch(name, basicClass, obfuscated, patchRenderChunk); 
         
+        if (transformedName.equals("net.minecraft.client.renderer.chunk.ListChunkFactory"))
+            return patch(name, basicClass, obfuscated, patchListChunkFactory); 
+        
+        
         return basicClass;
     }
     
     public byte[] patch(String name, byte[] bytes, boolean obfuscated, Consumer<ClassNode> patcher)
     {
-        ClassNode classNode = new ClassNode();
-        ClassReader classReader = new ClassReader(bytes);
-        classReader.accept(classNode, 0);
-        patcher.accept(classNode);
-        ClassWriter classWriter = new ClassWriter(0);
-        classNode.accept(classWriter);
-        return classWriter.toByteArray();
+        RenderHooks.INSTANCE.getLog().info("Patching " + name);
+
+        byte[] result = bytes;
+        try
+        {
+            ClassNode classNode = new ClassNode();
+            ClassReader classReader = new ClassReader(bytes);
+            classReader.accept(classNode, 0);
+            patcher.accept(classNode);
+            ClassWriter classWriter = new ClassWriter(0);
+            classNode.accept(classWriter);
+            result = classWriter.toByteArray();
+        }
+        catch(Exception e)
+        {
+            RenderHooks.INSTANCE.getLog().error("Unable to patch " + name + " due to unexpected error:", e);
+            allPatchesSuccessful = false;
+        }
+        
+        if(!allPatchesSuccessful)
+        {
+            RenderHooks.INSTANCE.getLog().warn("RenderHooks will be disabled and partial patches may cause problems.");
+            RenderHooks.INSTANCE.getLog().warn("RenderHooks or a conflicting mod should be removed to prevent strangeness or crashing.");
+        }
+        return result;
     }
     
     @SuppressWarnings("unused")
