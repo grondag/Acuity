@@ -341,6 +341,64 @@ public class ASMTransformer implements IClassTransformer
         }
     };
     
+    private Consumer<ClassNode> patchRenderGlobal = classNode ->
+    {
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+        int newCount = 0;
+        int invokeCount = 0;
+        
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            // patching two different locations
+            if (m.name.equals("func_72712_a") || m.name.equals("loadRenderers") || m.name.equals("<init>")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    if(next.getOpcode() == NEW)
+                    {
+                        TypeInsnNode op = (TypeInsnNode)next;
+                        if(op.desc.equals("net/minecraft/client/renderer/RenderList"))
+                        {
+                            op.desc = "grondag/render_hooks/core/PipelinedRenderList";
+                            newCount++;
+                        }
+                        else if(op.desc.equals("net/minecraft/client/renderer/VboRenderList"))
+                        {
+                            op.desc = "grondag/render_hooks/core/PipelinedVboRenderList";
+                            newCount++;
+                        }
+                    }
+                    // constructors are always INVOKESPECIAL
+                    else if(next.getOpcode() == INVOKESPECIAL)
+                    {
+                        MethodInsnNode op = (MethodInsnNode)next;
+                        if(op.owner.equals("net/minecraft/client/renderer/RenderList") && op.name.equals("<init>"))
+                        {
+                            op.owner = "grondag/render_hooks/core/PipelinedRenderList";
+                            op.itf = false;
+                            invokeCount++;
+                        }
+                        else if(op.owner.equals("net/minecraft/client/renderer/VboRenderList") && op.name.equals("<init>"))
+                        {
+                            op.owner = "grondag/render_hooks/core/PipelinedVboRenderList";
+                            op.itf = false;
+                            invokeCount++;
+                        }
+                    }
+                }
+            }
+        }
+        if(newCount != 4 || invokeCount != 4)
+        {
+            RenderHooks.INSTANCE.getLog().error("Unable to locate all VBORenderList & RenderList instances in RenderGlobal");
+            allPatchesSuccessful = false;
+        }
+    };
+    
     @SuppressWarnings("null")
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass)
@@ -364,6 +422,9 @@ public class ASMTransformer implements IClassTransformer
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher"))
             return patch(name, basicClass, obfuscated, patchChunkRenderDispatcher, ClassWriter.COMPUTE_FRAMES); 
+        
+        if (transformedName.equals("net.minecraft.client.renderer.RenderGlobal"))
+            return patch(name, basicClass, obfuscated, patchRenderGlobal); 
         
         return basicClass;
     }
