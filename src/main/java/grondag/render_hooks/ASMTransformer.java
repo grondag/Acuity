@@ -3,6 +3,7 @@ package grondag.render_hooks;
 import static org.objectweb.asm.Opcodes.*;
 
 import java.util.Iterator;
+import java.util.function.Consumer;
 
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -21,24 +22,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class ASMTransformer implements IClassTransformer
 {
-    @SuppressWarnings("null")
-    @Override
-    public byte[] transform(String name, String transformedName, byte[] basicClass)
+    private Consumer<ClassNode> patchBlockRendererDispatcher = classNode ->
     {
-        if(transformedName.equals("net.minecraft.client.renderer.BlockRendererDispatcher"))
-            return patchBlockRendererDispatcher(name, basicClass, name.compareTo(transformedName) != 0);
-        if (transformedName.equals("net.minecraft.client.renderer.RegionRenderCacheBuilder"))
-            return patchRegionRenderCacheBuilder(name, basicClass, name.compareTo(transformedName) != 0);
-        return basicClass;
-    }
-    
-
-    public byte[] patchBlockRendererDispatcher(String name, byte[] bytes, boolean obfuscated)
-    {
-        ClassNode classNode = new ClassNode();
-        ClassReader classReader = new ClassReader(bytes);
-        classReader.accept(classNode, 0);
-        
         Iterator<MethodNode> methods = classNode.methods.iterator();
 
         while (methods.hasNext())
@@ -68,19 +53,10 @@ public class ASMTransformer implements IClassTransformer
                 break;
             }
         }
-        
-        ClassWriter classWriter = new ClassWriter(0);
-        classNode.accept(classWriter);
-        return classWriter.toByteArray();
-        
-    }
+    };
     
-    public byte[] patchRegionRenderCacheBuilder(String name, byte[] bytes, boolean obfuscated)
+    private Consumer<ClassNode> patchRegionRenderCacheBuilder = classNode ->
     {
-        ClassNode classNode = new ClassNode();
-        ClassReader classReader = new ClassReader(bytes);
-        classReader.accept(classNode, 0);
-       
         Iterator<MethodNode> methods = classNode.methods.iterator();
 
         while (methods.hasNext())
@@ -115,11 +91,74 @@ public class ASMTransformer implements IClassTransformer
                 }
             }
         }
+    };
+    
+    
+    private Consumer<ClassNode> patchRenderChunk = classNode ->
+    {
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            // Initializer isn't obfuscated
+            if (m.name.equals("<init>")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    if(next.getOpcode() == NEW)
+                    {
+                        TypeInsnNode op = (TypeInsnNode)next;
+                        if(op.desc.equals("net/minecraft/client/renderer/vertex/VertexBuffer"))
+                        {
+                            op.desc = "grondag/render_hooks/core/CompoundVertexBuffer";
+                        }
+                    }
+                    else if(next.getOpcode() == INVOKESPECIAL)
+                    {
+                        MethodInsnNode op = (MethodInsnNode)next;
+                        if(op.owner.equals("net/minecraft/client/renderer/vertex/VertexBuffer") && op.name.equals("<init>"))
+                        {
+                            op.owner = "grondag/render_hooks/core/CompoundVertexBuffer";
+                            op.itf = false;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    };
+    
+    @SuppressWarnings("null")
+    @Override
+    public byte[] transform(String name, String transformedName, byte[] basicClass)
+    {
+        final boolean obfuscated = name.compareTo(transformedName) != 0;
         
+        if(transformedName.equals("net.minecraft.client.renderer.BlockRendererDispatcher"))
+            return patch(name, basicClass, obfuscated, patchBlockRendererDispatcher);
+        
+        if (transformedName.equals("net.minecraft.client.renderer.RegionRenderCacheBuilder"))
+            return patch(name, basicClass, obfuscated, patchRegionRenderCacheBuilder);
+        
+        if (transformedName.equals("net.minecraft.client.renderer.chunk.RenderChunk"))
+            return patch(name, basicClass, obfuscated, patchRenderChunk); 
+        
+        return basicClass;
+    }
+    
+    public byte[] patch(String name, byte[] bytes, boolean obfuscated, Consumer<ClassNode> patcher)
+    {
+        ClassNode classNode = new ClassNode();
+        ClassReader classReader = new ClassReader(bytes);
+        classReader.accept(classNode, 0);
+        patcher.accept(classNode);
         ClassWriter classWriter = new ClassWriter(0);
         classNode.accept(classWriter);
         return classWriter.toByteArray();
-        
     }
     
     @SuppressWarnings("unused")
