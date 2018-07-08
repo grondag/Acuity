@@ -1,8 +1,7 @@
 package grondag.render_hooks.api;
 
-import org.lwjgl.opengl.GL11;
+import javax.annotation.Nonnull;
 
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.BlockRenderLayer;
@@ -12,34 +11,35 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public interface IRenderPipeline
 {
-    public void initializeBuffer(BufferBuilder buffer);
-    
     public void preDraw();
     
     public void postDraw();
     
     /**
-     * GL mode  format to be used for this pipeline.
-     * Defaults to GL_QUADS
-     */
-    public default int glMode()
-    {
-        return GL11.GL_QUADS;
-    }
-    
-    /**
      * Target vertex buffer format to be used for this pipeline.
      * Defaults to BLOCK format.
      */
+    @Nonnull
     public default VertexFormat vertexFormat()
     {
         return DefaultVertexFormats.BLOCK;
     }
 
+    /**
+     * Must return the value assigned via {@link #assignIndex(int)}.<br>
+     * Note this is only unique per BlockRenderLayer.<br>
+     * The first index (0) in each layer refers to the vanilla MC pipeline.<br>
+     */
     public int getIndex();
 
+    /**
+     * Called 1X when pipelines are registered with manager.<br>
+     * Use for no other purpose.<br>
+     * See {@link #getIndex()}
+     */
     public void assignIndex(int n);
 
+    @Nonnull
     public BlockRenderLayer renderLayer();
 
     /**
@@ -66,7 +66,9 @@ public interface IRenderPipeline
      * of your texture coordinates.
      */
     public default int lightmapIndex() { return -1; }
-    
+  
+//    Not sure if this is needed yet...
+//    
 //    /**
 //     * If true, the pipeline vertex format includes a single byte
 //     * that contains bit flags (per layer) to indicate which layer(s)

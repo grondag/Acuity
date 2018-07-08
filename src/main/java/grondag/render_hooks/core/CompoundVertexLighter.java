@@ -1,7 +1,7 @@
 package grondag.render_hooks.core;
 
 import grondag.render_hooks.api.IPipelineManager;
-import grondag.render_hooks.api.IPipelinedBakedQuad;
+import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedQuadConsumer;
 import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.client.Minecraft;
@@ -18,7 +18,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
 {
     protected final BlockInfo blockInfo;
     
-    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[IPipelineManager.MAX_PIPELINE_COUNT];
+    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[IPipelineManager.MAX_PIPELINES_PER_RENDER_LAYER];
 
     private BlockRenderLayer renderLayer;
     private CompoundBufferBuilder target;
@@ -87,7 +87,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
     }
     
     @Override
-    public void accept(IPipelinedBakedQuad quad)
+    public void accept(IPipelinedQuad quad)
     {
         IRenderPipeline p = quad.getPipeline();
         if(p.renderLayer() == this.renderLayer)

@@ -2,6 +2,7 @@ package grondag.render_hooks.api;
 
 import javax.annotation.Nonnull;
 
+import grondag.render_hooks.Configurator;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -9,16 +10,22 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public interface IPipelineManager
 {
-    public static final int MAX_PIPELINE_COUNT = 64;
+    public static final int MAX_PIPELINES_PER_RENDER_LAYER = Configurator.maxPipelinesPerRenderLayer;
     
-    public static final int PIPELINE_VANILLA_SOLID = BlockRenderLayer.SOLID.ordinal();
-    public static final int PIPELINE_VANILLA_CUTOUT = BlockRenderLayer.CUTOUT.ordinal();
-    public static final int PIPELINE_VANILLA_CUTOUT_MIPPED = BlockRenderLayer.CUTOUT_MIPPED.ordinal();
-    public static final int PIPELINE_VANILLA_TRANSLUCENT = BlockRenderLayer.TRANSLUCENT.ordinal();
+    /**
+     * Will always be 0, defined to clarify intent in code.
+     */
+    public static final int VANILLA_MC_PIPELINE_INDEX = 0;
     
+    /**
+     * Will always be 1, defined to clarify intent in code.
+     */
+    public static final int FIRST_CUSTOM_PIPELINE_INDEX = 1;
     
     /**
      * Will return false if pipeline limit would be exceeded.
      */
     public boolean createPipeline(@Nonnull IRenderPipeline material);
+    
+    public IRenderPipeline getVanillaPipeline(@Nonnull BlockRenderLayer forLayer);
 }

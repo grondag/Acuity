@@ -28,12 +28,12 @@ public interface IPipelinedVertex
      * Set false for emissive rendering in vanilla-like pipelines.<br>
      * False also useful for many deferred rending scenarios.<br>
      */
-    default boolean applyDiffuse(int layerIndex) { return true; }
+    default boolean applyDiffuse(int colorIndex) { return true; }
     
     /**
      * If true, block color modifier associated with quad tint (if != -1) will be applied to vertex color.
      */
-    default boolean applyTint(int layerIndex) { return true; }
+    default boolean applyTint(int colorIndex) { return true; }
 
     /**
      * If false, color for this layer will not be adjusted for ambient occlusion
@@ -41,6 +41,6 @@ public interface IPipelinedVertex
      * 
      * Set false for emissive rendering in vanilla-like pipelines.<br>
      */
-    default boolean applyAO(int layerIndex)  { return true; }
+    default boolean applyAO(int colorIndex)  { return true; }
     
 }

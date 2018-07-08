@@ -1,9 +1,8 @@
 package grondag.render_hooks.core;
 
-import grondag.render_hooks.api.IPipelinedBakedQuad;
-import grondag.render_hooks.api.IPipelinedQuadLighter;
+import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedVertex;
-import grondag.render_hooks.api.IPipelinedVertexLighter;
+import grondag.render_hooks.api.IPipelinedVertexConsumer;
 import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -15,10 +14,9 @@ import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;
 
 /**
- * A version of Forge vertex lighter that supports multiple render paths in same quad stream.
- *
+ * A heavily-modified version of Forge vertex lighter that supports multiple render paths in same quad stream.
  */
-public abstract class PipelinedVertexLighter implements IPipelinedVertexLighter, IPipelinedQuadLighter
+public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 {
     protected final IRenderPipeline pipeline;
     protected final VertexFormat format;
@@ -38,14 +36,12 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexLighter,
     
     public abstract BufferBuilder getPipelineBuffer();
     
-    @Override
     public VertexFormat getVertexFormat()
     {
         return this.format;
     }
 
-    @Override
-    public void acceptQuad(IPipelinedBakedQuad quad)
+    public void acceptQuad(IPipelinedQuad quad)
     {
         if(quad.getTintIndex() == -1)
         {
@@ -107,13 +103,13 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexLighter,
                     
                 case COLOR:
                 {
-                    int c = vertex.unlitColorARGB(colorIndex++);
+                    int c = vertex.unlitColorARGB(colorIndex);
                     float a = (float)(c >> 24 & 0xFF);
                     float r = (float)(c >> 16 & 0xFF);
                     float g = (float)(c >> 8 & 0xFF);
                     float b = (float)(c & 0xFF);
                             
-                    if(vertex.applyDiffuse(i))
+                    if(vertex.applyDiffuse(colorIndex))
                     {
                         if(diffuse == -1)
                             diffuse = LightUtil.diffuseLight(normX, normY, normZ);
@@ -123,7 +119,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexLighter,
                         b *= diffuse;
                     }
                     
-                    if(aoEnabled && vertex.applyAO(i))
+                    if(aoEnabled && vertex.applyAO(colorIndex))
                     {
                         if(ao == -1)
                             ao = getAo(lightX, lightY, lightZ);
@@ -133,13 +129,14 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexLighter,
                         b *= ao;
                     }
                     
-                    if(haveTint && vertex.applyTint(i))
+                    if(haveTint && vertex.applyTint(colorIndex))
                     {
                         r *= this.blockColorR;
                         g *= this.blockColorG;
                         b *= this.blockColorB;
                     }
                     target.color(Math.round(r), Math.round(g), Math.round(b), Math.round(a));
+                    colorIndex++;
                     break;
                 }
                     

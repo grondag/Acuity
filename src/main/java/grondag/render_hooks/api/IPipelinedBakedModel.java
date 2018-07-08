@@ -22,11 +22,11 @@ public interface IPipelinedBakedModel extends IBakedModel
      */
     public default void produceQuads(IPipelinedQuadConsumer quadConsumer)
     {
-        this.getQuads(quadConsumer.extendedState(), null, quadConsumer.positionRandom()).forEach(q -> quadConsumer.accept((IPipelinedBakedQuad)q));
+        this.getQuads(quadConsumer.extendedState(), null, quadConsumer.positionRandom()).forEach(q -> quadConsumer.accept((IPipelinedQuad)q));
         for(EnumFacing face : EnumFacing.VALUES)
         {
             if(quadConsumer.shouldOutputSide(face))
-                this.getQuads(quadConsumer.extendedState(), face, quadConsumer.positionRandom()).forEach(q -> quadConsumer.accept((IPipelinedBakedQuad)q));
+                this.getQuads(quadConsumer.extendedState(), face, quadConsumer.positionRandom()).forEach(q -> quadConsumer.accept((IPipelinedQuad)q));
         }
     }
 }

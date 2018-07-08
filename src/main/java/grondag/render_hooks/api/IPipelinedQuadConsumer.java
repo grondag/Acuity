@@ -8,7 +8,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.common.property.IExtendedBlockState;
 
-public interface IPipelinedQuadConsumer extends Consumer<IPipelinedBakedQuad>
+public interface IPipelinedQuadConsumer extends Consumer<IPipelinedQuad>
 {
     /**
      * If your model has quads co-planar with a block face, then you should

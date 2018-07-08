@@ -1,6 +1,8 @@
 package grondag.render_hooks.core;
 
 
+import org.lwjgl.opengl.GL11;
+
 import grondag.render_hooks.api.IPipelineManager;
 import grondag.render_hooks.api.IRenderPipeline;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -9,7 +11,7 @@ import net.minecraft.client.renderer.vertex.VertexFormat;
 
 public class CompoundBufferBuilder extends BufferBuilder
 {
-    private static BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[IPipelineManager.MAX_PIPELINE_COUNT];
+    private static BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[IPipelineManager.MAX_PIPELINES_PER_RENDER_LAYER];
     
     /**
      * Cache all instantiated buffers for reuse.<p>
@@ -23,7 +25,7 @@ public class CompoundBufferBuilder extends BufferBuilder
      */
     private int nextAvailableBufferIndex;
     
-    private BufferBuilder[] pipelineBuffers = new BufferBuilder[IPipelineManager.MAX_PIPELINE_COUNT];
+    private BufferBuilder[] pipelineBuffers = new BufferBuilder[IPipelineManager.MAX_PIPELINES_PER_RENDER_LAYER];
     
     public CompoundBufferBuilder(int bufferSizeIn)
     {
@@ -34,8 +36,9 @@ public class CompoundBufferBuilder extends BufferBuilder
     public void begin(int glMode, VertexFormat format)
     {
         super.begin(glMode, format);
-        System.arraycopy(EMPTY_ARRAY, 0, pipelineBuffers, 0, IPipelineManager.MAX_PIPELINE_COUNT);
-        nextAvailableBufferIndex = 0;
+        System.arraycopy(EMPTY_ARRAY, 0, pipelineBuffers, 0, IPipelineManager.MAX_PIPELINES_PER_RENDER_LAYER);
+        pipelineBuffers[IPipelineManager.VANILLA_MC_PIPELINE_INDEX] = this;
+        nextAvailableBufferIndex = IPipelineManager.FIRST_CUSTOM_PIPELINE_INDEX;
     }
     
     public BufferBuilder getPipelineBuffer(IRenderPipeline pipeline)
@@ -63,7 +66,7 @@ public class CompoundBufferBuilder extends BufferBuilder
             childBuffers.add(result);
             nextAvailableBufferIndex = childBuffers.size();
         }
-        result.begin(pipeline.glMode(), pipeline.vertexFormat());
+        result.begin(GL11.GL_QUADS, pipeline.vertexFormat());
         result.setTranslation(this.xOffset, this.yOffset, this.zOffset);
         return result;
     }
