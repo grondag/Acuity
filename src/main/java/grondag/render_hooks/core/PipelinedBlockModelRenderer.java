@@ -2,27 +2,28 @@ package grondag.render_hooks.core;
 
 import grondag.render_hooks.api.IPipelinedBakedModel;
 import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.client.model.pipeline.VertexLighterSmoothAo;
+import net.minecraftforge.client.MinecraftForgeClient;
+import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public class PipelinedBlockModelRenderer
 {
-    private static final ThreadLocal<PipelinedVertexLighter> lighters = new ThreadLocal<PipelinedVertexLighter>()
+    private static final ThreadLocal<CompoundVertexLighter> lighters = new ThreadLocal<CompoundVertexLighter>()
     {
         @Override
-        protected PipelinedVertexLighter initialValue()
+        protected CompoundVertexLighter initialValue()
         {
-            return new PipelinedVertexLighter();
+            return new CompoundVertexLighter();
         }
     };
     
@@ -31,14 +32,15 @@ public class PipelinedBlockModelRenderer
         try
         {
             final IPipelinedBakedModel model = (IPipelinedBakedModel)modelIn;
-            final PipelinedVertexLighter lighter = lighters.get();
-            ((CompoundBufferBuilder)bufferIn).setOffset(posIn);
-            VertexConsumerBufferBuilder buffer = ((CompoundBufferBuilder)bufferIn).getMaterialBuffer(model.p)
-            lighters.get().r
-            boolean flag = Minecraft.isAmbientOcclusionEnabled() && stateIn.getLightValue(worldIn, posIn) == 0 && modelIn.isAmbientOcclusion(stateIn);
+            final BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
+            if(!model.mightRenderInLayer(layer)) 
+                return false;
 
-       
-            return true;
+            final CompoundVertexLighter lighter = lighters.get();
+            lighter.prepare((CompoundBufferBuilder)bufferIn, layer, worldIn, (IExtendedBlockState) stateIn, posIn, checkSides);
+            model.produceQuads(lighter);
+            lighter.releaseResources();
+            return lighter.didOutput();
         }
         catch (Throwable throwable)
         {

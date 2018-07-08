@@ -4,43 +4,27 @@ package grondag.render_hooks.core;
 import grondag.render_hooks.api.IPipelineManager;
 import grondag.render_hooks.api.IRenderPipeline;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.math.BlockPos;
 
-public class CompoundBufferBuilder extends VertexConsumerBufferBuilder
+public class CompoundBufferBuilder extends BufferBuilder
 {
-    private static VertexConsumerBufferBuilder[] EMPTY_ARRAY = new VertexConsumerBufferBuilder[IPipelineManager.MAX_PIPELINE_COUNT];
+    private static BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[IPipelineManager.MAX_PIPELINE_COUNT];
     
     /**
      * Cache all instantiated buffers for reuse.<p>
      *   
      * Buffers at beginning of list are in use, those at and after {@link #nextAvailableBufferIndex} are available.
      */
-    private ObjectArrayList<VertexConsumerBufferBuilder> childBuffers = new ObjectArrayList<>();
+    private ObjectArrayList<BufferBuilder> childBuffers = new ObjectArrayList<>();
     
     /**
      * Index of next available buffer in {@link #childBuffers}
      */
     private int nextAvailableBufferIndex;
     
-    private VertexConsumerBufferBuilder[] pipelineBuffers = new VertexConsumerBufferBuilder[IPipelineManager.MAX_PIPELINE_COUNT];
+    private BufferBuilder[] pipelineBuffers = new BufferBuilder[IPipelineManager.MAX_PIPELINE_COUNT];
     
-    private BlockPos offset = BlockPos.ORIGIN;
-    
-    private class ChildBuffer extends VertexConsumerBufferBuilder
-    {
-        public ChildBuffer(int bufferSizeIn)
-        {
-            super(bufferSizeIn);
-        }
-
-        @Override
-        public BlockPos getOffset()
-        {
-            return offset;
-        }
-    }
-
     public CompoundBufferBuilder(int bufferSizeIn)
     {
         super(bufferSizeIn);
@@ -54,14 +38,9 @@ public class CompoundBufferBuilder extends VertexConsumerBufferBuilder
         nextAvailableBufferIndex = 0;
     }
     
-    public void setOffset(BlockPos offset)
+    public BufferBuilder getPipelineBuffer(IRenderPipeline pipeline)
     {
-        this.offset = offset.toImmutable();
-    }
-    
-    public VertexConsumerBufferBuilder getMaterialBuffer(IRenderPipeline pipeline)
-    {
-        VertexConsumerBufferBuilder result = pipelineBuffers[pipeline.getIndex()];
+        BufferBuilder result = pipelineBuffers[pipeline.getIndex()];
         if(result == null)
         {
             result = getInitializedBuffer(pipeline);
@@ -70,9 +49,9 @@ public class CompoundBufferBuilder extends VertexConsumerBufferBuilder
         return result;
     }
     
-    private VertexConsumerBufferBuilder getInitializedBuffer(IRenderPipeline pipeline)
+    private BufferBuilder getInitializedBuffer(IRenderPipeline pipeline)
     {
-        VertexConsumerBufferBuilder result;
+        BufferBuilder result;
         
         if(nextAvailableBufferIndex < childBuffers.size())
         {
@@ -80,7 +59,7 @@ public class CompoundBufferBuilder extends VertexConsumerBufferBuilder
         }
         else
         {
-            result = new ChildBuffer(1024);
+            result = new BufferBuilder(1024);
             childBuffers.add(result);
             nextAvailableBufferIndex = childBuffers.size();
         }
@@ -93,18 +72,10 @@ public class CompoundBufferBuilder extends VertexConsumerBufferBuilder
     public void finishDrawing()
     {
         super.finishDrawing();
-        for(VertexConsumerBufferBuilder b : this.pipelineBuffers)
+        for(BufferBuilder b : this.pipelineBuffers)
         {
             if(b != null)
                 b.finishDrawing();
         }
     }
-
-    @Override
-    public BlockPos getOffset()
-    {
-        return this.offset;
-    }
-    
-    
 }
