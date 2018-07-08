@@ -21,16 +21,16 @@ public class ASMTransformer implements IClassTransformer
     private static final String REGION_RENDER_CACHE_BUILDER_MATERIAL_BUFFER_FIELD = "materialBuffers";
     private static final String RENDER_BUFFER_MANAGER_CLASS = "grondag/render_hooks/core/RenderMaterialBufferManager";
     
-    private static final String BMR_CLASS = "net.minecraft.client.renderer.BlockModelRenderer";
-    
     @SuppressWarnings("null")
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass)
     {
-        if (transformedName.equals(REGION_RENDER_CACHE_BUILDER_CLASS))
-            return patchRegionRenderCacheBuilder(name, basicClass, name.compareTo(transformedName) != 0);
-        else if (transformedName.equals(BMR_CLASS))
-            return patchBlockModelRenderer(name, basicClass, name.compareTo(transformedName) != 0);
+        if(transformedName.equals("net.minecraft.client.renderer.BlockRendererDispatcher"))
+            return patchBlockRendererDispatcher(name, basicClass, name.compareTo(transformedName) != 0);
+//        if (transformedName.equals(REGION_RENDER_CACHE_BUILDER_CLASS))
+//            return patchRegionRenderCacheBuilder(name, basicClass, name.compareTo(transformedName) != 0);
+//        else if (transformedName.equals(BMR_CLASS))
+//            return patchBlockModelRenderer(name, basicClass, name.compareTo(transformedName) != 0);
         return basicClass;
     }
     
@@ -45,6 +45,47 @@ public class ASMTransformer implements IClassTransformer
     // with...
     //    INVOKESTATIC grondag/render_hooks/core/PipelineHooks.renderBlock(Lnet/minecraft/client/renderer/BlockRendererDispatcher;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos$MutableBlockPos;Lnet/minecraft/world/ChunkCache;Lnet/minecraft/client/renderer/BufferBuilder;)Z
 
+    public byte[] patchBlockRendererDispatcher(String name, byte[] bytes, boolean obfuscated)
+    {
+        ClassNode classNode = new ClassNode();
+        ClassReader classReader = new ClassReader(bytes);
+        classReader.accept(classNode, 0);
+        
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            if (m.name.equals("func_175018_a") || m.name.equals("renderBlock"))
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    if(next.getOpcode() == INVOKEVIRTUAL)
+                    {
+                        MethodInsnNode op = (MethodInsnNode)next;
+                        if(op.owner.equals("net/minecraft/client/renderer/BlockModelRenderer")
+                                && (op.name.equals("func_178267_a") || op.name.equals("renderModel")))
+                        {
+                            op.setOpcode(INVOKESTATIC);
+                            op.owner = "grondag/render_hooks/core/PipelineHooks";
+                            op.name = "renderModel";
+                            op.desc = "(Lnet/minecraft/client/renderer/BlockModelRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/client/renderer/block/model/IBakedModel;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;Z)Z";
+                            op.itf = false;
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        
+        ClassWriter classWriter = new ClassWriter(ClassWriter.COMPUTE_MAXS);
+        classNode.accept(classWriter);
+        return classWriter.toByteArray();
+        
+    }
     
     @SuppressWarnings("null")
     public byte[] patchBlockModelRenderer(String name, byte[] bytes, boolean obfuscated)
