@@ -82,10 +82,7 @@ public class PipelineHooks
 
     public static void uploadVertexBuffer(BufferBuilder source, VertexBuffer target)
     {
-        source.reset();
-        target.bufferData(source.getByteBuffer());
-        
-        //TODO: upload additional pipelines
+        ((CompoundBufferBuilder)source).uploadTo((CompoundVertexBuffer)target);
     }
     
     /**
@@ -128,5 +125,4 @@ public class PipelineHooks
 
         bufferBuilderIn.reset();
     }
-    
 }

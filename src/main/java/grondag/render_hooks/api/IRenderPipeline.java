@@ -4,17 +4,35 @@ import javax.annotation.Nonnull;
 
 import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public interface IRenderPipeline
 {
+    /**
+     * Called before VBO rendering.</br>
+     * 
+     * MUST set up vertex bindings. Default setup is for vanilla Block vertex format.<br>
+     * Should NOT change matrix, translation or handle buffer binding.</p>
+     */
     public void preDraw();
     
+    /**
+     * Called before display list rendering
+     */
+    public void preDrawList();
+
+    /**
+     * Called after VBO rendering
+     */
     public void postDraw();
     
+    /**
+     * Called after display list rendering
+     */
+    public void postDrawList();
+
     /**
      * Target vertex buffer format to be used for this pipeline.
      * Defaults to BLOCK format.
@@ -38,9 +56,6 @@ public interface IRenderPipeline
      * See {@link #getIndex()}
      */
     public void assignIndex(int n);
-
-    @Nonnull
-    public BlockRenderLayer renderLayer();
 
     /**
      * How many (non-lightmap) UV elements?

@@ -15,10 +15,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class Configurator
 {
     @RequiresMcRestart
-    @Comment({"Maximum number of render pipelines per block layer (SOLID, MIPPED, etc.).",
+    @Comment({"Maximum number of render pipelines that can be registered at runtime.",
         " Smaller values will save slightly on memory overhead.  It isn't very much but",
         " is configurable for those folks who like to save every byte possible...."})
     @RangeInt(min = 16, max = 1024)
-    public static int maxPipelinesPerRenderLayer = 64;
+    public static int maxPipelines = 64;
 
 }

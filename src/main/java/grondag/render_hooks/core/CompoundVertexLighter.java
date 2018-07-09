@@ -21,7 +21,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
 {
     protected final BlockInfo blockInfo;
     
-    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[IPipelineManager.MAX_PIPELINES_PER_RENDER_LAYER];
+    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[IPipelineManager.MAX_PIPELINES];
 
     private BlockRenderLayer renderLayer;
     private CompoundBufferBuilder target;
@@ -92,9 +92,8 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
     @Override
     public void accept(IPipelinedQuad quad)
     {
-        IRenderPipeline p = quad.getPipeline();
-        if(p.renderLayer() == this.renderLayer)
-            getPipelineLighter(p).acceptQuad(quad);
+        if(quad.getRenderLayer() == this.renderLayer)
+            getPipelineLighter(quad.getPipeline()).acceptQuad(quad);
     }
     
     public CompoundVertexLighter()

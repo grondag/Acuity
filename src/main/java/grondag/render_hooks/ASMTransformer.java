@@ -409,22 +409,22 @@ public class ASMTransformer implements IClassTransformer
         final boolean obfuscated = name.compareTo(transformedName) != 0;
         
         if(transformedName.equals("net.minecraft.client.renderer.BlockRendererDispatcher"))
-            return patch(name, basicClass, obfuscated, patchBlockRendererDispatcher);
+            return patch(transformedName, basicClass, obfuscated, patchBlockRendererDispatcher);
         
         if (transformedName.equals("net.minecraft.client.renderer.RegionRenderCacheBuilder"))
-            return patch(name, basicClass, obfuscated, patchRegionRenderCacheBuilder);
+            return patch(transformedName, basicClass, obfuscated, patchRegionRenderCacheBuilder);
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.RenderChunk"))
-            return patch(name, basicClass, obfuscated, patchRenderChunk); 
+            return patch(transformedName, basicClass, obfuscated, patchRenderChunk); 
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.ListChunkFactory"))
-            return patch(name, basicClass, obfuscated, patchListChunkFactory); 
+            return patch(transformedName, basicClass, obfuscated, patchListChunkFactory); 
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher"))
-            return patch(name, basicClass, obfuscated, patchChunkRenderDispatcher, ClassWriter.COMPUTE_FRAMES); 
+            return patch(transformedName, basicClass, obfuscated, patchChunkRenderDispatcher, ClassWriter.COMPUTE_FRAMES); 
         
         if (transformedName.equals("net.minecraft.client.renderer.RenderGlobal"))
-            return patch(name, basicClass, obfuscated, patchRenderGlobal); 
+            return patch(transformedName, basicClass, obfuscated, patchRenderGlobal); 
         
         return basicClass;
     }

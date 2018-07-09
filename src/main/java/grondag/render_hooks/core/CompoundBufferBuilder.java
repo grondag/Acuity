@@ -1,10 +1,10 @@
 package grondag.render_hooks.core;
 
-
 import org.lwjgl.opengl.GL11;
 
 import grondag.render_hooks.api.IPipelineManager;
 import grondag.render_hooks.api.IRenderPipeline;
+import grondag.render_hooks.api.impl.PipelineManager;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -14,44 +14,47 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundBufferBuilder extends BufferBuilder
 {
-    private static BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[IPipelineManager.MAX_PIPELINES_PER_RENDER_LAYER];
+    private static final BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[IPipelineManager.MAX_PIPELINES];
     
     /**
-     * Cache all instantiated buffers for reuse.<p>
-     *   
-     * Buffers at beginning of list are in use, those at and after {@link #nextAvailableBufferIndex} are available.
+     * Cache all instantiated buffers for reuse. Does not include this instance<p>
      */
     private ObjectArrayList<BufferBuilder> childBuffers = new ObjectArrayList<>();
     
     /**
-     * Index of next available buffer in {@link #childBuffers}
+     * Track pipelines in use as list for fast upload 
+     * and to know if we ned to allocate more.  Never includes the vanilla pipeline.
      */
-    private int nextAvailableBufferIndex;
+    private ObjectArrayList<IRenderPipeline> pipelineList = new ObjectArrayList<>();
     
-    private BufferBuilder[] pipelineBuffers = new BufferBuilder[IPipelineManager.MAX_PIPELINES_PER_RENDER_LAYER];
+    /**
+     * Fast lookup of buffers by pipeline index.  Element 0 will always be this.
+     */
+    BufferBuilder[] pipelineArray = new BufferBuilder[IPipelineManager.MAX_PIPELINES];
     
     public CompoundBufferBuilder(int bufferSizeIn)
     {
         super(bufferSizeIn);
-        childBuffers.add(this);
     }
 
     @Override
     public void begin(int glMode, VertexFormat format)
     {
         super.begin(glMode, format);
-        System.arraycopy(EMPTY_ARRAY, 0, pipelineBuffers, 0, IPipelineManager.MAX_PIPELINES_PER_RENDER_LAYER);
-        pipelineBuffers[IPipelineManager.VANILLA_MC_PIPELINE_INDEX] = this;
-        nextAvailableBufferIndex = IPipelineManager.FIRST_CUSTOM_PIPELINE_INDEX;
+        pipelineList.clear();
+        System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, IPipelineManager.MAX_PIPELINES);
+        pipelineArray[IPipelineManager.VANILLA_MC_PIPELINE_INDEX] = this;
     }
     
     public BufferBuilder getPipelineBuffer(IRenderPipeline pipeline)
     {
-        BufferBuilder result = pipelineBuffers[pipeline.getIndex()];
+        final int i = pipeline.getIndex();
+        BufferBuilder result = pipelineArray[i];
         if(result == null)
         {
             result = getInitializedBuffer(pipeline);
-            pipelineBuffers[pipeline.getIndex()] = result;
+            pipelineArray[i] = result;
+            pipelineList.add(pipeline);
         }
         return result;
     }
@@ -60,15 +63,15 @@ public class CompoundBufferBuilder extends BufferBuilder
     {
         BufferBuilder result;
         
-        if(nextAvailableBufferIndex < childBuffers.size())
+        final int count = pipelineList.size();
+        if(count < childBuffers.size())
         {
-            result = childBuffers.get(nextAvailableBufferIndex++);
+            result = childBuffers.get(count);
         }
         else
         {
             result = new BufferBuilder(1024);
             childBuffers.add(result);
-            nextAvailableBufferIndex = childBuffers.size();
         }
         result.begin(GL11.GL_QUADS, pipeline.vertexFormat());
         result.setTranslation(this.xOffset, this.yOffset, this.zOffset);
@@ -79,12 +82,21 @@ public class CompoundBufferBuilder extends BufferBuilder
     public void finishDrawing()
     {
         super.finishDrawing();
-        if(nextAvailableBufferIndex > IPipelineManager.FIRST_CUSTOM_PIPELINE_INDEX)
+        if(!pipelineList.isEmpty())
+            pipelineList.forEach(p -> pipelineArray[p.getIndex()].finishDrawing());
+    }
+
+    public void uploadTo(CompoundVertexBuffer target)
+    {
+        target.prepareForUpload();
+        if(this.vertexCount > 0)
         {
-            for(int i = IPipelineManager.FIRST_CUSTOM_PIPELINE_INDEX; i < nextAvailableBufferIndex; i++)
-            {
-                this.childBuffers.get(i).finishDrawing();
-            }
+            target.uploadBuffer(PipelineManager.VANILLA_PIPELINE, this.getByteBuffer());
+            super.reset();
         }
+        if(!pipelineList.isEmpty())
+            pipelineList.forEach(p -> target.uploadBuffer(p, pipelineArray[p.getIndex()].getByteBuffer()));
+        
+        target.completeUpload();
     }
 }

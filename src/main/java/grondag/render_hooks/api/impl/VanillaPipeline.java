@@ -1,9 +1,8 @@
 package grondag.render_hooks.api.impl;
 
-import javax.annotation.Nonnull;
-
 import grondag.render_hooks.api.IRenderPipeline;
-import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -11,17 +10,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class VanillaPipeline implements IRenderPipeline
 {
     private int index;
-    private final BlockRenderLayer layer;
-    
-    public VanillaPipeline(@Nonnull BlockRenderLayer layer)
-    {
-        this.layer = layer;
-    }
     
     @Override
     public void preDraw()
     {
-        // NOOP        
+        GlStateManager.glVertexPointer(3, 5126, 28, 0);
+        GlStateManager.glColorPointer(4, 5121, 28, 12);
+        GlStateManager.glTexCoordPointer(2, 5126, 28, 16);
+        OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
+        GlStateManager.glTexCoordPointer(2, 5122, 28, 24);
+        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
     }
 
     @Override
@@ -43,9 +41,16 @@ public class VanillaPipeline implements IRenderPipeline
     }
 
     @Override
-    public BlockRenderLayer renderLayer()
+    public void preDrawList()
     {
-        return this.layer;
+        // TODO Auto-generated method stub
+        
     }
 
+    @Override
+    public void postDrawList()
+    {
+        // TODO Auto-generated method stub
+        
+    }
 }

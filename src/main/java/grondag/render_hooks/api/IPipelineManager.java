@@ -3,14 +3,13 @@ package grondag.render_hooks.api;
 import javax.annotation.Nonnull;
 
 import grondag.render_hooks.Configurator;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public interface IPipelineManager
 {
-    public static final int MAX_PIPELINES_PER_RENDER_LAYER = Configurator.maxPipelinesPerRenderLayer;
+    public static final int MAX_PIPELINES = Configurator.maxPipelines;
     
     /**
      * Will always be 0, defined to clarify intent in code.
@@ -27,5 +26,5 @@ public interface IPipelineManager
      */
     public boolean createPipeline(@Nonnull IRenderPipeline material);
     
-    public IRenderPipeline getVanillaPipeline(@Nonnull BlockRenderLayer forLayer);
+    public IRenderPipeline getVanillaPipeline();
 }

@@ -41,7 +41,6 @@ public class RenderHooks
     public Logger getLog()
     {
         Logger result = log;
-        // allow access to log during unit testing or other debug scenarios
         if(result == null)
         {
             result = LogManager.getLogger(MODNAME);
@@ -49,7 +48,6 @@ public class RenderHooks
         }
         return result;
     }
-   
 
     @EventHandler
 	public void preInit(FMLPreInitializationEvent event)
