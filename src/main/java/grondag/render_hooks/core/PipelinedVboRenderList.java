@@ -14,7 +14,7 @@ public class PipelinedVboRenderList extends VboRenderList
     @Override
     public void renderChunkLayer(BlockRenderLayer layer)
     {
-        if (this.initialized)
+        if (!this.renderChunks.isEmpty() && this.initialized)
         {
             for (RenderChunk renderchunk : this.renderChunks)
             {

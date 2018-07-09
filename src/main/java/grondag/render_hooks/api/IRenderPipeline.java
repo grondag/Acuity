@@ -21,7 +21,7 @@ public interface IRenderPipeline
     /**
      * Called before display list rendering
      */
-    public void preDrawList();
+    public default void preDrawList() {};
 
     /**
      * Called after VBO rendering
@@ -31,7 +31,7 @@ public interface IRenderPipeline
     /**
      * Called after display list rendering
      */
-    public void postDrawList();
+    public default void postDrawList() {};
 
     /**
      * Target vertex buffer format to be used for this pipeline.

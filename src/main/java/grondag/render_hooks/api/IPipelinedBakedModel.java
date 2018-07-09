@@ -21,7 +21,9 @@ public interface IPipelinedBakedModel extends IBakedModel
     
     /**
      * Default implementation simply casts IBakedModel getQuads() output and routes to consumer.
-     * Some model implementations could be more efficient and/or want to do different things.
+     * Some model implementations could be more efficient and/or want to do different things.<p>
+     * 
+     * If your model segregates quads by layer, query the provided consumer for render layer to improve efficiency.
      */
     public default void produceQuads(IPipelinedQuadConsumer quadConsumer)
     {

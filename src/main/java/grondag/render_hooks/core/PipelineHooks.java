@@ -1,17 +1,12 @@
 package grondag.render_hooks.core;
 
-import java.nio.ByteBuffer;
-import java.util.List;
-
 import grondag.render_hooks.api.IPipelinedBakedModel;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.BlockRenderLayer;
@@ -35,7 +30,7 @@ public class PipelineHooks
         }
     };
     
-    public static boolean renderModel(net.minecraft.client.renderer.BlockModelRenderer blockModelRenderer, IBlockAccess blockAccess, IBakedModel model, IBlockState state, BlockPos pos,
+    public static boolean renderModel(BlockModelRenderer blockModelRenderer, IBlockAccess blockAccess, IBakedModel model, IBlockState state, BlockPos pos,
             BufferBuilder bufferBuilderIn, boolean checkSides)
     {
         if(model instanceof IPipelinedBakedModel)
@@ -68,61 +63,13 @@ public class PipelineHooks
         }
     }
 
-    public static void  uploadDisplayList(BufferBuilder bufferBuilderIn, int vanillaList, RenderChunk renderChunk)
+    public static void  uploadDisplayList(BufferBuilder source, int vanillaList, RenderChunk target)
     {
-        GlStateManager.glNewList(vanillaList, 4864);
-        GlStateManager.pushMatrix();
-        renderChunk.multModelviewMatrix();
-        drawList(bufferBuilderIn);
-        GlStateManager.popMatrix();
-        GlStateManager.glEndList();
-        
-        //TODO: upload additional pipelines
+        ((CompoundBufferBuilder)source).uploadTo((CompoundListedRenderChunk)target, vanillaList);
     }
 
     public static void uploadVertexBuffer(BufferBuilder source, VertexBuffer target)
     {
         ((CompoundBufferBuilder)source).uploadTo((CompoundVertexBuffer)target);
-    }
-    
-    /**
-     * Static adaptation of WorldVertexBufferUploader
-     */
-    private static void drawList(BufferBuilder bufferBuilderIn)
-    {
-        if (bufferBuilderIn.getVertexCount() > 0)
-        {
-            VertexFormat vertexformat = bufferBuilderIn.getVertexFormat();
-            int i = vertexformat.getNextOffset();
-            ByteBuffer bytebuffer = bufferBuilderIn.getByteBuffer();
-            List<VertexFormatElement> list = vertexformat.getElements();
-
-            for (int j = 0; j < list.size(); ++j)
-            {
-                VertexFormatElement vertexformatelement = list.get(j);
-//                VertexFormatElement.EnumUsage vertexformatelement$enumusage = vertexformatelement.getUsage();
-//                int k = vertexformatelement.getType().getGlConstant();
-//                int l = vertexformatelement.getIndex();
-                bytebuffer.position(vertexformat.getOffset(j));
-
-                // moved to VertexFormatElement.preDraw
-                vertexformatelement.getUsage().preDraw(vertexformat, j, i, bytebuffer);
-            }
-
-            GlStateManager.glDrawArrays(bufferBuilderIn.getDrawMode(), 0, bufferBuilderIn.getVertexCount());
-            int i1 = 0;
-
-            for (int j1 = list.size(); i1 < j1; ++i1)
-            {
-                VertexFormatElement vertexformatelement1 = list.get(i1);
-//                VertexFormatElement.EnumUsage vertexformatelement$enumusage1 = vertexformatelement1.getUsage();
-//                int k1 = vertexformatelement1.getIndex();
-
-                // moved to VertexFormatElement.postDraw
-                vertexformatelement1.getUsage().postDraw(vertexformat, i1, i, bytebuffer);
-            }
-        }
-
-        bufferBuilderIn.reset();
     }
 }

@@ -99,4 +99,21 @@ public class CompoundBufferBuilder extends BufferBuilder
         
         target.completeUpload();
     }
+
+    public void uploadTo(CompoundListedRenderChunk target, int vanillaList)
+    {
+        if(this.vertexCount == 0 && pipelineList.isEmpty())
+            return;
+        
+        target.prepareForUpload(vanillaList);
+        if(this.vertexCount > 0)
+        {
+            target.uploadBuffer(PipelineManager.VANILLA_PIPELINE, this);
+            super.reset();
+        }
+        if(!pipelineList.isEmpty())
+            pipelineList.forEach(p -> target.uploadBuffer(p, pipelineArray[p.getIndex()]));
+        
+        target.completeUpload();
+    }
 }

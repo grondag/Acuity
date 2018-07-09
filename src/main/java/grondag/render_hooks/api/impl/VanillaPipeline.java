@@ -11,9 +11,13 @@ public class VanillaPipeline implements IRenderPipeline
 {
     private int index;
     
+    
+    //TODO: separate VBO path 
+    //TODO: list and VBO paths default to generic pre-post
     @Override
     public void preDraw()
     {
+        //TODO: do this based on vertex format
         GlStateManager.glVertexPointer(3, 5126, 28, 0);
         GlStateManager.glColorPointer(4, 5121, 28, 12);
         GlStateManager.glTexCoordPointer(2, 5126, 28, 16);
@@ -38,19 +42,5 @@ public class VanillaPipeline implements IRenderPipeline
     public void assignIndex(int index)
     {
         this.index = index;
-    }
-
-    @Override
-    public void preDrawList()
-    {
-        // TODO Auto-generated method stub
-        
-    }
-
-    @Override
-    public void postDrawList()
-    {
-        // TODO Auto-generated method stub
-        
     }
 }
