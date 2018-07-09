@@ -1,4 +1,4 @@
-package grondag.render_hooks.core;
+package grondag.render_hooks.api.impl;
 
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedVertex;

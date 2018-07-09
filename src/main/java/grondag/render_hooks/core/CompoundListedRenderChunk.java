@@ -3,6 +3,7 @@ package grondag.render_hooks.core;
 import java.nio.ByteBuffer;
 import java.util.List;
 
+import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
@@ -19,6 +20,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundListedRenderChunk extends ListedRenderChunk
 {
+    private final boolean isModEnabled = RenderHooks.isModEnabled();
+    
     public CompoundListedRenderChunk(World worldIn, RenderGlobal renderGlobalIn, int index)
     {
         super(worldIn, renderGlobalIn, index);
@@ -31,7 +34,7 @@ public class CompoundListedRenderChunk extends ListedRenderChunk
     @Override
     public int getDisplayList(BlockRenderLayer layer, CompiledChunk p_178600_2_)
     {
-        return this.baseDisplayList + layer.ordinal();
+        return isModEnabled ? this.baseDisplayList + layer.ordinal() : super.getDisplayList(layer, p_178600_2_);
     }
     
     public void prepareForUpload(int vanillaList)

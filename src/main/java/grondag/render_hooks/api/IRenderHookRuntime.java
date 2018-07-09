@@ -7,4 +7,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public interface IRenderHookRuntime
 {
     public IPipelineManager getPipelineManager();
+    
+    public boolean isRenderHooksEnabled();
 }

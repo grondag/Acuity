@@ -20,5 +20,10 @@ public class Configurator
         " is configurable for those folks who like to save every byte possible...."})
     @RangeInt(min = 16, max = 1024)
     public static int maxPipelines = 64;
+    
+    @Comment({"Changing will reload all renderers and models.",
+        " Has no effect if mod is disabled because of ASM failures. ",
+        " Primary use is for testing."})
+    public static boolean enabled = true;
 
 }

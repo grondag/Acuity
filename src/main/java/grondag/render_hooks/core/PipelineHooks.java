@@ -1,7 +1,10 @@
 package grondag.render_hooks.core;
 
+import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelinedBakedModel;
+import grondag.render_hooks.api.impl.CompoundVertexLighter;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.IBakedModel;
@@ -33,7 +36,7 @@ public class PipelineHooks
     public static boolean renderModel(BlockModelRenderer blockModelRenderer, IBlockAccess blockAccess, IBakedModel model, IBlockState state, BlockPos pos,
             BufferBuilder bufferBuilderIn, boolean checkSides)
     {
-        if(model instanceof IPipelinedBakedModel)
+        if(model instanceof IPipelinedBakedModel && RenderHooks.isModEnabled())
             return renderModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
         else
             return blockModelRenderer.renderModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
@@ -65,11 +68,17 @@ public class PipelineHooks
 
     public static void  uploadDisplayList(BufferBuilder source, int vanillaList, RenderChunk target)
     {
-        ((CompoundBufferBuilder)source).uploadTo((CompoundListedRenderChunk)target, vanillaList);
+        if(RenderHooks.isModEnabled())
+            ((CompoundBufferBuilder)source).uploadTo((CompoundListedRenderChunk)target, vanillaList);
+        else
+            Minecraft.getMinecraft().renderGlobal.renderDispatcher.uploadDisplayList(source, vanillaList, target);
     }
 
     public static void uploadVertexBuffer(BufferBuilder source, VertexBuffer target)
     {
-        ((CompoundBufferBuilder)source).uploadTo((CompoundVertexBuffer)target);
+        if(RenderHooks.isModEnabled())
+            ((CompoundBufferBuilder)source).uploadTo((CompoundVertexBuffer)target);
+        else
+            Minecraft.getMinecraft().renderGlobal.renderDispatcher.uploadVertexBuffer(source, target);
     }
 }

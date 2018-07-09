@@ -1,9 +1,10 @@
-package grondag.render_hooks.core;
+package grondag.render_hooks.api.impl;
 
 import grondag.render_hooks.api.IPipelineManager;
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedQuadConsumer;
 import grondag.render_hooks.api.IRenderPipeline;
+import grondag.render_hooks.core.CompoundBufferBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.BlockRenderLayer;

@@ -35,6 +35,27 @@ public class RenderHooks
 	
 	public final RenderHookRuntime runtime = new RenderHookRuntime();
 	
+	public static final boolean isModEnabled()
+	{
+	    return ASMTransformer.allPatchesSuccessful() && Configurator.enabled;
+	}
+	
+	private static boolean lastEnabledSetting = isModEnabled();
+	/**
+	 * For use by config event handler.
+	 */
+	public static boolean didEnabledStatusChange()
+	{
+	    final boolean current = isModEnabled();
+	    if(current != lastEnabledSetting)
+	    {
+	        lastEnabledSetting = current;
+	        return true;
+	    }
+	    else 
+	        return false;
+	}
+	
     @Nullable
     private static Logger log;
     
