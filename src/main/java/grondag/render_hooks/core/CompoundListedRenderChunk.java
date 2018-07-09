@@ -19,44 +19,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundListedRenderChunk extends ListedRenderChunk
 {
-    /**
-     * Holds all allocated gl lists, including those claimed by super 
-     */
-//    private IntArrayList glListIds = new IntArrayList();
-//    private int nextAvailableListIndex = 0;
-    
-//    private int layerPopulatedFlags = 0;
-//    private int currentLayerFlag = 0;
-    
-//    private int[] slotsInUse = new int[BlockRenderLayer.values().length];
-//    private IRenderPipeline[][] pipelines = new IRenderPipeline[BlockRenderLayer.values().length][IPipelineManager.MAX_PIPELINES];
-//    private int[][] pipelineListIds = new int[BlockRenderLayer.values().length][IPipelineManager.MAX_PIPELINES];
-//    private int[][] pipelineCounts = new int[BlockRenderLayer.values().length][IPipelineManager.MAX_PIPELINES];
-    
     public CompoundListedRenderChunk(World worldIn, RenderGlobal renderGlobalIn, int index)
     {
         super(worldIn, renderGlobalIn, index);
-//        this.glListIds.add(this.baseDisplayList);
-//        this.glListIds.add(this.baseDisplayList + 1);
-//        this.glListIds.add(this.baseDisplayList + 2);
-//        this.glListIds.add(this.baseDisplayList + 3);
-    }
-
-    @Override
-    public void deleteGlResources()
-    {
-        super.deleteGlResources();
-//        for(int i : this.glListIds)
-//        {
-//            if(i >= 0)
-//                GLAllocation.deleteDisplayLists(i);
-//        }
-//        this.glListIds.clear();
-//        
-//        for(BlockRenderLayer l : BlockRenderLayer.values())
-//            this.slotsInUse[l.ordinal()] = 0;
-//        
-//        this.nextAvailableListIndex = 0;
     }
 
     /**
@@ -66,48 +31,16 @@ public class CompoundListedRenderChunk extends ListedRenderChunk
     @Override
     public int getDisplayList(BlockRenderLayer layer, CompiledChunk p_178600_2_)
     {
-        // To avoid changing method signatures in ASM we detect the start of a new pass here.
-        // Relies on the way that ChunkRenderDispatcher calls this in blocklayer order
-        // and only calls from single thread.
-//        if(layer == BlockRenderLayer.SOLID)
-//            this.layerPopulatedFlags = 0;
-//        
-//        this.currentLayerFlag = 1 << layer.ordinal();
-        
-//        this.slotsInUse[layer.ordinal()] = 0;
-//
-//        // only when we do first (solid) layer, make all gl lists available to claim
-//        if(layer == BlockRenderLayer.SOLID)
-//            this.nextAvailableListIndex = 0;
-//            
         return this.baseDisplayList + layer.ordinal();
-//        return super.getDisplayList(layer, p_178600_2_);
     }
     
     public void prepareForUpload(int vanillaList)
     {
-//        final int layerIndex = vanillaList - this.baseDisplayList;
-//        
-//        if(layerIndex == 0)
-//            this.layerPopulatedFlags = 0;
-//  
-//        this.currentLayerFlag = 1 << layerIndex;
-        
         GlStateManager.glNewList(vanillaList, 4864);
     }
 
     public void uploadBuffer(IRenderPipeline pipeline, BufferBuilder bufferBuilderIn)
     {
-//        final int slotsInUse = this.slotsInUse[this.currentLayerIndex]++;
-//        
-//        pipelines[this.currentLayerIndex][slotsInUse] = pipeline;
-//        
-//        final int glId = getAvailableListId();
-//        pipelineListIds[this.currentLayerIndex][slotsInUse] = glId;
-//
-//        pipelineCounts[this.currentLayerIndex][slotsInUse] = bufferBuilderIn.getVertexCount();
-//        this.layerPopulatedFlags |= this.currentLayerFlag;
-        
         GlStateManager.pushMatrix();
         this.multModelviewMatrix();
         pipeline.preDrawList();
@@ -120,22 +53,6 @@ public class CompoundListedRenderChunk extends ListedRenderChunk
     {
         GlStateManager.glEndList();        
     }
-    
-//    private int getAvailableListId()
-//    {
-//        int result;
-//        if(this.nextAvailableListIndex < glListIds.size())
-//        {
-//            return glListIds.getInt(nextAvailableListIndex++);
-//        }
-//        else
-//        {
-//            result = OpenGlHelper.glGenBuffers();
-//            glListIds.add(result);
-//            nextAvailableListIndex++;
-//            return result;
-//        }
-//    }
     
     /**
      * Static adaptation of WorldVertexBufferUploader
