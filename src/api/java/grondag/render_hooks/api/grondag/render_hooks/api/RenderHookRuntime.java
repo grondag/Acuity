@@ -13,6 +13,8 @@ public abstract class RenderHookRuntime
      */
     public abstract PipelineManager getPipelineManager();
     
+    public abstract PipelineShaderManager getShaderManager();
+    
     /**
      * Will be false if any part of ASM modifications failed or
      * if user has disabled RenderHooks in configuration.

@@ -1,23 +1,33 @@
 package grondag.render_hooks.api;
 
+import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 
-public final class RenderPipelineImpl extends RenderPipeline
+final class RenderPipelineImpl extends RenderPipeline
 {
     private static int nextIndex = 0;
-
-    public static final RenderPipeline VANILLA_PIPELINE = new RenderPipelineImpl(PipelineVertexFormat.BASE);
     
     final int index = nextIndex++;
-    final PipelineVertexFormat pipelineVertexFormat;
-    final VertexFormat vertexFormat;
+    final @Nonnull PipelineVertexFormat pipelineVertexFormat;
+    final @Nonnull VertexFormat vertexFormat;
+    final @Nullable String vertexShaderFileName;
+    final @Nullable String fragmentShaderFileName;
+    final @Nullable IPipelineCallback callback;
     
-    RenderPipelineImpl(PipelineVertexFormat vertexFormat)
+    RenderPipelineImpl(@Nonnull PipelineVertexFormat format, 
+            @Nullable String vertexShaderFileName, 
+            @Nullable String fragmentShaderFileName,
+            @Nullable IPipelineCallback callback)
     {
-        this.pipelineVertexFormat = vertexFormat;
-        this.vertexFormat = vertexFormat.vertexFormat;
+        this.pipelineVertexFormat = format;
+        this.vertexFormat = format.vertexFormat;
+        this.vertexShaderFileName = vertexShaderFileName;
+        this.fragmentShaderFileName = fragmentShaderFileName;
+        this.callback = callback;
     }
     
     @Override

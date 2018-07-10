@@ -4,8 +4,6 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import grondag.render_hooks.Configurator;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
-import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -30,22 +28,15 @@ public abstract class PipelineManager
      * Will return null if pipeline limit would be exceeded.
      */
     @Nullable
-    public abstract RenderPipeline createPipeline(@Nonnull PipelineVertexFormat format);
-    
+    public abstract RenderPipeline getOrCreatePipeline(
+            @Nonnull PipelineVertexFormat format, 
+            @Nullable String vertexShaderFileName, 
+            @Nullable String fragmentShaderFileName,
+            @Nullable IPipelineCallback callback);  
     /**
      * Use when BLOCK vertex format is enough and you want to mimic MC rendering.
      */
+    @Nonnull
     public abstract RenderPipeline getVanillaPipeline();
-    
-    /**
-     * Use this to retrieve the vertex format that is generated for the given pipeline.
-     * The same instance will be returned for pipelines with the same format
-     * allowing for efficient comparison and sorting by the API.<p>
-     * 
-     * Will be {@link DefaultVertexFormats#BLOCK} unless the pipeline overrides
-     * {@link RenderPipeline#enableNormalVertexExtension()}, {@link RenderPipeline#colorVertexExtensions()}
-     * or IRenderPipeline#
-     */
-    public abstract VertexFormat getVertexFormat(RenderPipeline pipeline);
     
 }

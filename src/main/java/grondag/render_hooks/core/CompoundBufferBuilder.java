@@ -3,8 +3,8 @@ package grondag.render_hooks.core;
 import org.lwjgl.opengl.GL11;
 
 import grondag.render_hooks.api.PipelineManager;
+import grondag.render_hooks.api.RenderHookRuntimeImpl;
 import grondag.render_hooks.api.RenderPipeline;
-import grondag.render_hooks.api.RenderPipelineImpl;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -15,6 +15,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class CompoundBufferBuilder extends BufferBuilder
 {
     private static final BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[PipelineManager.MAX_PIPELINES];
+    
+    private static final RenderPipeline VANILLA_PIPELINE = RenderHookRuntimeImpl.INSTANCE.getPipelineManager().getVanillaPipeline();
     
     /**
      * Cache all instantiated buffers for reuse. Does not include this instance<p>
@@ -91,7 +93,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         target.prepareForUpload();
         if(this.vertexCount > 0)
         {
-            target.uploadBuffer(RenderPipelineImpl.VANILLA_PIPELINE, this.getByteBuffer());
+            target.uploadBuffer(VANILLA_PIPELINE, this.getByteBuffer());
             super.reset();
         }
         if(!pipelineList.isEmpty())
@@ -108,7 +110,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         target.prepareForUpload(vanillaList);
         if(this.vertexCount > 0)
         {
-            target.uploadBuffer(RenderPipelineImpl.VANILLA_PIPELINE, this);
+            target.uploadBuffer(VANILLA_PIPELINE, this);
             super.reset();
         }
         if(!pipelineList.isEmpty())
