@@ -30,12 +30,27 @@ public interface IPipelinedQuadConsumer extends Consumer<IPipelinedQuad>
      */
     public BlockRenderLayer targetLayer();
     
+    /**
+     * Provides access to in-world block position for model customization.
+     */
     public BlockPos pos();
     
+    /**
+     * Provides access to block world for model customization.
+     */
     public IBlockAccess world();
     
+    /**
+     * Provides access to block state for model customization.<br>
+     * Is what normally is passed to IBakedModel but already cast to IExtendedBlockState.
+     */
     public IExtendedBlockState extendedState();
     
+    /**
+     * Deterministically pseudo-random bits based on block position.<br>
+     * Will be same as what normally is passed to IBakedModel but is computed
+     * lazily - will not be calculated if never retrieved.
+     */
     public long positionRandom();
     
 }

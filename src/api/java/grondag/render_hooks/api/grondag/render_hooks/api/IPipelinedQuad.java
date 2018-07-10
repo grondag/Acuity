@@ -7,7 +7,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public interface IPipelinedQuad
 {
-    public IRenderPipeline getPipeline();
+    public RenderPipeline getPipeline();
 
     public int getTintIndex();
     

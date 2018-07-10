@@ -4,8 +4,8 @@ import java.nio.ByteBuffer;
 
 import org.lwjgl.opengl.GL11;
 
-import grondag.render_hooks.api.IPipelineManager;
-import grondag.render_hooks.api.IRenderPipeline;
+import grondag.render_hooks.api.PipelineManager;
+import grondag.render_hooks.api.RenderPipeline;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -29,9 +29,9 @@ public class CompoundVertexBuffer extends VertexBuffer
     private IntArrayList glBufferIds = new IntArrayList();
     
     private int slotsInUse = 0;
-    private IRenderPipeline[] pipelines = new IRenderPipeline[IPipelineManager.MAX_PIPELINES];
-    private int[] pipelineBufferIds = new int[IPipelineManager.MAX_PIPELINES];
-    private int[] pipelineCounts = new int[IPipelineManager.MAX_PIPELINES];
+    private RenderPipeline[] pipelines = new RenderPipeline[PipelineManager.MAX_PIPELINES];
+    private int[] pipelineBufferIds = new int[PipelineManager.MAX_PIPELINES];
+    private int[] pipelineCounts = new int[PipelineManager.MAX_PIPELINES];
     
     public CompoundVertexBuffer(VertexFormat vertexFormatIn)
     {
@@ -60,7 +60,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         this.slotsInUse = 0;
     }
     
-    public void uploadBuffer(IRenderPipeline pipeline, ByteBuffer data)
+    public void uploadBuffer(RenderPipeline pipeline, ByteBuffer data)
     {
         pipelines[slotsInUse] = pipeline;
         
@@ -69,7 +69,7 @@ public class CompoundVertexBuffer extends VertexBuffer
 
         pipelineCounts[slotsInUse] = data.limit() / pipeline.vertexFormat().getNextOffset();
         // shouldn't matter normally but if have partial ASM failure could prevent a break
-        if(pipeline.getIndex() == IPipelineManager.VANILLA_MC_PIPELINE_INDEX)
+        if(pipeline.getIndex() == PipelineManager.VANILLA_MC_PIPELINE_INDEX)
             this.count = pipelineCounts[0];
 
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, glId);
@@ -106,7 +106,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         for(int i = 0; i < this.slotsInUse; i++)
         {
             OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, pipelineBufferIds[i]);
-            final IRenderPipeline p  = this.pipelines[i];
+            final RenderPipeline p  = this.pipelines[i];
             p.preDraw();
             GlStateManager.glDrawArrays(GL11.GL_QUADS, 0, this.pipelineCounts[i]);
             p.postDraw();

@@ -1,9 +1,9 @@
-package grondag.render_hooks.api.impl;
+package grondag.render_hooks.api;
 
-import grondag.render_hooks.api.IPipelineManager;
+import grondag.render_hooks.api.PipelineManager;
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedQuadConsumer;
-import grondag.render_hooks.api.IRenderPipeline;
+import grondag.render_hooks.api.RenderPipeline;
 import grondag.render_hooks.core.CompoundBufferBuilder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -22,7 +22,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
 {
     protected final BlockInfo blockInfo;
     
-    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[IPipelineManager.MAX_PIPELINES];
+    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[PipelineManager.MAX_PIPELINES];
 
     private BlockRenderLayer renderLayer;
     private CompoundBufferBuilder target;
@@ -34,7 +34,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
     
     private class ChildLighter extends PipelinedVertexLighter
     {
-        protected ChildLighter(IRenderPipeline pipeline)
+        protected ChildLighter(RenderPipeline pipeline)
         {
             super(pipeline);
         }
@@ -102,7 +102,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
         this.blockInfo = new BlockInfo(Minecraft.getMinecraft().getBlockColors());
     }
 
-    private PipelinedVertexLighter getPipelineLighter(IRenderPipeline pipeline)
+    private PipelinedVertexLighter getPipelineLighter(RenderPipeline pipeline)
     {
         PipelinedVertexLighter result = lighters[pipeline.getIndex()];
         if(result == null)

@@ -1,9 +1,9 @@
-package grondag.render_hooks.api.impl;
+package grondag.render_hooks.api;
 
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedVertex;
 import grondag.render_hooks.api.IPipelinedVertexConsumer;
-import grondag.render_hooks.api.IRenderPipeline;
+import grondag.render_hooks.api.RenderPipeline;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -21,18 +21,17 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 {
-    protected final IRenderPipeline pipeline;
+    protected final RenderPipeline pipeline;
     protected final VertexFormat format;
     
     protected float blockColorR = -1f;
     protected float blockColorG = -1f;
     protected float blockColorB = -1f;
     
-    protected PipelinedVertexLighter(IRenderPipeline pipeline)
+    protected PipelinedVertexLighter(RenderPipeline pipeline)
     {
         this.pipeline = pipeline;
-        VertexFormat format = pipeline.vertexFormat();
-        this.format = format;
+        this.format = pipeline.pipelineVertexFormat().vertexFormat;
     }
     
     public abstract BlockInfo getBlockInfo();
@@ -144,7 +143,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
                 }
                     
                 case UV: 
-                    if(i == pipeline.lightmapIndex())
+                    if(i == 1)
                     {
                          if(aoEnabled)
                          {

@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import grondag.render_hooks.RenderHooks;
-import grondag.render_hooks.api.IRenderPipeline;
+import grondag.render_hooks.api.RenderPipeline;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -42,7 +42,7 @@ public class CompoundListedRenderChunk extends ListedRenderChunk
         GlStateManager.glNewList(vanillaList, 4864);
     }
 
-    public void uploadBuffer(IRenderPipeline pipeline, BufferBuilder bufferBuilderIn)
+    public void uploadBuffer(RenderPipeline pipeline, BufferBuilder bufferBuilderIn)
     {
         GlStateManager.pushMatrix();
         this.multModelviewMatrix();

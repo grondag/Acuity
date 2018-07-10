@@ -1,8 +1,8 @@
 package grondag.render_hooks.core;
 
 import grondag.render_hooks.RenderHooks;
+import grondag.render_hooks.api.CompoundVertexLighter;
 import grondag.render_hooks.api.IPipelinedBakedModel;
-import grondag.render_hooks.api.impl.CompoundVertexLighter;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockModelRenderer;

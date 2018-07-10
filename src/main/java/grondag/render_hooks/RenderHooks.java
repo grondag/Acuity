@@ -8,8 +8,8 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import grondag.render_hooks.api.IRenderHookRuntime;
-import grondag.render_hooks.api.impl.RenderHookRuntime;
+import grondag.render_hooks.api.RenderHookRuntime;
+import grondag.render_hooks.api.RenderHookRuntimeImpl;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -32,8 +32,6 @@ public class RenderHooks
 	
 	@Instance
 	public static RenderHooks INSTANCE = new RenderHooks();
-	
-	public final RenderHookRuntime runtime = new RenderHookRuntime();
 	
 	public static final boolean isModEnabled()
 	{
@@ -95,11 +93,11 @@ public class RenderHooks
         {
             if (message.key.equalsIgnoreCase("getRenderHookRuntime"))
             {
-                Optional<Function<IRenderHookRuntime, Void>> value = message.getFunctionValue(IRenderHookRuntime.class, Void.class);
+                Optional<Function<RenderHookRuntime, Void>> value = message.getFunctionValue(RenderHookRuntime.class, Void.class);
                 if (value.isPresent()) 
-                    value.get().apply(runtime);
+                    value.get().apply(RenderHookRuntimeImpl.INSTANCE);
                 else 
-                    log.warn("Error in inter-mod communication request for RenderHooks runtime.");
+                    getLog().warn("Error in inter-mod communication request for RenderHooks runtime.");
             }
         }
     }
