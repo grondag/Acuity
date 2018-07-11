@@ -16,7 +16,7 @@ public class CompoundBufferBuilder extends BufferBuilder
 {
     private static final BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[PipelineManager.MAX_PIPELINES];
     
-    private static final RenderPipeline VANILLA_PIPELINE = RenderHookRuntimeImpl.INSTANCE.getPipelineManager().getVanillaPipeline();
+    private final RenderPipeline VANILLA_PIPELINE = RenderHookRuntimeImpl.INSTANCE.getPipelineManager().getVanillaPipeline();
     
     /**
      * Cache all instantiated buffers for reuse. Does not include this instance<p>

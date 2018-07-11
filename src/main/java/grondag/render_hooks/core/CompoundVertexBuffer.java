@@ -107,6 +107,16 @@ public class CompoundVertexBuffer extends VertexBuffer
         {
             OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, pipelineBufferIds[i]);
             final RenderPipeline p  = this.pipelines[i];
+            
+            //TODO: do this based on vertex format
+            //     and reuse a vertex attribute array per format
+            GlStateManager.glVertexPointer(3, 5126, 28, 0);
+            GlStateManager.glColorPointer(4, 5121, 28, 12);
+            GlStateManager.glTexCoordPointer(2, 5126, 28, 16);
+            OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
+            GlStateManager.glTexCoordPointer(2, 5122, 28, 24);
+            OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+            
             p.preDraw();
             GlStateManager.glDrawArrays(GL11.GL_QUADS, 0, this.pipelineCounts[i]);
             p.postDraw();

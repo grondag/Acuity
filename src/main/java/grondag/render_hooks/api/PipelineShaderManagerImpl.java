@@ -7,6 +7,8 @@ import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
 final class PipelineShaderManagerImpl extends PipelineShaderManager
 {
+    final static PipelineShaderManagerImpl INSTANCE = new PipelineShaderManagerImpl();
+    
     PipelineShaderManagerImpl() {}
 
     private Object2ObjectOpenHashMap<String, PipelineVertexShader> vertexShaders = new Object2ObjectOpenHashMap<>();

@@ -3,20 +3,27 @@ package grondag.render_hooks.api;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 
 final class RenderPipelineImpl extends RenderPipeline
 {
     private static int nextIndex = 0;
     
-    final int index = nextIndex++;
-    final @Nonnull PipelineVertexFormat pipelineVertexFormat;
-    final @Nonnull VertexFormat vertexFormat;
-    final @Nullable String vertexShaderFileName;
-    final @Nullable String fragmentShaderFileName;
-    final @Nullable IPipelineCallback callback;
+    private static final IPipelineCallback DUMMY_CALLBACK = new IPipelineCallback()
+    {
+        @Override
+        public final void preDraw() {}
+
+        @Override
+        public final void postDraw(){}
+    };
+    
+    private final int index = nextIndex++;
+    private final @Nonnull PipelineVertexFormat pipelineVertexFormat;
+    private final @Nonnull VertexFormat vertexFormat;
+    private final @Nonnull IPipelineCallback callback;
+    private final @Nullable PipelineFragmentShader fragmentShader;
+    private final @Nullable PipelineVertexShader vertexShader;
     
     RenderPipelineImpl(@Nonnull PipelineVertexFormat format, 
             @Nullable String vertexShaderFileName, 
@@ -25,9 +32,9 @@ final class RenderPipelineImpl extends RenderPipeline
     {
         this.pipelineVertexFormat = format;
         this.vertexFormat = format.vertexFormat;
-        this.vertexShaderFileName = vertexShaderFileName;
-        this.fragmentShaderFileName = fragmentShaderFileName;
-        this.callback = callback;
+        this.vertexShader = RenderHookRuntimeImpl.INSTANCE.getShaderManager().getOrCreateVertexShader(vertexShaderFileName);
+        this.fragmentShader = RenderHookRuntimeImpl.INSTANCE.getShaderManager().getOrCreateFragmentShader(fragmentShaderFileName);
+        this.callback = callback == null ? DUMMY_CALLBACK : callback;
     }
     
     @Override
@@ -48,17 +55,28 @@ final class RenderPipelineImpl extends RenderPipeline
         return this.index;
     }
     
-    //TODO: separate VBO path 
-    //TODO: list and VBO paths default to generic pre-post
+    @Override
+    public final PipelineVertexShader vertexShader()
+    {
+        return this.vertexShader;
+    }
+
+    @Override
+    public final PipelineFragmentShader fragmentShader()
+    {
+        return this.fragmentShader;
+    }
+
     @Override
     public void preDraw()
     {
-        //TODO: do this based on vertex format
-        GlStateManager.glVertexPointer(3, 5126, 28, 0);
-        GlStateManager.glColorPointer(4, 5121, 28, 12);
-        GlStateManager.glTexCoordPointer(2, 5126, 28, 16);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.glTexCoordPointer(2, 5122, 28, 24);
-        OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+        this.callback.preDraw();
     }
+    
+    @Override
+    public void postDraw()
+    {
+        this.callback.postDraw();
+    }
+   
 }

@@ -1,6 +1,7 @@
 package grondag.render_hooks.api;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
 
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraftforge.fml.relauncher.Side;
@@ -11,29 +12,12 @@ public abstract class RenderPipeline
 {
     RenderPipeline() {};
     
-    /**
-     * Called before VBO rendering.</br>
-     * 
-     * MUST set up vertex bindings. Default setup is for vanilla Block vertex format.<br>
-     * Should NOT change matrix, translation or handle buffer binding.</p>
-     */
-    public void preDraw() {};
+    @Nullable
+    public abstract PipelineVertexShader vertexShader();
     
-    /**
-     * Called before display list rendering
-     */
-    public void preDrawList() {};
-
-    /**
-     * Called after VBO rendering
-     */
-    public void postDraw() {};
+    @Nullable
+    public abstract PipelineFragmentShader fragmentShader();
     
-    /**
-     * Called after display list rendering
-     */
-    public void postDrawList() {};
-
     @Nonnull
     public abstract PipelineVertexFormat pipelineVertexFormat();
 
@@ -47,5 +31,17 @@ public abstract class RenderPipeline
      * For internal use.<br>
      */
     public abstract int getIndex();
+    
+    /**
+     * Executes callback if there is one.
+     * For internal use.<br>
+     */
+    public abstract void preDraw();
+    
+    /**
+     * Executes callback if there is one.
+     * For internal use.<br>
+     */
+    public abstract void postDraw();
 
 }

@@ -12,6 +12,8 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 final class PipelineManagerImpl extends PipelineManager
 {
+    final static PipelineManagerImpl INSTANCE = new PipelineManagerImpl();
+    
     private RenderPipelineImpl[] pipelines = new RenderPipelineImpl[MAX_PIPELINES];
     
     private Object2ObjectOpenHashMap<Key, RenderPipelineImpl> pipelineMap = new Object2ObjectOpenHashMap<>();
@@ -95,7 +97,7 @@ final class PipelineManagerImpl extends PipelineManager
         {
             result = new RenderPipelineImpl(format, vertexShaderFileName, fragmentShaderFileName, callback);
             this.pipelineMap.put(key, result);
-            this.pipelines[result.index] = result;
+            this.pipelines[result.getIndex()] = result;
         }
         
         return result;

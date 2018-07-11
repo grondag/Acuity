@@ -42,50 +42,45 @@ public class CompoundListedRenderChunk extends ListedRenderChunk
         GlStateManager.glNewList(vanillaList, 4864);
     }
 
+    /**
+     * Implementation for lists is based on WorldVertexBufferUploader
+     */
     public void uploadBuffer(RenderPipeline pipeline, BufferBuilder bufferBuilderIn)
     {
+        if(bufferBuilderIn.getVertexCount() == 0) return;
+        
         GlStateManager.pushMatrix();
         this.multModelviewMatrix();
-        pipeline.preDrawList();
-        drawList(bufferBuilderIn);
-        pipeline.postDrawList();
+        
+        VertexFormat vertexformat = bufferBuilderIn.getVertexFormat();
+        int i = vertexformat.getNextOffset();
+        ByteBuffer bytebuffer = bufferBuilderIn.getByteBuffer();
+        List<VertexFormatElement> list = vertexformat.getElements();
+
+        for (int j = 0; j < list.size(); ++j)
+        {
+            VertexFormatElement vertexformatelement = list.get(j);
+            bytebuffer.position(vertexformat.getOffset(j));
+            vertexformatelement.getUsage().preDraw(vertexformat, j, i, bytebuffer);
+        }
+
+        pipeline.preDraw();
+        GlStateManager.glDrawArrays(bufferBuilderIn.getDrawMode(), 0, bufferBuilderIn.getVertexCount());
+        pipeline.postDraw();
+        
+        int i1 = 0;
+        for (int j1 = list.size(); i1 < j1; ++i1)
+        {
+            VertexFormatElement vertexformatelement1 = list.get(i1);
+            vertexformatelement1.getUsage().postDraw(vertexformat, i1, i, bytebuffer);
+        }
+
+        bufferBuilderIn.reset();
         GlStateManager.popMatrix();
     }
     
     public void completeUpload()
     {
         GlStateManager.glEndList();        
-    }
-    
-    /**
-     * Static adaptation of WorldVertexBufferUploader
-     */
-    private static void drawList(BufferBuilder bufferBuilderIn)
-    {
-        if (bufferBuilderIn.getVertexCount() > 0)
-        {
-            VertexFormat vertexformat = bufferBuilderIn.getVertexFormat();
-            int i = vertexformat.getNextOffset();
-            ByteBuffer bytebuffer = bufferBuilderIn.getByteBuffer();
-            List<VertexFormatElement> list = vertexformat.getElements();
-
-            for (int j = 0; j < list.size(); ++j)
-            {
-                VertexFormatElement vertexformatelement = list.get(j);
-                bytebuffer.position(vertexformat.getOffset(j));
-                vertexformatelement.getUsage().preDraw(vertexformat, j, i, bytebuffer);
-            }
-
-            GlStateManager.glDrawArrays(bufferBuilderIn.getDrawMode(), 0, bufferBuilderIn.getVertexCount());
-            int i1 = 0;
-
-            for (int j1 = list.size(); i1 < j1; ++i1)
-            {
-                VertexFormatElement vertexformatelement1 = list.get(i1);
-                vertexformatelement1.getUsage().postDraw(vertexformat, i1, i, bytebuffer);
-            }
-        }
-
-        bufferBuilderIn.reset();
     }
 }

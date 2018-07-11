@@ -9,13 +9,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public final class RenderHookRuntimeImpl extends RenderHookRuntime
 {
-    
     //TODO: hide
     public static final RenderHookRuntimeImpl INSTANCE = new RenderHookRuntimeImpl();
     
-    private final  PipelineManagerImpl pipelineManager = new PipelineManagerImpl();
-    
-    private final  PipelineShaderManagerImpl shaderManager = new PipelineShaderManagerImpl();
 
     private RenderHookRuntimeImpl() {};
     
@@ -23,7 +19,7 @@ public final class RenderHookRuntimeImpl extends RenderHookRuntime
     @Override
     public final PipelineManager getPipelineManager()
     {
-        return pipelineManager;
+        return PipelineManagerImpl.INSTANCE;
     }
 
     @Override
@@ -35,6 +31,6 @@ public final class RenderHookRuntimeImpl extends RenderHookRuntime
     @Override
     public final PipelineShaderManager getShaderManager()
     {
-        return this.shaderManager;
+        return PipelineShaderManagerImpl.INSTANCE;
     }
 }
