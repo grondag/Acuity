@@ -399,6 +399,47 @@ public class ASMTransformer implements IClassTransformer
         }
     };
     
+    private Consumer<ClassNode> patchVertexFormatElement = classNode ->
+    {
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+        boolean worked = false;
+        
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            // Initializer isn't obfuscated
+            if (m.name.equals("<init>")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    if(next instanceof MethodInsnNode)
+                    {
+                        MethodInsnNode ins = (MethodInsnNode)next;
+                        if(ins.owner.equals("et/minecraft/client/renderer/vertex/VertexFormatElement")
+                                && (ins.name.equals("isFirstOrUV") || ins.name.equals("func_177372_a"))
+                                && ins.desc.equals("(ILnet/minecraft/client/renderer/vertex/VertexFormatElement$EnumUsage;)Z"))
+                        {
+                            ins.setOpcode(INVOKESTATIC);
+                            ins.owner = "grondag/render_hooks/core/PipelineHooks";
+                            ins.name = "isFirstOrUV";
+                            ins.itf = false;
+                            worked = true;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        if(!worked)
+        {
+            RenderHooks.INSTANCE.getLog().error("Unable to locate isFirstOrUV call in VertexFormatElement.<init>");
+            allPatchesSuccessful = false;
+        }
+    };
+    
     @SuppressWarnings("null")
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass)
@@ -425,6 +466,9 @@ public class ASMTransformer implements IClassTransformer
         
         if (transformedName.equals("net.minecraft.client.renderer.RenderGlobal"))
             return patch(transformedName, basicClass, obfuscated, patchRenderGlobal); 
+        
+        if (transformedName.equals("net.minecraft.client.renderer.vertex.VertexFormatElement"))
+            return patch(transformedName, basicClass, obfuscated, patchVertexFormatElement); 
         
         return basicClass;
     }

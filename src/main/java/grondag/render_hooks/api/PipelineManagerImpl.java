@@ -79,7 +79,7 @@ final class PipelineManagerImpl extends PipelineManager
         super();
         
         // add vanilla MC pipeline
-        this.getOrCreatePipeline(PipelineVertexFormat.BASE, null, null, null);
+        this.getOrCreatePipeline(PipelineVertexFormat.MINECRAFT, null, null, null);
     }
     
     @Nullable

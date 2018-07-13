@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
+import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
 import net.minecraft.util.BlockRenderLayer;
@@ -79,5 +80,13 @@ public class PipelineHooks
             ((CompoundBufferBuilder)source).uploadTo((CompoundVertexBuffer)target);
         else
             Minecraft.getMinecraft().renderGlobal.renderDispatcher.uploadVertexBuffer(source, target);
+    }
+    
+    public static boolean isFirstOrUV(Object callerIgnored, int index, VertexFormatElement.EnumUsage usage)
+    {
+        if(RenderHooks.isModEnabled())
+            return index == 0 || usage == VertexFormatElement.EnumUsage.UV || usage == VertexFormatElement.EnumUsage.COLOR;
+        else
+            return index == 0 || usage == VertexFormatElement.EnumUsage.UV;
     }
 }

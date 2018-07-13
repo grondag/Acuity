@@ -1,8 +1,11 @@
 package grondag.render_hooks.core;
 
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+
 import grondag.render_hooks.api.IPipelinedQuad;
-import grondag.render_hooks.api.IPipelinedVertex;
 import grondag.render_hooks.api.IPipelinedVertexConsumer;
+import grondag.render_hooks.api.PipelineVertexFormat;
 import grondag.render_hooks.api.RenderPipeline;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -11,7 +14,6 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
-import net.minecraftforge.client.model.pipeline.LightUtil;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -24,16 +26,13 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     protected final RenderPipeline pipeline;
     protected final VertexFormat format;
     
-    protected float blockColorR = -1f;
-    protected float blockColorG = -1f;
-    protected float blockColorB = -1f;
-    
     protected PipelinedVertexLighter(RenderPipeline pipeline)
     {
         this.pipeline = pipeline;
         this.format = pipeline.pipelineVertexFormat().vertexFormat;
     }
     
+    @Override
     public abstract BlockInfo getBlockInfo();
     
     public abstract BufferBuilder getPipelineBuffer();
@@ -45,135 +44,192 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 
     public void acceptQuad(IPipelinedQuad quad)
     {
-        if(quad.getTintIndex() == -1)
-        {
-            this.blockColorR = -1f;
-        }
-        else
-        {
-            final int multiplier = getBlockInfo().getColorMultiplier(quad.getTintIndex());
-            this.blockColorR = (float)(multiplier >> 16 & 0xFF) / 0xFF;
-            this.blockColorG = (float)(multiplier >> 8 & 0xFF) / 0xFF;
-            this.blockColorB = (float)(multiplier & 0xFF) / 0xFF;
-        }
         quad.produceVertices(this);
     }
     
     @Override
-    public void acceptVertex(IPipelinedVertex vertex)
+    public void acceptVertex(
+            float posX,
+            float posY,
+            float posZ,
+            float normX,
+            float normY,
+            float normZ,
+            int glowBits3UB,
+            int unlitColorARGB0,
+            float u0,
+            float v0
+            )
     {
+        if(this.pipeline.pipelineVertexFormat() != PipelineVertexFormat.SINGLE)
+            throw new UnsupportedOperationException("Single-layer vertex must use single-layer pipeline format.");
+        
+        startVertex(posX, posY, posZ, normX, normY, normZ, glowBits3UB, unlitColorARGB0, u0, v0).endVertex();
+    }
+    
+    @Override
+    public void acceptVertex(
+            float posX,
+            float posY,
+            float posZ,
+            float normX,
+            float normY,
+            float normZ,
+            int glowBits3UB,
+            int unlitColorARGB0,
+            float u0,
+            float v0,
+            int unlitColorARGB1,
+            float u1,
+            float v1
+            )
+    {
+        if(this.pipeline.pipelineVertexFormat() != PipelineVertexFormat.DOUBLE)
+            throw new UnsupportedOperationException("Double-layer vertex must use double-layer pipeline format.");
+        
+        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, glowBits3UB, unlitColorARGB0, u0, v0);
+        final ByteBuffer bytes  = target.getByteBuffer();
+        // SECONDARY_RGBA_4UB
+        putColorRGBA(bytes, unlitColorARGB1);
+        
+        // SECONDARY_TEX_2F
+        bytes.putFloat(u1);
+        bytes.putFloat(v1);
+        target.endVertex();
+    }
+    
+    @Override
+    public void acceptVertex(
+            float posX,
+            float posY,
+            float posZ,
+            float normX,
+            float normY,
+            float normZ,
+            int glowBits3UB,
+            int unlitColorARGB0,
+            float u0,
+            float v0,
+            int unlitColorARGB1,
+            float u1,
+            float v1,
+            int unlitColorARGB2,
+            float u2,
+            float v2
+            )
+    {
+        if(this.pipeline.pipelineVertexFormat() != PipelineVertexFormat.TRIPLE)
+            throw new UnsupportedOperationException("Triple-layer vertex must use triple-layer pipeline format.");
+        
+        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, glowBits3UB, unlitColorARGB0, u0, v0);
+        final ByteBuffer bytes  = target.getByteBuffer();
+        // SECONDARY_RGBA_4UB
+        putColorRGBA(bytes, unlitColorARGB1);
+        
+        // SECONDARY_TEX_2F
+        bytes.putFloat(u1);
+        bytes.putFloat(v1);
+        
+        // TERTIARY_RGBA_4UB
+        putColorRGBA(bytes, unlitColorARGB2);
+        
+        // TERTIARY_TEX_2F
+        bytes.putFloat(u2);
+        bytes.putFloat(v2);
+        target.endVertex();
+    }
+    
+    private BufferBuilder startVertex(
+            float posX,
+            float posY,
+            float posZ,
+            float normX,
+            float normY,
+            float normZ,
+            int glowBits3UB,
+            int unlitColorARGB0,
+            float u0,
+            float v0)
+    {
+            
         final BlockInfo blockInfo = getBlockInfo();
         
         // local position is vertex, + block-state-driven shift (if any);
-        final float posX = vertex.posX() + blockInfo.getShx();
-        final float posY = vertex.posY() + blockInfo.getShy();
-        final float posZ = vertex.posZ() + blockInfo.getShz();
-        
-        final float normX = vertex.normalX();
-        final float normY = vertex.normalY();
-        final float normZ = vertex.normalZ();
+        posX += blockInfo.getShx();
+        posY += blockInfo.getShy();
+        posZ += blockInfo.getShz();
         
         final float lightX = posX - .5f + normX * .5f;
         final float lightY = posY - .5f + normY * .5f;
         final float lightZ = posZ - .5f + normZ * .5f;
         
-        final boolean aoEnabled = Minecraft.isAmbientOcclusionEnabled();
-        
-        final boolean haveTint = this.blockColorR != -1;
-        float diffuse = -1;
-        float ao = -1;
-        
-        int colorIndex = 0;
-        int uvIndex = 0;
-        
-        final int elementCount = format.getElementCount();
         final BufferBuilder target = getPipelineBuffer();
-        for(int i = 0; i <  elementCount; i++)
+        final ByteBuffer bytes  = target.getByteBuffer();
+        bytes.position(target.getVertexCount() * format.getNextOffset());
+
+        // POSITION_3F
+        final BlockPos pos = blockInfo.getBlockPos();
+        bytes.putFloat((float) (target.xOffset + pos.getX() + posX));
+        bytes.putFloat((float) (target.yOffset + pos.getY() + posY));
+        bytes.putFloat((float) (target.zOffset + pos.getZ() + posZ));
+        
+        // BASE_RGBA_4UB
+        putColorRGBA(bytes, unlitColorARGB0);
+        
+        // BASE_TEX_2F
+        bytes.putFloat(u0);
+        bytes.putFloat(v0);
+        
+        // NORMAL_3B
+        bytes.putFloat(normX);
+        bytes.putFloat(normY);
+        bytes.putFloat(normZ);
+        
+        // AO_1B
+        bytes.put((byte) Math.round(getAo(lightX, lightY, lightZ) * 255f));
+        
+        // LIGHTMAP_AND_GLOWS_4UB
+        if(Minecraft.isAmbientOcclusionEnabled())
         {
-            switch(format.getElement(i).getUsage())
-            {
-                case POSITION:
-                {
-                    final BlockPos pos = blockInfo.getBlockPos();
-                    target.pos((double)pos.getX() + posX, (double)pos.getY() + posY, (double)pos.getZ() + posZ);
-                    break;
-                }
-                
-                case NORMAL:
-                    target.normal(normX, normY, normZ);
-                    break;
-                    
-                case COLOR:
-                {
-                    int c = vertex.unlitColorARGB(colorIndex);
-                    float a = (float)(c >> 24 & 0xFF);
-                    float r = (float)(c >> 16 & 0xFF);
-                    float g = (float)(c >> 8 & 0xFF);
-                    float b = (float)(c & 0xFF);
-                            
-                    if(vertex.applyDiffuse(colorIndex))
-                    {
-                        if(diffuse == -1)
-                            diffuse = LightUtil.diffuseLight(normX, normY, normZ);
-                        
-                        r *= diffuse;
-                        g *= diffuse;
-                        b *= diffuse;
-                    }
-                    
-                    if(aoEnabled && vertex.applyAO(colorIndex))
-                    {
-                        if(ao == -1)
-                            ao = getAo(lightX, lightY, lightZ);
-                        
-                        r *= ao;
-                        g *= ao;
-                        b *= ao;
-                    }
-                    
-                    if(haveTint && vertex.applyTint(colorIndex))
-                    {
-                        r *= this.blockColorR;
-                        g *= this.blockColorG;
-                        b *= this.blockColorB;
-                    }
-                    target.color(Math.round(r), Math.round(g), Math.round(b), Math.round(a));
-                    colorIndex++;
-                    break;
-                }
-                    
-                case UV: 
-                    if(i == 1)
-                    {
-                         if(aoEnabled)
-                         {
-                             final float blockLight = Math.max(vertex.minimumBlockLight(), calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ));
-                             final float skyLight = Math.max(vertex.minimumSkyLight(), calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ));
-                             target.tex(blockLight, skyLight);
-                         }
-                         else
-                         {
-                             final int packedLight =  this.calcPackedLight(blockInfo, normX, normY, normZ, lightX, lightY, lightZ);
-                             final float blockLight = Math.max(vertex.minimumBlockLight(), ((float)((packedLight >> 0x04) & 0xF) * 0x20) / 0xFFFF);
-                             final float skyLight = Math.max(vertex.minimumSkyLight(), ((float)((packedLight >> 0x14) & 0xF) * 0x20) / 0xFFFF);
-                             target.tex(blockLight, skyLight);
-                         }
-                    }
-                    else
-                    {
-                        target.tex(vertex.u(uvIndex), vertex.v(uvIndex++));
-                    }
-                    break;
-                
-                case PADDING:
-                    // NOOP
-                    break;
-                    
-                default:
-                    throw new UnsupportedOperationException("Unsupported vertex element in pipelined render.");
-            }
+            final int blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * 0xF);
+            final int skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * 0xF);
+            bytes.put((byte) ((blockLight << 4) | skyLight));
         }
-        target.endVertex();
+        else
+        {
+            final int packedLight =  this.calcPackedLight(blockInfo, normX, normY, normZ, lightX, lightY, lightZ);
+            final int blockLight = (packedLight >> 0x04) & 0xF;
+            final int skyLight = (packedLight >> 0x14) & 0xF;
+            bytes.put((byte) ((blockLight << 4) | skyLight));
+        }
+        bytes.put((byte) (glowBits3UB & 0xFF));
+        bytes.put((byte) ((glowBits3UB >> 8) & 0xFF));
+        bytes.put((byte) ((glowBits3UB >> 16) & 0xFF));
+
+        return target;
+    }
+    
+    private static void putColorRGBA(ByteBuffer bytes, int colorARGB)
+    {
+        byte alpha = (byte)(colorARGB >> 24 & 0xFF);
+        byte red = (byte)(colorARGB >> 16 & 0xFF);
+        byte green = (byte)(colorARGB >> 8 & 0xFF);
+        byte blue = (byte)(colorARGB & 0xFF);
+        
+        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN)
+        {
+            bytes.put(red);
+            bytes.put(green);
+            bytes.put(blue);
+            bytes.put(alpha);
+        }
+        else
+        {
+            bytes.put(alpha);
+            bytes.put(blue);
+            bytes.put(green);
+            bytes.put(red);
+        }
     }
     
     protected int calcPackedLight(BlockInfo blockInfo, float normX, float normY, float normZ, float x, float y, float z)

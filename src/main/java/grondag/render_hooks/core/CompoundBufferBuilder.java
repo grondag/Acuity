@@ -34,16 +34,34 @@ public class CompoundBufferBuilder extends BufferBuilder
      */
     BufferBuilder[] pipelineArray = new BufferBuilder[PipelineManager.MAX_PIPELINES];
     
+    private int totalBytes = 0;
+    
     public CompoundBufferBuilder(int bufferSizeIn)
     {
         super(bufferSizeIn);
     }
 
+    public final double xOffset()
+    {
+        return this.xOffset;
+    }
+    
+    public final double yOffset()
+    {
+        return this.yOffset;
+    }
+    
+    public final double zOffset()
+    {
+        return this.zOffset;
+    }
+    
     @Override
     public void begin(int glMode, VertexFormat format)
     {
         super.begin(glMode, format);
         pipelineList.clear();
+        this.totalBytes = 0;
         System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, PipelineManager.MAX_PIPELINES);
         pipelineArray[PipelineManager.VANILLA_MC_PIPELINE_INDEX] = this;
     }
@@ -84,13 +102,20 @@ public class CompoundBufferBuilder extends BufferBuilder
     public void finishDrawing()
     {
         super.finishDrawing();
+        this.totalBytes = this.byteBuffer.limit();
+        
         if(!pipelineList.isEmpty())
-            pipelineList.forEach(p -> pipelineArray[p.getIndex()].finishDrawing());
+            pipelineList.forEach(p -> 
+            {
+                final BufferBuilder b = pipelineArray[p.getIndex()];
+                b.finishDrawing();
+                this.totalBytes += b.getByteBuffer().limit();
+            });
     }
 
     public void uploadTo(CompoundVertexBuffer target)
     {
-        target.prepareForUpload();
+        target.prepareForUpload(this.totalBytes);
         if(this.vertexCount > 0)
         {
             target.uploadBuffer(VANILLA_PIPELINE, this.getByteBuffer());

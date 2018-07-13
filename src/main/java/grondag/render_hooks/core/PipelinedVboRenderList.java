@@ -21,6 +21,7 @@ public class PipelinedVboRenderList extends VboRenderList
         {
             if (!this.renderChunks.isEmpty() && this.initialized)
             {
+                
                 for (RenderChunk renderchunk : this.renderChunks)
                 {
                     CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(layer.ordinal());
