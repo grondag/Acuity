@@ -9,7 +9,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public final class RenderHookRuntimeImpl extends RenderHookRuntime
 {
-    //TODO: hide
+    // UGLY: hide?
     public static final RenderHookRuntimeImpl INSTANCE = new RenderHookRuntimeImpl();
     
 
@@ -41,6 +41,8 @@ public final class RenderHookRuntimeImpl extends RenderHookRuntime
     
     public void forceReload()
     {
+        // TODO: remove or improve
+        System.out.println("RenderHooks force reload");
         PipelineShaderManagerImpl.INSTANCE.forceReload();
         ProgramManager.INSTANCE.forceReload();
         

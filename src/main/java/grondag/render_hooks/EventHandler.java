@@ -1,12 +1,16 @@
 package grondag.render_hooks;
 
+import org.lwjgl.input.Keyboard;
+
 import grondag.render_hooks.api.ProgramManager;
+import grondag.render_hooks.api.RenderHookRuntimeImpl;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
 import net.minecraftforge.fml.client.event.ConfigChangedEvent.PostConfigChangedEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
+import net.minecraftforge.fml.common.gameevent.InputEvent.KeyInputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
@@ -41,5 +45,12 @@ public class EventHandler
     {
         if(event.phase == Phase.START) 
             ProgramManager.INSTANCE.onGameTick();
+    }
+    
+    @SubscribeEvent
+    public static void onKeyInput(KeyInputEvent event) 
+    {
+        if(Keyboard.isKeyDown(61) && Keyboard.getEventKey() == 30)
+            RenderHookRuntimeImpl.INSTANCE.forceReload();
     }
 }

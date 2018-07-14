@@ -37,6 +37,8 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     
     public abstract BufferBuilder getPipelineBuffer();
     
+    protected abstract void reportOutput();
+    
     public VertexFormat getVertexFormat()
     {
         return this.format;
@@ -44,6 +46,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 
     public void acceptQuad(IPipelinedQuad quad)
     {
+        this.reportOutput();
         quad.produceVertices(this);
     }
     

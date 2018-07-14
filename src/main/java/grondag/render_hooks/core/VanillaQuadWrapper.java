@@ -138,7 +138,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     private int blockColorMultiplier(IPipelinedVertexConsumer vertexLighter)
     {
         final int tint = wrapped.getTintIndex();
-        return tint == -1 ? 0xFFFFFFFF : vertexLighter.getBlockInfo().getColorMultiplier(tint); 
+        return tint == -1 ? 0xFFFFFFFF : 0xFF000000 | vertexLighter.getBlockInfo().getColorMultiplier(tint); 
     }
 
     @Override

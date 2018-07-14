@@ -57,6 +57,12 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
         {
             return target.getPipelineBuffer(this.pipeline);
         }
+        
+        @Override
+        protected void reportOutput()
+        {
+            didOutput = true;
+        }
     }
     
     public void prepare(CompoundBufferBuilder target, BlockRenderLayer layer, IBlockAccess world, IBlockState blockState, BlockPos pos, boolean checkSides)
