@@ -60,7 +60,10 @@ public class CompoundBufferBuilder extends BufferBuilder
     @Override
     public void begin(int glMode, VertexFormat format)
     {
-        super.begin(glMode, format);
+        // UGLY:  means this class can only be used for chunk rebuilds
+        // one alternative would be to honor input format but then create separate buffers - wasteful
+     
+        super.begin(glMode, PipelineVertexFormat.SINGLE.vertexFormat);
         pipelineList.clear();
         this.totalBytes = 0;
         System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, PipelineManager.MAX_PIPELINES);

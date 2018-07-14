@@ -46,11 +46,16 @@ public class OpenGlHelperExt
         }
     }
 
-    public static String getLogInfo(int obj)
+    public static String getProgramInfoLog(int obj)
     {
         return OpenGlHelper.glGetProgramInfoLog(obj, OpenGlHelper.glGetProgrami(obj, GL20.GL_INFO_LOG_LENGTH));
     }
 
+    public static String getShaderInfoLog(int obj)
+    {
+        return OpenGlHelper.glGetProgramInfoLog(obj, OpenGlHelper.glGetShaderi(obj, GL20.GL_INFO_LOG_LENGTH));
+    }
+    
     public static @Nullable ByteBuffer readFileAsString(String filename) throws Exception
     {
         InputStream in = ProgramManager.class.getResourceAsStream(filename);
@@ -84,7 +89,7 @@ public class OpenGlHelperExt
             OpenGlHelper.glCompileShader(shader);
     
             if (OpenGlHelper.glGetProgrami(shader, OpenGlHelper.GL_COMPILE_STATUS) == GL11.GL_FALSE)
-                throw new RuntimeException("Error creating shader: " + getLogInfo(shader));
+                throw new RuntimeException("Error creating shader: " + getProgramInfoLog(shader));
     
             return shader;
         }

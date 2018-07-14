@@ -181,9 +181,9 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         bytes.putFloat(v0);
         
         // NORMAL_3B
-        bytes.putFloat(normX);
-        bytes.putFloat(normY);
-        bytes.putFloat(normZ);
+        bytes.put((byte) Math.round(normX * 127));
+        bytes.put((byte) Math.round(normY * 127));
+        bytes.put((byte) Math.round(normZ * 127));
         
         // AO_1B
         bytes.put((byte) Math.round(getAo(lightX, lightY, lightZ) * 255f));
@@ -194,7 +194,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         {
             blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * 0xFF);
             skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * 0xFF);
-            bytes.put((byte) ((blockLight << 4) | skyLight));
         }
         else
         {

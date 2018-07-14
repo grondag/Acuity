@@ -4,6 +4,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;
 
 import grondag.render_hooks.RenderHooks;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.VboRenderList;
@@ -29,6 +30,13 @@ public class PipelinedVboRenderList extends VboRenderList
                 GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
                 GL20.glEnableVertexAttribArray(0);
                 GL20.glEnableVertexAttribArray(1);
+                
+                // we don't want the lightmap at all
+                // will be disabled by caller anyway when we return
+                OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
+                GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+                OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+                Minecraft.getMinecraft().entityRenderer.disableLightmap();
                 
                 for (RenderChunk renderchunk : this.renderChunks)
                 {

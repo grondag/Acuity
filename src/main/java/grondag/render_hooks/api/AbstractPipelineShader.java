@@ -19,6 +19,7 @@ abstract class AbstractPipelineShader
     
     private int glId = -1;
     private boolean needsLoad = true;
+    private boolean isErrored = false;
     
     AbstractPipelineShader(@Nonnull String fileName, int shaderType)
     {
@@ -39,46 +40,49 @@ abstract class AbstractPipelineShader
         if(this.needsLoad)
             this.load();
         
-        return this.glId;
+        return this.isErrored ? -1 : this.glId;
     }
     
     private final void load()
     {
         this.needsLoad = false;
+        this.isErrored = false;
         try
         {
+            @Nullable ByteBuffer source = OpenGlHelperExt.readFileAsString(this.fileName);
+            if(source == null)
+            {
+                this.isErrored = true;
+                return;
+            }
+            
             if(this.glId <= 0)
             {
                 this.glId = OpenGlHelper.glCreateShader(shaderType);
                 if(this.glId == 0) 
                 {
                     this.glId = -1;
+                    this.isErrored = true;
                     return;
                 }
-            }
-    
-            @Nullable ByteBuffer source = OpenGlHelperExt.readFileAsString(this.fileName);
-            
-            if(source == null)
-            {
-                this.glId = -1;
-                return;
             }
             
             OpenGlHelper.glShaderSource(this.glId, source);
             OpenGlHelper.glCompileShader(this.glId);
     
-            if (OpenGlHelper.glGetProgrami(this.glId, OpenGlHelper.GL_COMPILE_STATUS) == GL11.GL_FALSE)
-                throw new RuntimeException("Error creating shader: " + OpenGlHelperExt.getLogInfo(this.glId));
+            if (OpenGlHelper.glGetShaderi(this.glId, OpenGlHelper.GL_COMPILE_STATUS) == GL11.GL_FALSE)
+                throw new RuntimeException("Error creating shader: " + OpenGlHelperExt.getShaderInfoLog(this.glId));
     
         }
         catch(Exception e)
         {
+            this.isErrored = true;
             if(this.glId > 0)
+            {
                 OpenGlHelper.glDeleteShader(glId);
-            
+                this.glId = -1;
+            }
             RenderHooks.INSTANCE.getLog().error("Unable to create shader " + this.fileName, e);
-            this.glId = -1;
         }
     }
 }

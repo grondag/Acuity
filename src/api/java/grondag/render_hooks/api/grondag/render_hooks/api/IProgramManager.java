@@ -7,4 +7,6 @@ public interface IProgramManager
 
     IProgram getDefaultProgram(PipelineVertexFormat format);
 
+    float worldTime();
+
 }

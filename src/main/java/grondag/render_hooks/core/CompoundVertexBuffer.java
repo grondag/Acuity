@@ -117,9 +117,9 @@ public class CompoundVertexBuffer extends VertexBuffer
     {
         final int stride = format.vertexFormat.getNextOffset();
         
-        GlStateManager.glVertexPointer(count, POSITION_3F.getType().getGlConstant(), stride, bufferOffset + 0);
-        GlStateManager.glColorPointer(count, BASE_RGBA_4UB.getType().getGlConstant(), stride, bufferOffset + 12);
-        GlStateManager.glTexCoordPointer(count, BASE_TEX_2F.getType().getGlConstant(), stride, bufferOffset + 16);
+        GlStateManager.glVertexPointer(3, POSITION_3F.getType().getGlConstant(), stride, bufferOffset + 0);
+        GlStateManager.glColorPointer(4, BASE_RGBA_4UB.getType().getGlConstant(), stride, bufferOffset + 12);
+        GlStateManager.glTexCoordPointer(2, BASE_TEX_2F.getType().getGlConstant(), stride, bufferOffset + 16);
         GL11.glNormalPointer(NORMAL_3B.getType().getGlConstant(), stride, bufferOffset + 24);
         GL20.glVertexAttribPointer(0, 1, AO_1B.getType().getGlConstant(), false, stride, bufferOffset + 27);
         GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
