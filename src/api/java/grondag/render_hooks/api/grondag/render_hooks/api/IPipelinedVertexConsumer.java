@@ -11,8 +11,8 @@ public interface IPipelinedVertexConsumer
      * For single-layer renders.<br>
      * Will throw an error if not used with {@link PipelineVertexFormat#SINGLE}<p>
      * 
-     * Similar to Vanilla MC format, but always includes normals and includes a 1-byte "glow" value (0-255)
-     * for each layer.  In default shaders this is used for emmissive renders, but could be used for anything.<p>
+     * Similar to Vanilla MC format, but always includes normals and includes block light value (0-255)
+     * for each layer.  Set the block light to 255 for emissive renders.<p>
      * 
      * The consumer will also compute and send through ambient occlusion (if enabled) and a packed lightmap.<p>
      * 
@@ -38,7 +38,7 @@ public interface IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int glowBits3UB,
+            int blockLightMaps,
             int unlitColorARGB0,
             float u0,
             float v0
@@ -69,7 +69,7 @@ public interface IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int glowBits3UB,
+            int blockLightMaps,
             int unlitColorARGB0,
             float u0,
             float v0,
@@ -89,7 +89,7 @@ public interface IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int glowBits3UB,
+            int blockLightMaps,
             int unlitColorARGB0,
             float u0,
             float v0,

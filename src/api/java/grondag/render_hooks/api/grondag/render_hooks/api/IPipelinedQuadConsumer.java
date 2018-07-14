@@ -2,11 +2,11 @@ package grondag.render_hooks.api;
 
 import java.util.function.Consumer;
 
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -42,9 +42,9 @@ public interface IPipelinedQuadConsumer extends Consumer<IPipelinedQuad>
     
     /**
      * Provides access to block state for model customization.<br>
-     * Is what normally is passed to IBakedModel but already cast to IExtendedBlockState.
+     * Is what normally is passed to IBakedModel and may be an IExtendedBlockState.
      */
-    public IExtendedBlockState extendedState();
+    public IBlockState blockState();
     
     /**
      * Deterministically pseudo-random bits based on block position.<br>

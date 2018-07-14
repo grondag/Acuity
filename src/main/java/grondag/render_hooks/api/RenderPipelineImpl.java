@@ -22,18 +22,15 @@ final class RenderPipelineImpl extends RenderPipeline
     private final @Nonnull PipelineVertexFormat pipelineVertexFormat;
     private final @Nonnull VertexFormat vertexFormat;
     private final @Nonnull IPipelineCallback callback;
-    private final @Nullable PipelineFragmentShader fragmentShader;
-    private final @Nullable PipelineVertexShader vertexShader;
+    private final @Nonnull Program program;
     
     RenderPipelineImpl(@Nonnull PipelineVertexFormat format, 
-            @Nullable String vertexShaderFileName, 
-            @Nullable String fragmentShaderFileName,
+            IProgram program,
             @Nullable IPipelineCallback callback)
     {
         this.pipelineVertexFormat = format;
         this.vertexFormat = format.vertexFormat;
-        this.vertexShader = RenderHookRuntimeImpl.INSTANCE.getShaderManager().getOrCreateVertexShader(vertexShaderFileName);
-        this.fragmentShader = RenderHookRuntimeImpl.INSTANCE.getShaderManager().getOrCreateFragmentShader(fragmentShaderFileName);
+        this.program = (Program)program;
         this.callback = callback == null ? DUMMY_CALLBACK : callback;
     }
     
@@ -54,23 +51,12 @@ final class RenderPipelineImpl extends RenderPipeline
     {
         return this.index;
     }
-    
-    @Override
-    public final PipelineVertexShader vertexShader()
-    {
-        return this.vertexShader;
-    }
-
-    @Override
-    public final PipelineFragmentShader fragmentShader()
-    {
-        return this.fragmentShader;
-    }
 
     @Override
     public void preDraw()
     {
         this.callback.preDraw();
+        this.program.activate();
     }
     
     @Override

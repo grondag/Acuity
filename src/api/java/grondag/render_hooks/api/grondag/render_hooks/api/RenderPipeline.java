@@ -12,12 +12,6 @@ public abstract class RenderPipeline
 {
     RenderPipeline() {};
     
-    @Nullable
-    public abstract PipelineVertexShader vertexShader();
-    
-    @Nullable
-    public abstract PipelineFragmentShader fragmentShader();
-    
     @Nonnull
     public abstract PipelineVertexFormat pipelineVertexFormat();
 

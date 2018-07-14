@@ -1,7 +1,5 @@
 package grondag.render_hooks.api;
 
-import java.util.Objects;
-
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
@@ -14,35 +12,33 @@ final class PipelineManagerImpl extends PipelineManager
 {
     final static PipelineManagerImpl INSTANCE = new PipelineManagerImpl();
     
-    private RenderPipelineImpl[] pipelines = new RenderPipelineImpl[MAX_PIPELINES];
+    private final RenderPipelineImpl[] pipelines = new RenderPipelineImpl[MAX_PIPELINES];
     
-    private Object2ObjectOpenHashMap<Key, RenderPipelineImpl> pipelineMap = new Object2ObjectOpenHashMap<>();
+    private final RenderPipeline[] defaultPipelines = new RenderPipelineImpl[PipelineVertexFormat.values().length];
+    
+    
+    private final Object2ObjectOpenHashMap<Key, RenderPipelineImpl> pipelineMap = new Object2ObjectOpenHashMap<>();
 
     private class Key
     {
         private final @Nonnull PipelineVertexFormat format;
-        private final @Nullable String vertexShaderFileName;
-        private final @Nullable String fragmentShaderFileName;
+        private final @Nonnull IProgram program;
         private final @Nullable IPipelineCallback callback;
         
         final int hash;
         
         private Key(
                 @Nonnull PipelineVertexFormat format, 
-                @Nullable String vertexShaderFileName, 
-                @Nullable String fragmentShaderFileName,
+                @Nonnull IProgram program, 
                 @Nullable IPipelineCallback callback)
         {
             this.format = format;
-            this.vertexShaderFileName = vertexShaderFileName;
-            this.fragmentShaderFileName = fragmentShaderFileName;
+            this.program = program;
             this.callback = callback;
             
             int hash = format.hashCode();
-            if(vertexShaderFileName != null)
-                hash ^= vertexShaderFileName.hashCode();
-            if(fragmentShaderFileName != null)
-                hash ^= fragmentShaderFileName.hashCode();
+            if(program != null)
+                hash ^= program.hashCode();
             if(callback != null)
                 hash ^= callback.hashCode();
             
@@ -64,11 +60,9 @@ final class PipelineManagerImpl extends PipelineManager
             {
                 Key other = (Key)obj;
                 
-                return Objects.equals(this.format, other.format)
-                        && Objects.equals(this.vertexShaderFileName, other.vertexShaderFileName)
-                        && Objects.equals(this.fragmentShaderFileName, other.fragmentShaderFileName)
-                        && Objects.equals(this.callback, other.callback);
-                        
+                return this.format == other.format
+                        && this.program == other.program
+                        && this.callback == other.callback;
             }
             return false;
         }
@@ -78,24 +72,26 @@ final class PipelineManagerImpl extends PipelineManager
     {
         super();
         
-        // add vanilla MC pipeline
-        this.getOrCreatePipeline(PipelineVertexFormat.MINECRAFT, null, null, null);
+        // add default pipelines
+        for(PipelineVertexFormat format : PipelineVertexFormat.values())
+        {
+            defaultPipelines[format.ordinal()] = this.getOrCreatePipeline(format, ProgramManager.INSTANCE.getDefaultProgram(format), null);
+        }
     }
     
     @Nullable
     @Override
     public synchronized final RenderPipeline getOrCreatePipeline(
             @Nonnull PipelineVertexFormat format, 
-            @Nullable String vertexShaderFileName, 
-            @Nullable String fragmentShaderFileName,
+            @Nonnull IProgram program, 
             @Nullable IPipelineCallback callback)
     {
-        Key key = new Key(format, vertexShaderFileName, fragmentShaderFileName, callback);
+        Key key = new Key(format, program, callback);
         
         RenderPipelineImpl result = this.pipelineMap.get(key);
         if(result == null && pipelineMap.size() < MAX_PIPELINES)
         {
-            result = new RenderPipelineImpl(format, vertexShaderFileName, fragmentShaderFileName, callback);
+            result = new RenderPipelineImpl(format, program, callback);
             this.pipelineMap.put(key, result);
             this.pipelines[result.getIndex()] = result;
         }
@@ -109,8 +105,8 @@ final class PipelineManagerImpl extends PipelineManager
     }
 
     @Override
-    public final RenderPipeline getVanillaPipeline()
+    public final RenderPipeline getDefaultPipeline(PipelineVertexFormat format)
     {
-        return pipelines[0];
+        return pipelines[format.ordinal()];
     }
 }

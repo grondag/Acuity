@@ -5,25 +5,34 @@ import javax.annotation.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
-final class PipelineShaderManagerImpl extends PipelineShaderManager
+final class PipelineShaderManagerImpl implements PipelineShaderManager
 {
     final static PipelineShaderManagerImpl INSTANCE = new PipelineShaderManagerImpl();
-    
-    PipelineShaderManagerImpl() {}
+    private Object2ObjectOpenHashMap<String, PipelineVertexShaderImpl> vertexShaders = new Object2ObjectOpenHashMap<>();
+    private Object2ObjectOpenHashMap<String, PipelineFragmentShaderImpl> fragmentShaders = new Object2ObjectOpenHashMap<>();
 
-    private Object2ObjectOpenHashMap<String, PipelineVertexShader> vertexShaders = new Object2ObjectOpenHashMap<>();
+    final IPipelineVertexShader[] defaultVertex = new IPipelineVertexShader[PipelineVertexFormat.values().length];
+    final IPipelineFragmentShader[] defaultFragment = new IPipelineFragmentShader[PipelineVertexFormat.values().length];;
     
-    private Object2ObjectOpenHashMap<String, PipelineFragmentShader> fragmentShaders = new Object2ObjectOpenHashMap<>();
+    PipelineShaderManagerImpl()
+    {
+        this.defaultVertex[PipelineVertexFormat.SINGLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert");
+        this.defaultVertex[PipelineVertexFormat.DOUBLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_double.vert");
+        this.defaultVertex[PipelineVertexFormat.TRIPLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_triple.vert");
+        this.defaultFragment[PipelineVertexFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
+        this.defaultFragment[PipelineVertexFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_double.frag");
+        this.defaultFragment[PipelineVertexFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_triple.frag");
+    }
     
     @Override
-    public @Nullable PipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName)
+    public @Nullable IPipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName)
     {
         if(shaderFileName == null || shaderFileName.isEmpty()) 
             return null;
         
         synchronized(vertexShaders)
         {
-            PipelineVertexShader result = vertexShaders.get(shaderFileName);
+            PipelineVertexShaderImpl result = vertexShaders.get(shaderFileName);
             if(result == null)
             {
                 result = new PipelineVertexShaderImpl(shaderFileName);
@@ -34,14 +43,14 @@ final class PipelineShaderManagerImpl extends PipelineShaderManager
     }
 
     @Override
-    public @Nullable PipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName)
+    public @Nullable IPipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName)
     {
         if(shaderFileName == null || shaderFileName.isEmpty()) 
             return null;
         
         synchronized(fragmentShaders)
         {
-            PipelineFragmentShader result = fragmentShaders.get(shaderFileName);
+            PipelineFragmentShaderImpl result = fragmentShaders.get(shaderFileName);
             if(result == null)
             {
                 result = new PipelineFragmentShaderImpl(shaderFileName);
@@ -49,5 +58,23 @@ final class PipelineShaderManagerImpl extends PipelineShaderManager
             }
             return result;
         }
+    }
+
+    @Override
+    public IPipelineVertexShader getDefaultVertexShader(PipelineVertexFormat format)
+    {
+        return this.defaultVertex[format.ordinal()];
+    }
+
+    @Override
+    public IPipelineFragmentShader getDefaultFragmentShader(PipelineVertexFormat format)
+    {
+        return this.defaultFragment[format.ordinal()];
+    }
+    
+    public void forceReload()
+    {
+        this.fragmentShaders.values().forEach(s -> s.forceReload());
+        this.vertexShaders.values().forEach(s -> s.forceReload());
     }
 }

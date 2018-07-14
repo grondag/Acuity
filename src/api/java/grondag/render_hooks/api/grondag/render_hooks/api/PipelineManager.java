@@ -30,13 +30,12 @@ public abstract class PipelineManager
     @Nullable
     public abstract RenderPipeline getOrCreatePipeline(
             @Nonnull PipelineVertexFormat format, 
-            @Nullable String vertexShaderFileName, 
-            @Nullable String fragmentShaderFileName,
+            @Nonnull IProgram program, 
             @Nullable IPipelineCallback callback);  
+    
     /**
-     * Use when BLOCK vertex format is enough and you want to mimic MC rendering.
+     * Use when you want standard rendering.
      */
-    @Nonnull
-    public abstract RenderPipeline getVanillaPipeline();
+    public abstract RenderPipeline getDefaultPipeline(PipelineVertexFormat format);
     
 }

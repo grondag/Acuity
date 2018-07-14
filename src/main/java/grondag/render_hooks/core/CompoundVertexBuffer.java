@@ -1,30 +1,29 @@
 package grondag.render_hooks.core;
 
-import static org.lwjgl.opengl.GL11.GL_COLOR_ARRAY;
-import static org.lwjgl.opengl.GL11.GL_NORMAL_ARRAY;
-import static org.lwjgl.opengl.GL11.GL_TEXTURE_COORD_ARRAY;
-import static org.lwjgl.opengl.GL11.GL_VERTEX_ARRAY;
-import static org.lwjgl.opengl.GL11.glColorPointer;
-import static org.lwjgl.opengl.GL11.glEnableClientState;
-import static org.lwjgl.opengl.GL11.glNormalPointer;
-import static org.lwjgl.opengl.GL11.glTexCoordPointer;
-import static org.lwjgl.opengl.GL20.glEnableVertexAttribArray;
-import static org.lwjgl.opengl.GL20.glVertexAttribPointer;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.AO_1B;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_RGBA_4UB;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_TEX_2F;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.LIGHTMAPS_4UB;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.NORMAL_3B;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.POSITION_3F;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_RGBA_4UB;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_TEX_2F;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.TERTIARY_RGBA_4UB;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.TERTIARY_TEX_2F;
 
 import java.nio.ByteBuffer;
-import java.util.List;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
 
-import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.PipelineManager;
+import grondag.render_hooks.api.PipelineVertexFormat;
 import grondag.render_hooks.api.RenderPipeline;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -99,119 +98,81 @@ public class CompoundVertexBuffer extends VertexBuffer
      */
     public void renderChunk()
     {
-        
-        // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
-        // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
-
-        
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         for(int i = 0; i < this.slotsInUse; i++)
         {
             final RenderPipeline p  = this.pipelines[i];
             final int offset = this.pipelineBufferOffset[i];
             
-            // vertex       12
-            // base color   3
-            // ao           1
-            // uv           8
-
-            // skylight     1
-            // blocklight   1
-            // glow_0       1
-            // normal       3
-            // glow_1       1
-            // glow_2       1
-            // 32 bytes for regular
-            
-            // extra buffers - 12 each
-            // color_1      4
-            // uv_1         8
-            
-            
-            // vertex       12
-            // uv           8
-            // lightmap     4
-            // color        4
-            
-            
-            
-            GlStateManager.glVertexPointer(3, 5126, 28, 0);
-            GlStateManager.glColorPointer(4, 5121, 28, 12);
-            GlStateManager.glTexCoordPointer(2, 5126, 28, 16);
-            OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-            GlStateManager.glTexCoordPointer(2, 5122, 28, 24);
-            OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
-            
-            setupVertexAttributes(p.vertexFormat(), offset);
+            setupVertexAttributes(p.pipelineVertexFormat(), offset);
             p.preDraw();
             GlStateManager.glDrawArrays(GL11.GL_QUADS, offset, this.pipelineCounts[i]);
             p.postDraw();
         }
     }
     
-    private void setupVertexAttributes(VertexFormat format, int bufferOffset)
+    private static PipelineVertexFormat lastEnabledFormat;
+    
+    private void setupVertexAttributes(PipelineVertexFormat format, int bufferOffset)
     {
-        final int stride = format.getNextOffset();
-        final List<VertexFormatElement> elements = format.getElements();
-        final int size = elements.size();
-        for (int j = 0; j < size; ++j)
+        final int stride = format.vertexFormat.getNextOffset();
+        
+        GlStateManager.glVertexPointer(count, POSITION_3F.getType().getGlConstant(), stride, bufferOffset + 0);
+        GlStateManager.glColorPointer(count, BASE_RGBA_4UB.getType().getGlConstant(), stride, bufferOffset + 12);
+        GlStateManager.glTexCoordPointer(count, BASE_TEX_2F.getType().getGlConstant(), stride, bufferOffset + 16);
+        GL11.glNormalPointer(NORMAL_3B.getType().getGlConstant(), stride, bufferOffset + 24);
+        GL20.glVertexAttribPointer(0, 1, AO_1B.getType().getGlConstant(), false, stride, bufferOffset + 27);
+        GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
+        
+        switch(format)
         {
-            VertexFormatElement attr = elements.get(j);
-            
-            int count = attr.getElementCount();
-            int constant = attr.getType().getGlConstant();
-            int genericIndex = 0;
-            
-            switch(attr.getUsage())
+        case SINGLE:
+            if(lastEnabledFormat != PipelineVertexFormat.SINGLE)
             {
-                case POSITION:
-                    GlStateManager.glVertexPointer(count, constant, stride, bufferOffset + format.getOffset(j));
-                    GlStateManager.glEnableClientState(GL_VERTEX_ARRAY);
-                    break;
-                    
-                case NORMAL:
-                    if(count != 3)
-                    {
-                        throw new IllegalArgumentException("Normal attribute should have the size 3: " + attr);
-                    }
-                    glNormalPointer(constant, stride, bufferOffset + format.getOffset(j));
-                    glEnableClientState(GL_NORMAL_ARRAY);
-                    break;
-                    
-                case COLOR:
-                    if(attr.getIndex() == 0)
-                    {
-                        glColorPointer(count, constant, stride, bufferOffset + format.getOffset(j));
-                        glEnableClientState(GL_COLOR_ARRAY);
-                    }
-                    else
-                    {
-                        // secondary colors are added as generic attributes
-                        glEnableVertexAttribArray(genericIndex);
-                        glVertexAttribPointer(genericIndex++, count, constant, true, stride, bufferOffset + format.getOffset(j));
-                    }
-                    break;
-                    
-                case UV:
+                GL20.glDisableVertexAttribArray(2);
+                GL20.glDisableVertexAttribArray(3);
+                if(lastEnabledFormat == PipelineVertexFormat.TRIPLE)
                 {
-                    if(attr.getIndex() == 1) OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-                    glTexCoordPointer(count, constant, stride, bufferOffset + format.getOffset(j));
-                    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-                    if(attr.getIndex() == 1) OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
-                    break;
+                    GL20.glDisableVertexAttribArray(4);
+                    GL20.glDisableVertexAttribArray(5);
                 }
-                
-                case PADDING:
-                    break;
-                    
-                case GENERIC:
-                    glEnableVertexAttribArray(attr.getIndex());
-                    glVertexAttribPointer(attr.getIndex(), count, constant, false, stride, bufferOffset + format.getOffset(j));
-                    break;
-                    
-                default:
-                    RenderHooks.INSTANCE.getLog().fatal("Unsupported attribute upload: {}", attr.getUsage().toString());
             }
+            break;
+            
+        case DOUBLE:
+            if(lastEnabledFormat == PipelineVertexFormat.SINGLE)
+            {
+                GL20.glEnableVertexAttribArray(2);
+                GL20.glEnableVertexAttribArray(3);
+            }
+            else if(lastEnabledFormat == PipelineVertexFormat.TRIPLE)
+            {
+                GL20.glDisableVertexAttribArray(4);
+                GL20.glDisableVertexAttribArray(5);
+            }
+            GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), false, stride, bufferOffset + 32);
+            GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), false, stride, bufferOffset + 36);
+            break;
+            
+        case TRIPLE:
+            if(lastEnabledFormat == PipelineVertexFormat.SINGLE)
+            {
+                GL20.glEnableVertexAttribArray(2);
+                GL20.glEnableVertexAttribArray(3);
+            }
+            GL20.glEnableVertexAttribArray(4);
+            GL20.glEnableVertexAttribArray(5);
+            
+            GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), false, stride, bufferOffset + 32);
+            GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), false, stride, bufferOffset + 36);
+            GL20.glVertexAttribPointer(4, 1, TERTIARY_RGBA_4UB.getType().getGlConstant(), false, stride, bufferOffset + 44);
+            GL20.glVertexAttribPointer(5, 4, TERTIARY_TEX_2F.getType().getGlConstant(), false, stride, bufferOffset + 48);
+            break;
+            
+        default:
+            throw new UnsupportedOperationException("Bad pipeline vertex format.");
+        
         }
+        
     }
 }

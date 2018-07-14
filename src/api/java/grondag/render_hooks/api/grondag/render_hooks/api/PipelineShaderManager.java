@@ -2,11 +2,14 @@ package grondag.render_hooks.api;
 
 import javax.annotation.Nonnull;
 
-public abstract class PipelineShaderManager
+public interface PipelineShaderManager
 {
-    PipelineShaderManager() {}
     
-    public abstract PipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName);
+    IPipelineVertexShader getDefaultVertexShader(PipelineVertexFormat format);
     
-    public abstract PipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName);
+    IPipelineFragmentShader getDefaultFragmentShader(PipelineVertexFormat format);
+    
+    IPipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName);
+    
+    IPipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName);
 }

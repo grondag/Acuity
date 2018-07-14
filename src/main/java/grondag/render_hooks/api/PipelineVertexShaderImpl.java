@@ -2,10 +2,12 @@ package grondag.render_hooks.api;
 
 import javax.annotation.Nonnull;
 
-final class PipelineVertexShaderImpl extends PipelineVertexShader
+import net.minecraft.client.renderer.OpenGlHelper;
+
+public final class PipelineVertexShaderImpl  extends AbstractPipelineShader implements IPipelineVertexShader
 {
     PipelineVertexShaderImpl(@Nonnull String fileName)
     {
-        super(fileName);
+        super(fileName, OpenGlHelper.GL_VERTEX_SHADER);
     }
 }

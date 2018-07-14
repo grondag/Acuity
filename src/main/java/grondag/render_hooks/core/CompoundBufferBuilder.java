@@ -3,6 +3,7 @@ package grondag.render_hooks.core;
 import org.lwjgl.opengl.GL11;
 
 import grondag.render_hooks.api.PipelineManager;
+import grondag.render_hooks.api.PipelineVertexFormat;
 import grondag.render_hooks.api.RenderHookRuntimeImpl;
 import grondag.render_hooks.api.RenderPipeline;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -16,7 +17,7 @@ public class CompoundBufferBuilder extends BufferBuilder
 {
     private static final BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[PipelineManager.MAX_PIPELINES];
     
-    private final RenderPipeline VANILLA_PIPELINE = RenderHookRuntimeImpl.INSTANCE.getPipelineManager().getVanillaPipeline();
+    private final RenderPipeline VANILLA_PIPELINE = RenderHookRuntimeImpl.INSTANCE.getPipelineManager().getDefaultPipeline(PipelineVertexFormat.SINGLE);
     
     /**
      * Cache all instantiated buffers for reuse. Does not include this instance<p>

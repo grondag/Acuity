@@ -33,4 +33,16 @@ public final class RenderHookRuntimeImpl extends RenderHookRuntime
     {
         return PipelineShaderManagerImpl.INSTANCE;
     }
+    
+    public final IProgramManager getProgramManager()
+    {
+        return ProgramManager.INSTANCE;
+    }
+    
+    public void forceReload()
+    {
+        PipelineShaderManagerImpl.INSTANCE.forceReload();
+        ProgramManager.INSTANCE.forceReload();
+        
+    }
 }

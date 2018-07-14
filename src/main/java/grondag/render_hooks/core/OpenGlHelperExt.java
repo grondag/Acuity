@@ -1,10 +1,20 @@
 package grondag.render_hooks.core;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 
-import org.lwjgl.opengl.ARBVertexBufferObject;
-import org.lwjgl.opengl.GL15;
+import javax.annotation.Nullable;
 
+import org.apache.commons.io.IOUtils;
+import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.ARBVertexBufferObject;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL15;
+import org.lwjgl.opengl.GL20;
+
+import grondag.render_hooks.RenderHooks;
+import grondag.render_hooks.api.ProgramManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 
 public class OpenGlHelperExt
@@ -33,6 +43,56 @@ public class OpenGlHelperExt
         else
         {
             GL15.glBufferSubData(target, offset, data);
+        }
+    }
+
+    public static String getLogInfo(int obj)
+    {
+        return OpenGlHelper.glGetProgramInfoLog(obj, OpenGlHelper.glGetProgrami(obj, GL20.GL_INFO_LOG_LENGTH));
+    }
+
+    public static @Nullable ByteBuffer readFileAsString(String filename) throws Exception
+    {
+        InputStream in = ProgramManager.class.getResourceAsStream(filename);
+    
+        if(in == null)
+            return null;
+    
+        byte[] abyte = IOUtils.toByteArray(new BufferedInputStream(in));
+        ByteBuffer bytebuffer = BufferUtils.createByteBuffer(abyte.length);
+        bytebuffer.put(abyte);
+        bytebuffer.position(0);
+        return bytebuffer;
+    }
+
+    public static int createShader(String filename, int shaderType)
+    {
+        int shader = 0;
+        try
+        {
+            shader = OpenGlHelper.glCreateShader(shaderType);
+    
+            if(shader == 0)
+                return 0;
+    
+            @Nullable ByteBuffer source = readFileAsString(filename);
+            
+            if(source == null)
+                return 0;
+            
+            OpenGlHelper.glShaderSource(shader, source);
+            OpenGlHelper.glCompileShader(shader);
+    
+            if (OpenGlHelper.glGetProgrami(shader, OpenGlHelper.GL_COMPILE_STATUS) == GL11.GL_FALSE)
+                throw new RuntimeException("Error creating shader: " + getLogInfo(shader));
+    
+            return shader;
+        }
+        catch(Exception e)
+        {
+            OpenGlHelper.glDeleteShader(shader);
+            RenderHooks.INSTANCE.getLog().error("Unable to create shader", e);
+            return -1;
         }
     }
 }

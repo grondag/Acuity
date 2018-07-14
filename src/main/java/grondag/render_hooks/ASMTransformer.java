@@ -25,7 +25,7 @@ public class ASMTransformer implements IClassTransformer
 {
     private static boolean allPatchesSuccessful = true;
     
-    public static boolean allPatchesSuccessful()
+    public static final boolean allPatchesSuccessful()
     {
         return allPatchesSuccessful;
     }
@@ -418,12 +418,13 @@ public class ASMTransformer implements IClassTransformer
                     if(next instanceof MethodInsnNode)
                     {
                         MethodInsnNode ins = (MethodInsnNode)next;
-                        if(ins.owner.equals("et/minecraft/client/renderer/vertex/VertexFormatElement")
+                        if(ins.owner.equals("net/minecraft/client/renderer/vertex/VertexFormatElement")
                                 && (ins.name.equals("isFirstOrUV") || ins.name.equals("func_177372_a"))
                                 && ins.desc.equals("(ILnet/minecraft/client/renderer/vertex/VertexFormatElement$EnumUsage;)Z"))
                         {
                             ins.setOpcode(INVOKESTATIC);
                             ins.owner = "grondag/render_hooks/core/PipelineHooks";
+                            ins.desc = "(Ljava/lang/Object;ILnet/minecraft/client/renderer/vertex/VertexFormatElement$EnumUsage;)Z";
                             ins.name = "isFirstOrUV";
                             ins.itf = false;
                             worked = true;
@@ -468,7 +469,7 @@ public class ASMTransformer implements IClassTransformer
             return patch(transformedName, basicClass, obfuscated, patchRenderGlobal); 
         
         if (transformedName.equals("net.minecraft.client.renderer.vertex.VertexFormatElement"))
-            return patch(transformedName, basicClass, obfuscated, patchVertexFormatElement); 
+            return patch(transformedName, basicClass, obfuscated, patchVertexFormatElement, ClassWriter.COMPUTE_FRAMES); 
         
         return basicClass;
     }

@@ -10,9 +10,9 @@ public class PipelineVertextFormatElements
     public static final VertexFormatElement NORMAL_3B = new VertexFormatElement(0, VertexFormatElement.EnumType.BYTE, VertexFormatElement.EnumUsage.NORMAL, 3);
     public static final VertexFormatElement AO_1B = new VertexFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 1);
     /**
-     * Lightmap combined(block is high quartet and sky is low), plus glow values for primary, secondary and tertiary layers if present
+     * First (lsb) is sky light, others are block light for 1st - 3rd layers (2 & 3 will be 0 if not present);
      */
-    public static final VertexFormatElement LIGHTMAP_AND_GLOWS_4UB = new VertexFormatElement(1, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4);
+    public static final VertexFormatElement LIGHTMAPS_4UB = new VertexFormatElement(1, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4);
 
     public static final VertexFormatElement SECONDARY_RGBA_4UB = new VertexFormatElement(2, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4);
     public static final VertexFormatElement SECONDARY_TEX_2F = new VertexFormatElement(3, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.GENERIC, 2);

@@ -10,6 +10,10 @@ import org.apache.logging.log4j.Logger;
 
 import grondag.render_hooks.api.RenderHookRuntime;
 import grondag.render_hooks.api.RenderHookRuntimeImpl;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.resources.IReloadableResourceManager;
+import net.minecraft.client.resources.IResourceManager;
+import net.minecraft.client.resources.IResourceManagerReloadListener;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.Mod.EventHandler;
 import net.minecraftforge.fml.common.Mod.Instance;
@@ -17,6 +21,8 @@ import net.minecraftforge.fml.common.event.FMLInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLInterModComms;
 import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
 import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
+import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.relauncher.SideOnly;
 
 @Mod(   modid = RenderHooks.MODID, 
         name = RenderHooks.MODNAME,
@@ -33,15 +39,19 @@ public class RenderHooks
 	@Instance
 	public static RenderHooks INSTANCE = new RenderHooks();
 	
+	@SideOnly(Side.CLIENT)
 	public static final boolean isModEnabled()
 	{
 	    return ASMTransformer.allPatchesSuccessful() && Configurator.enabled;
 	}
 	
+	@SideOnly(Side.CLIENT)
 	private static boolean lastEnabledSetting = isModEnabled();
+	
 	/**
 	 * For use by config event handler.
 	 */
+	@SideOnly(Side.CLIENT)
 	public static boolean didEnabledStatusChange()
 	{
 	    final boolean current = isModEnabled();
@@ -68,24 +78,38 @@ public class RenderHooks
         return result;
     }
 
+    @SideOnly(Side.CLIENT)
     @EventHandler
 	public void preInit(FMLPreInitializationEvent event)
 	{
-
 	}
 
+    @SideOnly(Side.CLIENT)
 	@EventHandler
 	public void init(FMLInitializationEvent event)
 	{
 
 	}
 
+    @SideOnly(Side.CLIENT)
 	@EventHandler
 	public void postInit(FMLPostInitializationEvent event)
 	{
+        IResourceManager rm = Minecraft.getMinecraft().getResourceManager();
+        if(rm instanceof IReloadableResourceManager)
+        {
+            ((IReloadableResourceManager)rm).registerReloadListener(new IResourceManagerReloadListener() {
 
+                @Override
+                public void onResourceManagerReload(IResourceManager resourceManager)
+                {
+                    RenderHookRuntimeImpl.INSTANCE.forceReload();
+                }});
+        }
+        
 	}
 	
+    @SideOnly(Side.CLIENT)
 	@Mod.EventHandler
     public void imcCallback(FMLInterModComms.IMCEvent event)
 	{

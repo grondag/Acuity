@@ -1,9 +1,10 @@
 package grondag.render_hooks.core;
 
-import grondag.render_hooks.api.PipelineManager;
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedQuadConsumer;
+import grondag.render_hooks.api.PipelineManager;
 import grondag.render_hooks.api.RenderPipeline;
+import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.BlockRenderLayer;
@@ -12,7 +13,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
-import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -27,7 +27,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
     private CompoundBufferBuilder target;
     private boolean didOutput;
     private boolean needsBlockInfoUpdate;
-    private IExtendedBlockState extendedState;
+    private IBlockState blockState;
     private long positionRandom = Long.MIN_VALUE;
     private int sideFlags;
     
@@ -59,7 +59,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
         }
     }
     
-    public void prepare(CompoundBufferBuilder target, BlockRenderLayer layer, IBlockAccess world, IExtendedBlockState extendedState, BlockPos pos, boolean checkSides)
+    public void prepare(CompoundBufferBuilder target, BlockRenderLayer layer, IBlockAccess world, IBlockState blockState, BlockPos pos, boolean checkSides)
     {
         this.renderLayer = layer;
         this.target = target;
@@ -67,9 +67,9 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
         this.needsBlockInfoUpdate = true;
         this.positionRandom = Long.MIN_VALUE;
         this.blockInfo.setWorld(world);
-        this.blockInfo.setState(extendedState);
+        this.blockInfo.setState(blockState);
         this.blockInfo.setBlockPos(pos);
-        this.extendedState = extendedState;
+        this.blockState = blockState;
         this.sideFlags = checkSides ? getSideFlags() : 0xFFFF;
     }
     
@@ -83,7 +83,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
         int result = 0;
         for (EnumFacing face : EnumFacing.values())
         {
-            if(this.extendedState.shouldSideBeRendered(this.world(), this.pos(), face))
+            if(this.blockState.shouldSideBeRendered(this.world(), this.pos(), face))
                 result |= (1 << face.ordinal());
         }
         return result;
@@ -151,9 +151,9 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
     }
 
     @Override
-    public IExtendedBlockState extendedState()
+    public IBlockState blockState()
     {
-        return this.extendedState;
+        return this.blockState;
     }
 
     @Override
