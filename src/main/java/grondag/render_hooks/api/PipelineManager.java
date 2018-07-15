@@ -10,7 +10,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 final class PipelineManager implements IPipelineManager
 {
-    final static PipelineManager INSTANCE = new PipelineManager();
+    static final PipelineManager INSTANCE = new PipelineManager();
     
     private final RenderPipeline[] pipelines = new RenderPipeline[MAX_PIPELINES];
     

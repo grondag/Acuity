@@ -4,6 +4,7 @@ import java.util.List;
 
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelinedBakedModel;
+import grondag.render_hooks.api.RenderHookRuntime;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -55,13 +56,12 @@ public class PipelineHooks
      */
     public static boolean renderFluid(BlockFluidRenderer fluidRenderer, IBlockAccess blockAccess, IBlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
     {
-        //TODO: implement
         if(RenderHooks.isModEnabled())
         {
+            BufferBuilder target;
             if(blockStateIn.getMaterial() == Material.LAVA)
             {
-//                return renderModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
-                return false;
+                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(RenderHookRuntime.INSTANCE.getPipelineManager().getLavaPipeline());
             }
             else
             {
@@ -70,9 +70,9 @@ public class PipelineHooks
                     RenderHooks.INSTANCE.getLog().warn("Unknown fluid sent to vanilla fluid render handler. Will render using water pipeline.");
                     didWarnUnhandledFluid = true;
                 }
-                return false;
-//                return renderVanillaModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
+                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(RenderHookRuntime.INSTANCE.getPipelineManager().getWaterPipeline());
             }
+            return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, target);
         }
         else
             return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);

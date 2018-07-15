@@ -34,7 +34,8 @@ public class ASMTransformer implements IClassTransformer
     {
         Iterator<MethodNode> methods = classNode.methods.iterator();
         
-        boolean worked = false;
+        boolean blockWorked = false;
+        boolean fluidWorked = false;
         
         while (methods.hasNext())
         {
@@ -57,17 +58,29 @@ public class ASMTransformer implements IClassTransformer
                             op.name = "renderModel";
                             op.desc = "(Lnet/minecraft/client/renderer/BlockModelRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/client/renderer/block/model/IBakedModel;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;Z)Z";
                             op.itf = false;
-                            worked = true;
-                            break;
+                            blockWorked = true;
                         }
+                        else if(op.owner.equals("net/minecraft/client/renderer/BlockFluidRenderer")
+                                && (op.name.equals("func_178270_a") || op.name.equals("renderFluid")))
+                        {
+                            op.setOpcode(INVOKESTATIC);
+                            op.owner = "grondag/render_hooks/core/PipelineHooks";
+                            op.name = "renderFluid";
+                            op.desc = "(Lnet/minecraft/client/renderer/BlockFluidRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;)Z";
+                            op.itf = false;
+                            fluidWorked = true;
+                        }
+                        
+                        if(blockWorked && fluidWorked)
+                            break;
                     }
                 }
                 break;
             }
         }
-        if(!worked)
+        if(!blockWorked || !fluidWorked)
         {
-            RenderHooks.INSTANCE.getLog().error("Unable to locate net/minecraft/client/renderer/BlockModelRenderer.renderBlock");
+            RenderHooks.INSTANCE.getLog().error("Unable to locate and patch net/minecraft/client/renderer/BlockModelRenderer.renderBlock");
             allPatchesSuccessful = false;
         }
     };
