@@ -5,15 +5,14 @@ import java.nio.ByteOrder;
 
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedVertexConsumer;
-import grondag.render_hooks.api.PipelineVertexFormat;
 import grondag.render_hooks.api.IRenderPipeline;
+import grondag.render_hooks.api.PipelineVertexFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.EnumSkyBlock;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -143,6 +142,9 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         target.endVertex();
     }
     
+    private static final float LIGHTMAP_TO_255 = 34815.47f;
+//    private static final float LIGHTMAP_TO_15 = 34815.47f * 15f / 255f;
+    
     private BufferBuilder startVertex(
             float posX,
             float posY,
@@ -196,8 +198,8 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         int blockLight, skyLight;
         if(Minecraft.isAmbientOcclusionEnabled())
         {
-            blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * 34815.47f);
-            skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * 34815.47f);
+            blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
+            skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
         }
         else
         {
@@ -208,13 +210,9 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             
         }
         
-        // TODO: remove
-//        if(blockLight > 0 && blockInfo.getBlockPos().getY() >= 3)
-//            System.out.println("boop");
-        
-        bytes.put((byte) Math.max(blockLight, (blockLightMaps & 0xFF)));
-        bytes.put((byte) Math.max(blockLight, ((blockLightMaps >> 8) & 0xFF)));
-        bytes.put((byte) Math.max(blockLight, ((blockLightMaps >> 16) & 0xFF)));
+        bytes.put((byte) blockLight);
+        bytes.put((byte) 0); 
+        bytes.put((byte) 0);
         bytes.put((byte) skyLight);
         
         return target;

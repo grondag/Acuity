@@ -86,7 +86,7 @@ public final class Program implements IProgram
         
         protected final void upload()
         {
-            if(this.unifID > 0 && this.isUniformDirty)
+            if(this.unifID >= 0 && this.isUniformDirty)
             {
                 this.initialize();
                 this.isUniformDirty = false;
@@ -485,16 +485,12 @@ public final class Program implements IProgram
         this.isErrored = true;
         try
         {
-            if(this.progID <= 0)
-            {
-                this.progID = OpenGlHelper.glCreateProgram();
-                if(this.progID == 0) 
-                {
-                    this.progID = -1;
-                }
-            }
             if(this.progID > 0)
-                this.isErrored = !loadInner();
+                OpenGlHelper.glDeleteProgram(progID);
+            
+            this.progID = OpenGlHelper.glCreateProgram();
+            
+            this.isErrored = this.progID > 0 && !loadInner();
         }
         catch(Exception e)
         {
@@ -505,7 +501,7 @@ public final class Program implements IProgram
             this.progID = -1;
         }
         
-        if(progID > 0 && !this.isErrored)
+        if(!this.isErrored)
         {
             this.uniforms.forEach(u -> u.load(progID));
             this.hasDirtyUniform = true;

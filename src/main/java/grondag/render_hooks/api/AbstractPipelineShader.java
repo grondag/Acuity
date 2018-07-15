@@ -71,7 +71,7 @@ abstract class AbstractPipelineShader
             OpenGlHelper.glCompileShader(this.glId);
     
             if (OpenGlHelper.glGetShaderi(this.glId, OpenGlHelper.GL_COMPILE_STATUS) == GL11.GL_FALSE)
-                throw new RuntimeException("Error creating shader: " + OpenGlHelperExt.getShaderInfoLog(this.glId));
+                throw new RuntimeException(OpenGlHelperExt.getShaderInfoLog(this.glId));
     
         }
         catch(Exception e)
@@ -82,7 +82,7 @@ abstract class AbstractPipelineShader
                 OpenGlHelper.glDeleteShader(glId);
                 this.glId = -1;
             }
-            RenderHooks.INSTANCE.getLog().error("Unable to create shader " + this.fileName, e);
+            RenderHooks.INSTANCE.getLog().error("Unable to create shader " + this.fileName + " " + e.getMessage());
         }
     }
 }

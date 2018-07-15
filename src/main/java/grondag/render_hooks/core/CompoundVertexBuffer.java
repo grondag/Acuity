@@ -129,19 +129,19 @@ public class CompoundVertexBuffer extends VertexBuffer
             
         case SINGLE:
             GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
-            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), true, stride, bufferOffset + 28);
+            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
             break;
             
         case DOUBLE:
             GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
-            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), true, stride, bufferOffset + 28);
+            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
             GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 32);
             GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 36);
             break;
             
         case TRIPLE:
             GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
-            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), true, stride, bufferOffset + 28);            
+            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);            
             GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 32);
             GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 36);
             GL20.glVertexAttribPointer(4, 1, TERTIARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 44);
