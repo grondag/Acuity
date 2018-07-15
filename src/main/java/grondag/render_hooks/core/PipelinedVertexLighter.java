@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.EnumSkyBlock;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -195,16 +196,22 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         int blockLight, skyLight;
         if(Minecraft.isAmbientOcclusionEnabled())
         {
-            blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * 0xFF);
-            skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * 0xFF);
+            blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * 34815.47f);
+            skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * 34815.47f);
         }
         else
         {
+            //FIXME: sure this isn't right
             final int packedLight =  this.calcPackedLight(blockInfo, normX, normY, normZ, lightX, lightY, lightZ);
             blockLight = (packedLight >> 0x03) & 0xFF;
             skyLight = (packedLight >> 0x13) & 0xFF;
             
         }
+        
+        // TODO: remove
+//        if(blockLight > 0 && blockInfo.getBlockPos().getY() >= 3)
+//            System.out.println("boop");
+        
         bytes.put((byte) Math.max(blockLight, (blockLightMaps & 0xFF)));
         bytes.put((byte) Math.max(blockLight, ((blockLightMaps >> 8) & 0xFF)));
         bytes.put((byte) Math.max(blockLight, ((blockLightMaps >> 16) & 0xFF)));

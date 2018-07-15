@@ -61,8 +61,12 @@ public enum PipelineVertexFormat
     
     public final VertexFormat vertexFormat;
     
+    public final int attributeCount;
+    
     private  PipelineVertexFormat(VertexFormat vertexFormat)
     {
         this.vertexFormat = vertexFormat;
+        // the first three elements are always pos, color, tex - anything after that is an attribute
+        this.attributeCount = vertexFormat.getElementCount() - 3;
     }
 }

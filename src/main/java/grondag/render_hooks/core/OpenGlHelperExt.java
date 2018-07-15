@@ -100,4 +100,20 @@ public class OpenGlHelperExt
             return -1;
         }
     }
+    
+    private static int attributeEnabledCount = 0;
+    
+    public static void enableAttributes(int enabledCount)
+    {
+        if(enabledCount > attributeEnabledCount)
+        {
+            while(enabledCount > attributeEnabledCount)
+                GL20.glEnableVertexAttribArray(attributeEnabledCount++);
+        }
+        else if(enabledCount < attributeEnabledCount)
+        {
+            while(enabledCount < attributeEnabledCount)
+                GL20.glDisableVertexAttribArray(--attributeEnabledCount);
+        }
+    }
 }

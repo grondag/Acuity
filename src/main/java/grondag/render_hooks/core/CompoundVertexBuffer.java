@@ -12,17 +12,16 @@ import static grondag.render_hooks.api.PipelineVertextFormatElements.TERTIARY_TE
 
 import java.nio.ByteBuffer;
 
-import javax.annotation.Nullable;
-
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 
 import grondag.render_hooks.api.IPipelineManager;
-import grondag.render_hooks.api.PipelineVertexFormat;
 import grondag.render_hooks.api.IRenderPipeline;
+import grondag.render_hooks.api.PipelineVertexFormat;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraftforge.fml.relauncher.Side;
@@ -112,61 +111,41 @@ public class CompoundVertexBuffer extends VertexBuffer
         }
     }
     
-    private static @Nullable PipelineVertexFormat lastEnabledFormat = null;
-    
     private void setupVertexAttributes(PipelineVertexFormat format, int bufferOffset)
     {
+        OpenGlHelperExt.enableAttributes(format.attributeCount);
+        
         final int stride = format.vertexFormat.getNextOffset();
         
         GlStateManager.glVertexPointer(3, POSITION_3F.getType().getGlConstant(), stride, bufferOffset + 0);
         GlStateManager.glColorPointer(4, BASE_RGBA_4UB.getType().getGlConstant(), stride, bufferOffset + 12);
         GlStateManager.glTexCoordPointer(2, BASE_TEX_2F.getType().getGlConstant(), stride, bufferOffset + 16);
-        GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
-        GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
         
         switch(format)
         {
+        case COMPATIBLE:
+            GL20.glVertexAttribPointer(0, 2, DefaultVertexFormats.TEX_2S.getType().getGlConstant(), true, stride, bufferOffset + 24);
+            break;
+            
         case SINGLE:
-            if(lastEnabledFormat != PipelineVertexFormat.SINGLE)
-            {
-                GL20.glDisableVertexAttribArray(2);
-                GL20.glDisableVertexAttribArray(3);
-                if(lastEnabledFormat == PipelineVertexFormat.TRIPLE)
-                {
-                    GL20.glDisableVertexAttribArray(4);
-                    GL20.glDisableVertexAttribArray(5);
-                }
-            }
+            GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
+            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), true, stride, bufferOffset + 28);
             break;
             
         case DOUBLE:
-            if(lastEnabledFormat == PipelineVertexFormat.SINGLE)
-            {
-                GL20.glEnableVertexAttribArray(2);
-                GL20.glEnableVertexAttribArray(3);
-            }
-            else if(lastEnabledFormat == PipelineVertexFormat.TRIPLE)
-            {
-                GL20.glDisableVertexAttribArray(4);
-                GL20.glDisableVertexAttribArray(5);
-            }
-            GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), false, stride, bufferOffset + 32);
-            GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), false, stride, bufferOffset + 36);
+            GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
+            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), true, stride, bufferOffset + 28);
+            GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 32);
+            GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 36);
             break;
             
         case TRIPLE:
-            if(lastEnabledFormat == PipelineVertexFormat.SINGLE)
-            {
-                GL20.glEnableVertexAttribArray(2);
-                GL20.glEnableVertexAttribArray(3);
-            }
-            GL20.glEnableVertexAttribArray(4);
-            GL20.glEnableVertexAttribArray(5);
-            
-            GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), false, stride, bufferOffset + 32);
-            GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), false, stride, bufferOffset + 36);
-            GL20.glVertexAttribPointer(4, 1, TERTIARY_RGBA_4UB.getType().getGlConstant(), false, stride, bufferOffset + 44);
-            GL20.glVertexAttribPointer(5, 4, TERTIARY_TEX_2F.getType().getGlConstant(), false, stride, bufferOffset + 48);
+            GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
+            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), true, stride, bufferOffset + 28);            
+            GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 32);
+            GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 36);
+            GL20.glVertexAttribPointer(4, 1, TERTIARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 44);
+            GL20.glVertexAttribPointer(5, 4, TERTIARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 48);
             break;
             
         default:

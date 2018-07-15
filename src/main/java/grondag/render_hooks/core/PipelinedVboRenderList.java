@@ -1,7 +1,6 @@
 package grondag.render_hooks.core;
 
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
 
 import grondag.render_hooks.RenderHooks;
 import net.minecraft.client.Minecraft;
@@ -27,8 +26,6 @@ public class PipelinedVboRenderList extends VboRenderList
             {
                 // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
                 // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
-                GL20.glEnableVertexAttribArray(0);
-                GL20.glEnableVertexAttribArray(1);
                 
                 // we don't want the lightmap at all
                 // will be disabled by caller anyway when we return
@@ -46,13 +43,8 @@ public class PipelinedVboRenderList extends VboRenderList
                     vertexbuffer.renderChunk();
                     GlStateManager.popMatrix();
                 }
-                GL20.glDisableVertexAttribArray(0);
-                GL20.glDisableVertexAttribArray(1);
-                GL20.glDisableVertexAttribArray(2);
-                GL20.glDisableVertexAttribArray(3);
-                GL20.glDisableVertexAttribArray(4);
-                GL20.glDisableVertexAttribArray(5);
                 
+                OpenGlHelperExt.enableAttributes(0);
                 OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, 0);
                 OpenGlHelper.glUseProgram(0);
                 GlStateManager.resetColor();

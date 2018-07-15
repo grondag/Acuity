@@ -2,7 +2,7 @@
 
 //uniform float u_time;
 uniform sampler2D u_textures;
-//uniform sampler2D u_lightmap;
+uniform sampler2D u_lightmap;
 
 varying vec4 v_color;
 varying vec2 v_texcoord;
