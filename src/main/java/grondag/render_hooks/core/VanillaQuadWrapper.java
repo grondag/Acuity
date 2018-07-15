@@ -1,13 +1,14 @@
 package grondag.render_hooks.core;
 
+import javax.annotation.Nullable;
 import javax.vecmath.Vector3f;
 
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedQuadConsumer;
 import grondag.render_hooks.api.IPipelinedVertexConsumer;
 import grondag.render_hooks.api.PipelineVertexFormat;
-import grondag.render_hooks.api.RenderHookRuntimeImpl;
-import grondag.render_hooks.api.RenderPipeline;
+import grondag.render_hooks.api.RenderHookRuntime;
+import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
@@ -17,9 +18,9 @@ import net.minecraftforge.client.model.pipeline.LightUtil;
 public class VanillaQuadWrapper implements IPipelinedQuad
 {
 
-    private final RenderPipeline SIMPLE = RenderHookRuntimeImpl.INSTANCE.getPipelineManager().getDefaultPipeline(PipelineVertexFormat.SINGLE);
-    private BakedQuad wrapped;
-    private BlockRenderLayer layer;
+    private final IRenderPipeline SIMPLE = RenderHookRuntime.INSTANCE.getPipelineManager().getDefaultPipeline(PipelineVertexFormat.SINGLE);
+    private @Nullable BakedQuad wrapped;
+    private @Nullable BlockRenderLayer layer;
     private float[][] positions = new float[4][3];
     
     public void prepare(BlockRenderLayer layer)
@@ -28,11 +29,12 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     }
     
     @Override
-    public RenderPipeline getPipeline()
+    public IRenderPipeline getPipeline()
     {
         return SIMPLE;
     }
 
+    @SuppressWarnings("null")
     @Override
     public int getTintIndex()
     {
@@ -43,7 +45,9 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     public void produceVertices(IPipelinedVertexConsumer vertexLighter)
     {
         final int blockColor = blockColorMultiplier(vertexLighter);
+        @SuppressWarnings("null")
         final int[] data =  wrapped.getVertexData();
+        @SuppressWarnings("null")
         final VertexFormat format = wrapped.getFormat();
         final float[][] pos = this.positions;
         float normX = 0, normY = 1, normZ = 0;
@@ -137,10 +141,12 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     
     private int blockColorMultiplier(IPipelinedVertexConsumer vertexLighter)
     {
+        @SuppressWarnings("null")
         final int tint = wrapped.getTintIndex();
         return tint == -1 ? 0xFFFFFFFF : 0xFF000000 | vertexLighter.getBlockInfo().getColorMultiplier(tint); 
     }
 
+    @SuppressWarnings("null")
     @Override
     public BlockRenderLayer getRenderLayer()
     {

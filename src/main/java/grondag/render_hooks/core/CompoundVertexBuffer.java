@@ -1,10 +1,9 @@
 package grondag.render_hooks.core;
 
-import static grondag.render_hooks.api.PipelineVertextFormatElements.AO_1B;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_RGBA_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_TEX_2F;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.LIGHTMAPS_4UB;
-import static grondag.render_hooks.api.PipelineVertextFormatElements.NORMAL_3B;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.NORMAL_AO_4B;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.POSITION_3F;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_RGBA_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_TEX_2F;
@@ -13,13 +12,15 @@ import static grondag.render_hooks.api.PipelineVertextFormatElements.TERTIARY_TE
 
 import java.nio.ByteBuffer;
 
+import javax.annotation.Nullable;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 
-import grondag.render_hooks.api.PipelineManager;
+import grondag.render_hooks.api.IPipelineManager;
 import grondag.render_hooks.api.PipelineVertexFormat;
-import grondag.render_hooks.api.RenderPipeline;
+import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
@@ -40,9 +41,9 @@ public class CompoundVertexBuffer extends VertexBuffer
     private int nextStartIndex = 0;
     private int currentAllocationBytes = 0;
     
-    private RenderPipeline[] pipelines = new RenderPipeline[PipelineManager.MAX_PIPELINES];
-    private int[] pipelineBufferOffset = new int[PipelineManager.MAX_PIPELINES];
-    private int[] pipelineCounts = new int[PipelineManager.MAX_PIPELINES];
+    private IRenderPipeline[] pipelines = new IRenderPipeline[IPipelineManager.MAX_PIPELINES];
+    private int[] pipelineBufferOffset = new int[IPipelineManager.MAX_PIPELINES];
+    private int[] pipelineCounts = new int[IPipelineManager.MAX_PIPELINES];
     
     public CompoundVertexBuffer(VertexFormat vertexFormatIn)
     {
@@ -61,7 +62,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         }
     }
     
-    public void uploadBuffer(RenderPipeline pipeline, ByteBuffer data)
+    public void uploadBuffer(IRenderPipeline pipeline, ByteBuffer data)
     {
         this.pipelines[slotsInUse] = pipeline;
         this.pipelineBufferOffset[slotsInUse] = this.nextStartIndex;
@@ -69,7 +70,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         slotsInUse++;
         
         // shouldn't matter normally but if have partial ASM failure could prevent a break
-        if(pipeline.getIndex() == PipelineManager.VANILLA_MC_PIPELINE_INDEX)
+        if(pipeline.getIndex() == IPipelineManager.VANILLA_MC_PIPELINE_INDEX)
             this.count = pipelineCounts[0];
 
         OpenGlHelperExt.glBufferSubData(OpenGlHelper.GL_ARRAY_BUFFER, this.nextStartIndex, data);
@@ -101,7 +102,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         for(int i = 0; i < this.slotsInUse; i++)
         {
-            final RenderPipeline p  = this.pipelines[i];
+            final IRenderPipeline p  = this.pipelines[i];
             final int offset = this.pipelineBufferOffset[i];
             
             setupVertexAttributes(p.pipelineVertexFormat(), offset);
@@ -111,7 +112,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         }
     }
     
-    private static PipelineVertexFormat lastEnabledFormat;
+    private static @Nullable PipelineVertexFormat lastEnabledFormat = null;
     
     private void setupVertexAttributes(PipelineVertexFormat format, int bufferOffset)
     {
@@ -120,8 +121,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         GlStateManager.glVertexPointer(3, POSITION_3F.getType().getGlConstant(), stride, bufferOffset + 0);
         GlStateManager.glColorPointer(4, BASE_RGBA_4UB.getType().getGlConstant(), stride, bufferOffset + 12);
         GlStateManager.glTexCoordPointer(2, BASE_TEX_2F.getType().getGlConstant(), stride, bufferOffset + 16);
-        GL11.glNormalPointer(NORMAL_3B.getType().getGlConstant(), stride, bufferOffset + 24);
-        GL20.glVertexAttribPointer(0, 1, AO_1B.getType().getGlConstant(), false, stride, bufferOffset + 27);
+        GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
         GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
         
         switch(format)

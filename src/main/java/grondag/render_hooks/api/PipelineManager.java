@@ -8,16 +8,17 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-final class PipelineManagerImpl extends PipelineManager
+final class PipelineManager implements IPipelineManager
 {
-    final static PipelineManagerImpl INSTANCE = new PipelineManagerImpl();
+    final static PipelineManager INSTANCE = new PipelineManager();
     
-    private final RenderPipelineImpl[] pipelines = new RenderPipelineImpl[MAX_PIPELINES];
+    private final RenderPipeline[] pipelines = new RenderPipeline[MAX_PIPELINES];
     
-    private final RenderPipeline[] defaultPipelines = new RenderPipelineImpl[PipelineVertexFormat.values().length];
+    private final IRenderPipeline[] defaultPipelines = new RenderPipeline[PipelineVertexFormat.values().length];
+    private final IRenderPipeline waterPipeline;
+    private final IRenderPipeline lavaPipeline;
     
-    
-    private final Object2ObjectOpenHashMap<Key, RenderPipelineImpl> pipelineMap = new Object2ObjectOpenHashMap<>();
+    private final Object2ObjectOpenHashMap<Key, RenderPipeline> pipelineMap = new Object2ObjectOpenHashMap<>();
 
     private class Key
     {
@@ -37,8 +38,7 @@ final class PipelineManagerImpl extends PipelineManager
             this.callback = callback;
             
             int hash = format.hashCode();
-            if(program != null)
-                hash ^= program.hashCode();
+            hash ^= program.hashCode();
             if(callback != null)
                 hash ^= callback.hashCode();
             
@@ -52,7 +52,7 @@ final class PipelineManagerImpl extends PipelineManager
         }
 
         @Override
-        public boolean equals(Object obj)
+        public boolean equals(@Nullable Object obj)
         {
             if(obj == this) return true;
             if(obj == null) return false;
@@ -68,7 +68,8 @@ final class PipelineManagerImpl extends PipelineManager
         }
     }
     
-    PipelineManagerImpl()
+    @SuppressWarnings("null")
+    PipelineManager()
     {
         super();
         
@@ -77,21 +78,23 @@ final class PipelineManagerImpl extends PipelineManager
         {
             defaultPipelines[format.ordinal()] = this.getOrCreatePipeline(format, ProgramManager.INSTANCE.getDefaultProgram(format), null);
         }
+        this.waterPipeline = this.getOrCreatePipeline(PipelineVertexFormat.COMPATIBLE, ProgramManager.INSTANCE.getWaterProgram(), null);
+        this.lavaPipeline = this.getOrCreatePipeline(PipelineVertexFormat.COMPATIBLE, ProgramManager.INSTANCE.getLavaProgram(), null);
     }
     
     @Nullable
     @Override
-    public synchronized final RenderPipeline getOrCreatePipeline(
+    public synchronized final IRenderPipeline getOrCreatePipeline(
             @Nonnull PipelineVertexFormat format, 
             @Nonnull IProgram program, 
             @Nullable IPipelineCallback callback)
     {
         Key key = new Key(format, program, callback);
         
-        RenderPipelineImpl result = this.pipelineMap.get(key);
+        RenderPipeline result = this.pipelineMap.get(key);
         if(result == null && pipelineMap.size() < MAX_PIPELINES)
         {
-            result = new RenderPipelineImpl(format, program, callback);
+            result = new RenderPipeline(format, program, callback);
             this.pipelineMap.put(key, result);
             this.pipelines[result.getIndex()] = result;
         }
@@ -99,14 +102,26 @@ final class PipelineManagerImpl extends PipelineManager
         return result;
     }
     
-    public final RenderPipeline getPipeline(int pipelineIndex)
+    public final IRenderPipeline getPipeline(int pipelineIndex)
     {
         return pipelines[pipelineIndex];
     }
 
     @Override
-    public final RenderPipeline getDefaultPipeline(PipelineVertexFormat format)
+    public final IRenderPipeline getDefaultPipeline(PipelineVertexFormat format)
     {
         return pipelines[format.ordinal()];
+    }
+    
+    @Override
+    public final IRenderPipeline getWaterPipeline()
+    {
+        return this.waterPipeline;
+    }
+    
+    @Override
+    public final IRenderPipeline getLavaPipeline()
+    {
+        return this.lavaPipeline;
     }
 }

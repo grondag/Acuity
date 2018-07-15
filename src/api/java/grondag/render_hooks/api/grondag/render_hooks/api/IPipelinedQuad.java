@@ -1,5 +1,6 @@
 package grondag.render_hooks.api;
 
+
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
@@ -8,7 +9,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public interface IPipelinedQuad
 {
-    public RenderPipeline getPipeline();
+    public IRenderPipeline getPipeline();
 
     public int getTintIndex();
     

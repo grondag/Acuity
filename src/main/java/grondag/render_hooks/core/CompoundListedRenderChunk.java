@@ -4,7 +4,7 @@ import java.nio.ByteBuffer;
 import java.util.List;
 
 import grondag.render_hooks.RenderHooks;
-import grondag.render_hooks.api.RenderPipeline;
+import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -45,7 +45,7 @@ public class CompoundListedRenderChunk extends ListedRenderChunk
     /**
      * Implementation for lists is based on WorldVertexBufferUploader
      */
-    public void uploadBuffer(RenderPipeline pipeline, BufferBuilder bufferBuilderIn)
+    public void uploadBuffer(IRenderPipeline pipeline, BufferBuilder bufferBuilderIn)
     {
         if(bufferBuilderIn.getVertexCount() == 0) return;
         

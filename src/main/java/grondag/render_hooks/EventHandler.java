@@ -3,7 +3,7 @@ package grondag.render_hooks;
 import org.lwjgl.input.Keyboard;
 
 import grondag.render_hooks.api.ProgramManager;
-import grondag.render_hooks.api.RenderHookRuntimeImpl;
+import grondag.render_hooks.api.RenderHookRuntime;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -39,7 +39,6 @@ public class EventHandler
             ProgramManager.INSTANCE.onRenderTick();
     }
     
-    @SuppressWarnings("null")
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent event) 
     {
@@ -51,6 +50,6 @@ public class EventHandler
     public static void onKeyInput(KeyInputEvent event) 
     {
         if(Keyboard.isKeyDown(61) && Keyboard.getEventKey() == 30)
-            RenderHookRuntimeImpl.INSTANCE.forceReload();
+            RenderHookRuntime.INSTANCE.forceReload();
     }
 }

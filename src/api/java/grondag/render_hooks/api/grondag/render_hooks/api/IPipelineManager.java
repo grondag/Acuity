@@ -8,10 +8,8 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public abstract class PipelineManager
+public interface IPipelineManager
 {
-    PipelineManager() { }
-    
     public static final int MAX_PIPELINES = Configurator.maxPipelines;
     
     /**
@@ -28,7 +26,7 @@ public abstract class PipelineManager
      * Will return null if pipeline limit would be exceeded.
      */
     @Nullable
-    public abstract RenderPipeline getOrCreatePipeline(
+    IRenderPipeline getOrCreatePipeline(
             @Nonnull PipelineVertexFormat format, 
             @Nonnull IProgram program, 
             @Nullable IPipelineCallback callback);  
@@ -36,6 +34,10 @@ public abstract class PipelineManager
     /**
      * Use when you want standard rendering.
      */
-    public abstract RenderPipeline getDefaultPipeline(PipelineVertexFormat format);
+    IRenderPipeline getDefaultPipeline(PipelineVertexFormat format);
+
+    IRenderPipeline getWaterPipeline();
+
+    IRenderPipeline getLavaPipeline();
     
 }

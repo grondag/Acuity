@@ -1,10 +1,9 @@
 package grondag.render_hooks.api;
 
-import static grondag.render_hooks.api.PipelineVertextFormatElements.AO_1B;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_RGBA_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_TEX_2F;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.LIGHTMAPS_4UB;
-import static grondag.render_hooks.api.PipelineVertextFormatElements.NORMAL_3B;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.NORMAL_AO_4B;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.POSITION_3F;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_RGBA_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_TEX_2F;
@@ -12,9 +11,15 @@ import static grondag.render_hooks.api.PipelineVertextFormatElements.TERTIARY_RG
 import static grondag.render_hooks.api.PipelineVertextFormatElements.TERTIARY_TEX_2F;
 
 import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 public enum PipelineVertexFormat
 {
+    /**
+     * The default MC format, for vanilla fluids (for now) and blocks that opt out.
+     */
+    COMPATIBLE(DefaultVertexFormats.BLOCK),
+    
     /**
      * Slightly larger than default MC format, but include AO, glow (for three layers), lightmaps and normals.
      * Lightmaps are passed as scalar value vs half-float texture coordinates, so must use a shader.
@@ -23,8 +28,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_3B)
-            .addElement(AO_1B)
+            .addElement(NORMAL_AO_4B)
             .addElement(LIGHTMAPS_4UB)),
     
     /**
@@ -35,8 +39,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_3B)
-            .addElement(AO_1B)
+            .addElement(NORMAL_AO_4B)
             .addElement(LIGHTMAPS_4UB)
             .addElement(SECONDARY_RGBA_4UB)
             .addElement(SECONDARY_TEX_2F)),
@@ -49,8 +52,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_3B)
-            .addElement(AO_1B)
+            .addElement(NORMAL_AO_4B)
             .addElement(LIGHTMAPS_4UB)
             .addElement(SECONDARY_RGBA_4UB)
             .addElement(SECONDARY_TEX_2F)

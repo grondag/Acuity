@@ -4,8 +4,10 @@ import java.util.List;
 
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelinedBakedModel;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
@@ -46,7 +48,36 @@ public class PipelineHooks
         }
     };
     
-    
+    private static boolean didWarnUnhandledFluid = false;
+    /**
+     * Handles vanilla special-case rendering for lava and water.
+     * Forge fluids should come as block models instead.
+     */
+    public static boolean renderFluid(BlockFluidRenderer fluidRenderer, IBlockAccess blockAccess, IBlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
+    {
+        //TODO: implement
+        if(RenderHooks.isModEnabled())
+        {
+            if(blockStateIn.getMaterial() == Material.LAVA)
+            {
+//                return renderModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
+                return false;
+            }
+            else
+            {
+                if(!didWarnUnhandledFluid && blockStateIn.getMaterial() != Material.WATER)
+                {
+                    RenderHooks.INSTANCE.getLog().warn("Unknown fluid sent to vanilla fluid render handler. Will render using water pipeline.");
+                    didWarnUnhandledFluid = true;
+                }
+                return false;
+//                return renderVanillaModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
+            }
+        }
+        else
+            return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
+    }
+
     public static boolean renderModel(BlockModelRenderer blockModelRenderer, IBlockAccess blockAccess, IBakedModel model, IBlockState state, BlockPos pos,
             BufferBuilder bufferBuilderIn, boolean checkSides)
     {
@@ -60,7 +91,7 @@ public class PipelineHooks
         else
             return blockModelRenderer.renderModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
     }
-
+    
     private static boolean renderModel(IBlockAccess worldIn, IBakedModel modelIn, IBlockState stateIn, BlockPos posIn, BufferBuilder bufferIn, boolean checkSides)
     {
         try
@@ -135,9 +166,7 @@ public class PipelineHooks
     
     public static boolean isFirstOrUV(Object callerIgnored, int index, VertexFormatElement.EnumUsage usage)
     {
-        if(RenderHooks.isModEnabled())
-            return index == 0 || usage == VertexFormatElement.EnumUsage.UV || usage == VertexFormatElement.EnumUsage.GENERIC;
-        else
-            return index == 0 || usage == VertexFormatElement.EnumUsage.UV;
+        // has to apply even when mod is disabled so that our formats can be instantiated
+        return index == 0 || usage == VertexFormatElement.EnumUsage.UV || usage == VertexFormatElement.EnumUsage.GENERIC;
     }
 }

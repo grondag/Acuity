@@ -5,7 +5,7 @@ import javax.annotation.Nullable;
 
 import net.minecraft.client.renderer.vertex.VertexFormat;
 
-final class RenderPipelineImpl extends RenderPipeline
+final class RenderPipeline implements IRenderPipeline
 {
     private static int nextIndex = 0;
     
@@ -24,7 +24,7 @@ final class RenderPipelineImpl extends RenderPipeline
     private final @Nonnull IPipelineCallback callback;
     private final @Nonnull Program program;
     
-    RenderPipelineImpl(@Nonnull PipelineVertexFormat format, 
+    RenderPipeline(@Nonnull PipelineVertexFormat format, 
             IProgram program,
             @Nullable IPipelineCallback callback)
     {

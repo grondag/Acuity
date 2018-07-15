@@ -2,8 +2,11 @@ package grondag.render_hooks.core;
 
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedQuadConsumer;
-import grondag.render_hooks.api.PipelineManager;
-import grondag.render_hooks.api.RenderPipeline;
+
+import javax.annotation.Nullable;
+
+import grondag.render_hooks.api.IPipelineManager;
+import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -21,19 +24,19 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
 {
     protected final BlockInfo blockInfo;
     
-    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[PipelineManager.MAX_PIPELINES];
+    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[IPipelineManager.MAX_PIPELINES];
 
-    private BlockRenderLayer renderLayer;
-    private CompoundBufferBuilder target;
+    private @Nullable BlockRenderLayer renderLayer;
+    private @Nullable CompoundBufferBuilder target;
     private boolean didOutput;
     private boolean needsBlockInfoUpdate;
-    private IBlockState blockState;
+    private @Nullable IBlockState blockState;
     private long positionRandom = Long.MIN_VALUE;
     private int sideFlags;
     
     private class ChildLighter extends PipelinedVertexLighter
     {
-        protected ChildLighter(RenderPipeline pipeline)
+        protected ChildLighter(IRenderPipeline pipeline)
         {
             super(pipeline);
         }
@@ -52,6 +55,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
             return blockInfo;
         }
         
+        @SuppressWarnings("null")
         @Override
         public final BufferBuilder getPipelineBuffer()
         {
@@ -84,6 +88,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
         this.blockInfo.reset();
     }
     
+    @SuppressWarnings("null")
     private int getSideFlags()
     {
         int result = 0;
@@ -96,9 +101,9 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
     }
     
     @Override
-    public void accept(IPipelinedQuad quad)
+    public void accept(@Nullable IPipelinedQuad quad)
     {
-        if(quad.getRenderLayer() == this.renderLayer)
+        if(quad != null && quad.getRenderLayer() == this.renderLayer)
             getPipelineLighter(quad.getPipeline()).acceptQuad(quad);
     }
     
@@ -107,7 +112,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
         this.blockInfo = new BlockInfo(Minecraft.getMinecraft().getBlockColors());
     }
 
-    private PipelinedVertexLighter getPipelineLighter(RenderPipeline pipeline)
+    private PipelinedVertexLighter getPipelineLighter(IRenderPipeline pipeline)
     {
         PipelinedVertexLighter result = lighters[pipeline.getIndex()];
         if(result == null)
@@ -139,6 +144,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
     }
 
     @Override
+    @Nullable
     public BlockRenderLayer targetLayer()
     {
         return this.renderLayer;
@@ -157,6 +163,7 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
     }
 
     @Override
+    @Nullable
     public IBlockState blockState()
     {
         return this.blockState;

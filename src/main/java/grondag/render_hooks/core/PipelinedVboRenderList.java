@@ -27,7 +27,6 @@ public class PipelinedVboRenderList extends VboRenderList
             {
                 // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
                 // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
-                GL11.glEnableClientState(GL11.GL_NORMAL_ARRAY);
                 GL20.glEnableVertexAttribArray(0);
                 GL20.glEnableVertexAttribArray(1);
                 
@@ -47,7 +46,6 @@ public class PipelinedVboRenderList extends VboRenderList
                     vertexbuffer.renderChunk();
                     GlStateManager.popMatrix();
                 }
-                GL11.glDisableClientState(GL11.GL_NORMAL_ARRAY);
                 GL20.glDisableVertexAttribArray(0);
                 GL20.glDisableVertexAttribArray(1);
                 GL20.glDisableVertexAttribArray(2);

@@ -2,6 +2,8 @@ package grondag.render_hooks.api;
 
 import java.util.function.Consumer;
 
+import javax.annotation.Nullable;
+
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
@@ -28,7 +30,7 @@ public interface IPipelinedQuadConsumer extends Consumer<IPipelinedQuad>
      * If your model just has one big list of quads, you can simply pass them all the consumer.
      * The consumer still checks and will skip quads not in the target layer.
      */
-    public BlockRenderLayer targetLayer();
+    public @Nullable BlockRenderLayer targetLayer();
     
     /**
      * Provides access to in-world block position for model customization.
@@ -44,7 +46,7 @@ public interface IPipelinedQuadConsumer extends Consumer<IPipelinedQuad>
      * Provides access to block state for model customization.<br>
      * Is what normally is passed to IBakedModel and may be an IExtendedBlockState.
      */
-    public IBlockState blockState();
+    public @Nullable IBlockState blockState();
     
     /**
      * Deterministically pseudo-random bits based on block position.<br>

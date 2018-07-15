@@ -7,34 +7,32 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public abstract class RenderPipeline
+public interface IRenderPipeline
 {
-    RenderPipeline() {};
-    
     @Nonnull
-    public abstract PipelineVertexFormat pipelineVertexFormat();
+    PipelineVertexFormat pipelineVertexFormat();
 
     /**
      * Convenient access to {@link PipelineVertexFormat#vertexFormat}
      */
     @Nonnull
-    public abstract VertexFormat vertexFormat();
+    VertexFormat vertexFormat();
     
     /**
      * For internal use.<br>
      */
-    public abstract int getIndex();
-    
-    /**
-     * Executes callback if there is one.
-     * For internal use.<br>
-     */
-    public abstract void preDraw();
+    int getIndex();
     
     /**
      * Executes callback if there is one.
      * For internal use.<br>
      */
-    public abstract void postDraw();
+    void preDraw();
+    
+    /**
+     * Executes callback if there is one.
+     * For internal use.<br>
+     */
+    void postDraw();
 
 }

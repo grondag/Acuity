@@ -8,8 +8,8 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import grondag.render_hooks.api.IRenderHookRuntime;
 import grondag.render_hooks.api.RenderHookRuntime;
-import grondag.render_hooks.api.RenderHookRuntimeImpl;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.resources.IResourceManager;
@@ -103,7 +103,7 @@ public class RenderHooks
                 @Override
                 public void onResourceManagerReload(IResourceManager resourceManager)
                 {
-                    RenderHookRuntimeImpl.INSTANCE.forceReload();
+                    RenderHookRuntime.INSTANCE.forceReload();
                 }});
         }
         
@@ -117,9 +117,9 @@ public class RenderHooks
         {
             if (message.key.equalsIgnoreCase("getRenderHookRuntime"))
             {
-                Optional<Function<RenderHookRuntime, Void>> value = message.getFunctionValue(RenderHookRuntime.class, Void.class);
+                Optional<Function<IRenderHookRuntime, Void>> value = message.getFunctionValue(IRenderHookRuntime.class, Void.class);
                 if (value.isPresent()) 
-                    value.get().apply(RenderHookRuntimeImpl.INSTANCE);
+                    value.get().apply(RenderHookRuntime.INSTANCE);
                 else 
                     getLog().warn("Error in inter-mod communication request for RenderHooks runtime.");
             }

@@ -4,9 +4,9 @@ import javax.annotation.Nonnull;
 
 import net.minecraft.client.renderer.OpenGlHelper;
 
-public final class PipelineVertexShaderImpl  extends AbstractPipelineShader implements IPipelineVertexShader
+public final class PipelineVertexShader  extends AbstractPipelineShader implements IPipelineVertexShader
 {
-    PipelineVertexShaderImpl(@Nonnull String fileName)
+    PipelineVertexShader(@Nonnull String fileName)
     {
         super(fileName, OpenGlHelper.GL_VERTEX_SHADER);
     }

@@ -18,21 +18,42 @@ public final class ProgramManager implements IProgramManager
 
     private final IProgram[] standards = new IProgram[PipelineVertexFormat.values().length];
     
+    private final IProgram waterProgram;
+    private final IProgram lavaProgram;
+    
+    @SuppressWarnings("null")
     private ProgramManager()
     {
+        standards[PipelineVertexFormat.COMPATIBLE.ordinal()] = createProgram(
+                PipelineShaderManager.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.COMPATIBLE),
+                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.COMPATIBLE),
+                true).finish();
+        
         standards[PipelineVertexFormat.SINGLE.ordinal()] = createProgram(
-                PipelineShaderManagerImpl.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.SINGLE),
-                PipelineShaderManagerImpl.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.SINGLE),
+                PipelineShaderManager.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.SINGLE),
+                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.SINGLE),
                 true).finish();
         
         standards[PipelineVertexFormat.DOUBLE.ordinal()] = createProgram(
-                PipelineShaderManagerImpl.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.DOUBLE),
-                PipelineShaderManagerImpl.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.DOUBLE),
+                PipelineShaderManager.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.DOUBLE),
+                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.DOUBLE),
                 true).finish();
         
         standards[PipelineVertexFormat.TRIPLE.ordinal()] = createProgram(
-                PipelineShaderManagerImpl.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.TRIPLE),
-                PipelineShaderManagerImpl.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.TRIPLE),
+                PipelineShaderManager.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.TRIPLE),
+                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.TRIPLE),
+                true).finish();
+        
+        // TODO: create water shader
+        this.waterProgram = createProgram(
+                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/passthru.vert"),
+                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/passthru.frag"),
+                true).finish();
+        
+        // TODO: create lava shader
+        this.lavaProgram = createProgram(
+                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/passthru.vert"),
+                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/passthru.frag"),
                 true).finish();
     }
     
@@ -64,6 +85,7 @@ public final class ProgramManager implements IProgramManager
         programs.forEach(s -> s.forceReload());
     }
 
+    @SuppressWarnings("null")
     public void onRenderTick()
     {
         programs.forEach(s -> s.onRenderTick());
@@ -85,5 +107,15 @@ public final class ProgramManager implements IProgramManager
     public float worldTime()
     {
         return this.worldTime;
+    }
+
+    public IProgram getWaterProgram()
+    {
+        return this.waterProgram;
+    }
+
+    public IProgram getLavaProgram()
+    {
+        return this.lavaProgram;
     }
 }

@@ -22,8 +22,8 @@ public final class Program implements IProgram
     private boolean isFinal = false;
     protected boolean hasDirtyUniform = false;
     
-    public final PipelineVertexShaderImpl vertexShader;
-    public final PipelineFragmentShaderImpl fragmentShader;
+    public final PipelineVertexShader vertexShader;
+    public final PipelineFragmentShader fragmentShader;
     
     private final ObjectArrayList<Uniform<?>> uniforms = new ObjectArrayList<>();
     private final ObjectArrayList<Uniform<?>> renderTickUpdates = new ObjectArrayList<>();
@@ -248,25 +248,25 @@ public final class Program implements IProgram
     }
     
     @Override
-    public Uniform1f uniform1f(String name, UniformUpdateFrequency frequency, Consumer<Uniform1f> initializer)
+    public Uniform1f uniform1f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform1f> initializer)
     {
         return addUniform(new Uniform1f(name, initializer, frequency));
     }
     
     @Override
-    public Uniform2f uniform2f(String name, UniformUpdateFrequency frequency, Consumer<Uniform2f> initializer)
+    public Uniform2f uniform2f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform2f> initializer)
     {
         return addUniform(new Uniform2f(name, initializer, frequency));
     }
     
     @Override
-    public Uniform3f uniform3f(String name, UniformUpdateFrequency frequency, Consumer<Uniform3f> initializer)
+    public Uniform3f uniform3f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform3f> initializer)
     {
         return addUniform(new Uniform3f(name, initializer, frequency));
     }
     
     @Override
-    public Uniform4f uniform4f(String name, UniformUpdateFrequency frequency, Consumer<Uniform4f> initializer)
+    public Uniform4f uniform4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform4f> initializer)
     {
         return addUniform(new Uniform4f(name, initializer, frequency));
     }
@@ -409,33 +409,33 @@ public final class Program implements IProgram
     }
     
     @Override
-    public Uniform1i uniform1i(String name, UniformUpdateFrequency frequency, Consumer<Uniform1i> initializer)
+    public Uniform1i uniform1i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform1i> initializer)
     {
         return addUniform(new Uniform1i(name, initializer, frequency));
     }
     
     @Override
-    public Uniform2i uniform2i(String name, UniformUpdateFrequency frequency, Consumer<Uniform2i> initializer)
+    public Uniform2i uniform2i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform2i> initializer)
     {
         return addUniform(new Uniform2i(name, initializer, frequency));
     }
     
     @Override
-    public Uniform3i uniform3i(String name, UniformUpdateFrequency frequency, Consumer<Uniform3i> initializer)
+    public Uniform3i uniform3i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform3i> initializer)
     {
         return addUniform(new Uniform3i(name, initializer, frequency));
     }
     
     @Override
-    public Uniform4i uniform4i(String name, UniformUpdateFrequency frequency, Consumer<Uniform4i> initializer)
+    public Uniform4i uniform4i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform4i> initializer)
     {
         return addUniform(new Uniform4i(name, initializer, frequency));
     }
     
     Program(IPipelineVertexShader vertexShader, IPipelineFragmentShader fragmentShader)
     {
-        this.vertexShader = (PipelineVertexShaderImpl) vertexShader;
-        this.fragmentShader = (PipelineFragmentShaderImpl) fragmentShader;
+        this.vertexShader = (PipelineVertexShader) vertexShader;
+        this.fragmentShader = (PipelineFragmentShader) fragmentShader;
     }
     
     /**

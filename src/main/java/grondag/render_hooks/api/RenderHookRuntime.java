@@ -1,25 +1,25 @@
 package grondag.render_hooks.api;
 
 import grondag.render_hooks.RenderHooks;
-import grondag.render_hooks.api.PipelineManager;
-import grondag.render_hooks.api.RenderHookRuntime;
+import grondag.render_hooks.api.IPipelineManager;
+import grondag.render_hooks.api.IRenderHookRuntime;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public final class RenderHookRuntimeImpl extends RenderHookRuntime
+public final class RenderHookRuntime implements IRenderHookRuntime
 {
     // UGLY: hide?
-    public static final RenderHookRuntimeImpl INSTANCE = new RenderHookRuntimeImpl();
+    public static final RenderHookRuntime INSTANCE = new RenderHookRuntime();
     
 
-    private RenderHookRuntimeImpl() {};
+    private RenderHookRuntime() {};
     
     
     @Override
-    public final PipelineManager getPipelineManager()
+    public final IPipelineManager getPipelineManager()
     {
-        return PipelineManagerImpl.INSTANCE;
+        return PipelineManager.INSTANCE;
     }
 
     @Override
@@ -29,9 +29,9 @@ public final class RenderHookRuntimeImpl extends RenderHookRuntime
     }
 
     @Override
-    public final PipelineShaderManager getShaderManager()
+    public final IPipelineShaderManager getShaderManager()
     {
-        return PipelineShaderManagerImpl.INSTANCE;
+        return PipelineShaderManager.INSTANCE;
     }
     
     public final IProgramManager getProgramManager()
@@ -43,7 +43,7 @@ public final class RenderHookRuntimeImpl extends RenderHookRuntime
     {
         // TODO: remove or improve
         System.out.println("RenderHooks force reload");
-        PipelineShaderManagerImpl.INSTANCE.forceReload();
+        PipelineShaderManager.INSTANCE.forceReload();
         ProgramManager.INSTANCE.forceReload();
         
     }

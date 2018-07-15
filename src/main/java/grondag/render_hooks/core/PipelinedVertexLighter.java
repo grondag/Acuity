@@ -6,7 +6,7 @@ import java.nio.ByteOrder;
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedVertexConsumer;
 import grondag.render_hooks.api.PipelineVertexFormat;
-import grondag.render_hooks.api.RenderPipeline;
+import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -23,10 +23,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 {
-    protected final RenderPipeline pipeline;
+    protected final IRenderPipeline pipeline;
     protected final VertexFormat format;
     
-    protected PipelinedVertexLighter(RenderPipeline pipeline)
+    protected PipelinedVertexLighter(IRenderPipeline pipeline)
     {
         this.pipeline = pipeline;
         this.format = pipeline.pipelineVertexFormat().vertexFormat;
@@ -188,8 +188,8 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         bytes.put((byte) Math.round(normY * 127));
         bytes.put((byte) Math.round(normZ * 127));
         
-        // AO_1B
-        bytes.put((byte) Math.round(getAo(lightX, lightY, lightZ) * 255f));
+        // AO - sent as a signed value - add 1 and divide by 2 in shader
+        bytes.put((byte) Math.round(getAo(lightX, lightY, lightZ) * 255f - 127f));
         
         // LIGHTMAP_AND_GLOWS_4UB
         int blockLight, skyLight;
