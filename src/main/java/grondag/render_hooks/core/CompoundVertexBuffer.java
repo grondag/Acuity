@@ -3,7 +3,7 @@ package grondag.render_hooks.core;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_RGBA_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_TEX_2F;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.LIGHTMAPS_4UB;
-import static grondag.render_hooks.api.PipelineVertextFormatElements.NORMAL_AO_4B;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.NORMAL_AO_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.POSITION_3F;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_RGBA_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_TEX_2F;
@@ -124,28 +124,28 @@ public class CompoundVertexBuffer extends VertexBuffer
         switch(format)
         {
         case COMPATIBLE:
-            GL20.glVertexAttribPointer(0, 2, DefaultVertexFormats.TEX_2S.getType().getGlConstant(), true, stride, bufferOffset + 24);
+            GL20.glVertexAttribPointer(1, 2, DefaultVertexFormats.TEX_2S.getType().getGlConstant(), true, stride, bufferOffset + 24);
             break;
             
         case SINGLE:
-            GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
-            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
+            GL20.glVertexAttribPointer(1, 4, NORMAL_AO_4UB.getType().getGlConstant(), false, stride, bufferOffset + 24);
+            GL20.glVertexAttribPointer(2, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
             break;
             
         case DOUBLE:
-            GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
-            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
-            GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 32);
-            GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 36);
+            GL20.glVertexAttribPointer(1, 4, NORMAL_AO_4UB.getType().getGlConstant(), false, stride, bufferOffset + 24);
+            GL20.glVertexAttribPointer(2, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);
+            GL20.glVertexAttribPointer(3, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 32);
+            GL20.glVertexAttribPointer(4, 4, SECONDARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 36);
             break;
             
         case TRIPLE:
-            GL20.glVertexAttribPointer(0, 4, NORMAL_AO_4B.getType().getGlConstant(), true, stride, bufferOffset + 24);
-            GL20.glVertexAttribPointer(1, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);            
-            GL20.glVertexAttribPointer(2, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 32);
-            GL20.glVertexAttribPointer(3, 4, SECONDARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 36);
-            GL20.glVertexAttribPointer(4, 1, TERTIARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 44);
-            GL20.glVertexAttribPointer(5, 4, TERTIARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 48);
+            GL20.glVertexAttribPointer(1, 4, NORMAL_AO_4UB.getType().getGlConstant(), false, stride, bufferOffset + 24);
+            GL20.glVertexAttribPointer(2, 4, LIGHTMAPS_4UB.getType().getGlConstant(), false, stride, bufferOffset + 28);            
+            GL20.glVertexAttribPointer(3, 1, SECONDARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 32);
+            GL20.glVertexAttribPointer(4, 4, SECONDARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 36);
+            GL20.glVertexAttribPointer(5, 1, TERTIARY_RGBA_4UB.getType().getGlConstant(), true, stride, bufferOffset + 44);
+            GL20.glVertexAttribPointer(6, 4, TERTIARY_TEX_2F.getType().getGlConstant(), true, stride, bufferOffset + 48);
             break;
             
         default:

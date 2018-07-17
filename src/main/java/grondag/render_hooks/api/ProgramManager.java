@@ -21,7 +21,6 @@ public final class ProgramManager implements IProgramManager
     private final IProgram waterProgram;
     private final IProgram lavaProgram;
     
-    @SuppressWarnings("null")
     private ProgramManager()
     {
         standards[PipelineVertexFormat.COMPATIBLE.ordinal()] = createProgram(

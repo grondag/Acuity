@@ -103,17 +103,20 @@ public class OpenGlHelperExt
     
     private static int attributeEnabledCount = 0;
     
+    /**
+     * Using 1-based numbering for attribute slots because GL (on my machine at least) not liking slot 0
+     */
     public static void enableAttributes(int enabledCount)
     {
         if(enabledCount > attributeEnabledCount)
         {
             while(enabledCount > attributeEnabledCount)
-                GL20.glEnableVertexAttribArray(attributeEnabledCount++);
+                GL20.glEnableVertexAttribArray(1 + attributeEnabledCount++);
         }
         else if(enabledCount < attributeEnabledCount)
         {
             while(enabledCount < attributeEnabledCount)
-                GL20.glDisableVertexAttribArray(--attributeEnabledCount);
+                GL20.glDisableVertexAttribArray(--attributeEnabledCount + 1);
         }
     }
 }

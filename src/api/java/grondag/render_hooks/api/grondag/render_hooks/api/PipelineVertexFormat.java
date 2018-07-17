@@ -3,7 +3,7 @@ package grondag.render_hooks.api;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_RGBA_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.BASE_TEX_2F;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.LIGHTMAPS_4UB;
-import static grondag.render_hooks.api.PipelineVertextFormatElements.NORMAL_AO_4B;
+import static grondag.render_hooks.api.PipelineVertextFormatElements.NORMAL_AO_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.POSITION_3F;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_RGBA_4UB;
 import static grondag.render_hooks.api.PipelineVertextFormatElements.SECONDARY_TEX_2F;
@@ -28,7 +28,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_AO_4B)
+            .addElement(NORMAL_AO_4UB)
             .addElement(LIGHTMAPS_4UB)),
     
     /**
@@ -39,7 +39,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_AO_4B)
+            .addElement(NORMAL_AO_4UB)
             .addElement(LIGHTMAPS_4UB)
             .addElement(SECONDARY_RGBA_4UB)
             .addElement(SECONDARY_TEX_2F)),
@@ -52,7 +52,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_AO_4B)
+            .addElement(NORMAL_AO_4UB)
             .addElement(LIGHTMAPS_4UB)
             .addElement(SECONDARY_RGBA_4UB)
             .addElement(SECONDARY_TEX_2F)

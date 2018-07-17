@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL20;
 
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.core.OpenGlHelperExt;
@@ -528,7 +529,16 @@ public final class Program implements IProgram
         
         OpenGlHelper.glAttachShader(programID, vertId);
         OpenGlHelper.glAttachShader(programID, fragId);
+        
 
+        GL20.glBindAttribLocation(programID, 1, "i_normal_ao");
+        GL20.glBindAttribLocation(programID, 2, "i_lightlevels");
+        
+        //TODO: remove or put back
+//        final int libraryId = PipelineShaderManager.INSTANCE.vertexLibrary.glId();
+//        if(libraryId > 0)
+//            OpenGlHelper.glAttachShader(programID, libraryId);
+        
         OpenGlHelper.glLinkProgram(programID);
         if(OpenGlHelper.glGetProgrami(programID, OpenGlHelper.GL_LINK_STATUS) == GL11.GL_FALSE)
         {
@@ -536,6 +546,7 @@ public final class Program implements IProgram
             return false;
         }
 
+        
         return true;
     }
 

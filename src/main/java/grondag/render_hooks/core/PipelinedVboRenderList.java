@@ -15,12 +15,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class PipelinedVboRenderList extends VboRenderList
 {
-    private final boolean isModEnabled = RenderHooks.isModEnabled();
-    
     @Override
     public void renderChunkLayer(BlockRenderLayer layer)
     {
-        if(isModEnabled)
+        if(RenderHooks.isModEnabled())
         {
             if (!this.renderChunks.isEmpty() && this.initialized)
             {

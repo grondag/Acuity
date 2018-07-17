@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.util.BlockRenderLayer;
+import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;
 
 public class VanillaQuadWrapper implements IPipelinedQuad
@@ -44,6 +45,16 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     @Override
     public void produceVertices(IPipelinedVertexConsumer vertexLighter)
     {
+        BlockInfo bi = vertexLighter.getBlockInfo();
+        
+        @SuppressWarnings("null")
+        int lightmaps = bi.getState().getLightValue(bi.getWorld(), bi.getBlockPos()) == 0
+            ? wrapped.shouldApplyDiffuseLighting()
+                    // block not lit, disable shading if quad requests
+                    ?  0 : 0x10000
+            // block is lit - disable shading and ao
+            :  0x20000;
+                     
         final int blockColor = blockColorMultiplier(vertexLighter);
         @SuppressWarnings("null")
         final int[] data =  wrapped.getVertexData();
@@ -97,7 +108,6 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         }
         
         float[] unpack = new float[3];
-        int lightmaps = 0;
         
         for(int i = 0; i < 4; i++)
         {
@@ -113,9 +123,10 @@ public class VanillaQuadWrapper implements IPipelinedQuad
             {
                 LightUtil.unpack(data, unpack, format, i, lightMapIndex);
                 
-                //FIXME: This probably isn't right
+                //FIXME: This isn't right at all - needs to match what ligher expects
+                // 0-255 in lower half for block/sky light
                 float max = Math.max(unpack[0], unpack[1]);
-                lightmaps = Math.round(max * 0xFFFF) >> 2;
+                lightmaps |= Math.round(max * 0xFFFF) >> 2;
             }
             
             int rawColor = data[(i * format.getNextOffset() + format.getColorOffset()) / 4];

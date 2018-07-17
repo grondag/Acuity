@@ -1,7 +1,6 @@
 package grondag.render_hooks.api;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 
@@ -11,8 +10,10 @@ final class PipelineShaderManager implements IPipelineShaderManager
     private Object2ObjectOpenHashMap<String, PipelineVertexShader> vertexShaders = new Object2ObjectOpenHashMap<>();
     private Object2ObjectOpenHashMap<String, PipelineFragmentShader> fragmentShaders = new Object2ObjectOpenHashMap<>();
 
-    final IPipelineVertexShader[] defaultVertex = new IPipelineVertexShader[PipelineVertexFormat.values().length];
-    final IPipelineFragmentShader[] defaultFragment = new IPipelineFragmentShader[PipelineVertexFormat.values().length];;
+    private final IPipelineVertexShader[] defaultVertex = new IPipelineVertexShader[PipelineVertexFormat.values().length];
+    private final IPipelineFragmentShader[] defaultFragment = new IPipelineFragmentShader[PipelineVertexFormat.values().length];;
+    
+    public final PipelineVertexShader vertexLibrary;
     
     PipelineShaderManager()
     {
@@ -25,15 +26,14 @@ final class PipelineShaderManager implements IPipelineShaderManager
         this.defaultFragment[PipelineVertexFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
         this.defaultFragment[PipelineVertexFormat.DOUBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
         this.defaultFragment[PipelineVertexFormat.TRIPLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
+        
+        this.vertexLibrary = (PipelineVertexShader)this.getOrCreateVertexShader("/assets/render_hooks/shader/library.glsl");
+        
     }
     
-    @SuppressWarnings("null")
     @Override
-    public @Nullable IPipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName)
+    public IPipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName)
     {
-        if(shaderFileName == null || shaderFileName.isEmpty()) 
-            return null;
-        
         synchronized(vertexShaders)
         {
             PipelineVertexShader result = vertexShaders.get(shaderFileName);
@@ -46,13 +46,9 @@ final class PipelineShaderManager implements IPipelineShaderManager
         }
     }
 
-    @SuppressWarnings("null")
     @Override
-    public @Nullable IPipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName)
+    public IPipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName)
     {
-        if(shaderFileName == null || shaderFileName.isEmpty()) 
-            return null;
-        
         synchronized(fragmentShaders)
         {
             PipelineFragmentShader result = fragmentShaders.get(shaderFileName);

@@ -58,7 +58,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int blockLightMaps,
+            int blockGlowBits,
             int unlitColorARGB0,
             float u0,
             float v0
@@ -67,7 +67,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.pipelineVertexFormat() != PipelineVertexFormat.SINGLE)
             throw new UnsupportedOperationException("Single-layer vertex must use single-layer pipeline format.");
         
-        startVertex(posX, posY, posZ, normX, normY, normZ, blockLightMaps, unlitColorARGB0, u0, v0).endVertex();
+        startVertex(posX, posY, posZ, normX, normY, normZ, blockGlowBits, unlitColorARGB0, u0, v0).endVertex();
     }
     
     @Override
@@ -78,7 +78,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int blockLightMaps,
+            int blockGlowBits,
             int unlitColorARGB0,
             float u0,
             float v0,
@@ -90,7 +90,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.pipelineVertexFormat() != PipelineVertexFormat.DOUBLE)
             throw new UnsupportedOperationException("Double-layer vertex must use double-layer pipeline format.");
         
-        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, blockLightMaps, unlitColorARGB0, u0, v0);
+        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, blockGlowBits, unlitColorARGB0, u0, v0);
         final ByteBuffer bytes  = target.getByteBuffer();
         // SECONDARY_RGBA_4UB
         putColorRGBA(bytes, unlitColorARGB1);
@@ -109,7 +109,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int blockLightMaps,
+            int blockGlowBits,
             int unlitColorARGB0,
             float u0,
             float v0,
@@ -124,7 +124,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.pipelineVertexFormat() != PipelineVertexFormat.TRIPLE)
             throw new UnsupportedOperationException("Triple-layer vertex must use triple-layer pipeline format.");
         
-        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, blockLightMaps, unlitColorARGB0, u0, v0);
+        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, blockGlowBits, unlitColorARGB0, u0, v0);
         final ByteBuffer bytes  = target.getByteBuffer();
         // SECONDARY_RGBA_4UB
         putColorRGBA(bytes, unlitColorARGB1);
@@ -158,6 +158,9 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float v0)
     {
             
+        // TODO: make this work for multiple layers
+        final boolean wantsAo = (blockLightMaps & 0xF0000) <= 0x10000 && Minecraft.isAmbientOcclusionEnabled();
+            
         final BlockInfo blockInfo = getBlockInfo();
         
         // local position is vertex, + block-state-driven shift (if any);
@@ -171,10 +174,34 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         
         final BufferBuilder target = getPipelineBuffer();
         final ByteBuffer bytes  = target.getByteBuffer();
+        final BlockPos pos = blockInfo.getBlockPos();
+
+        // Compute light
+        int blockLight, skyLight, ao = 255;
+        
+        if(wantsAo)
+        {
+            ao = Math.round(getAo(blockInfo, lightX, lightY, lightZ) * 255f);
+            blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
+            skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
+        }
+        else
+        {
+            // what we get back is raw (0-15) sky << 20 | block << 4
+            final int packedLight =  this.calcPackedLight(blockInfo, normX, normY, normZ, lightX, lightY, lightZ);
+            blockLight = packedLight & 0xFF;
+            skyLight = (packedLight >> 16) & 0xFF;
+        }
+        
+        if(blockLightMaps != 0)
+        {
+            blockLight = Math.max(blockLight, blockLightMaps & 0xFF);
+            blockLight = Math.max(blockLight, (blockLightMaps >> 8) & 0xFF);
+        }
+        
         bytes.position(target.getVertexCount() * format.getNextOffset());
 
         // POSITION_3F
-        final BlockPos pos = blockInfo.getBlockPos();
         bytes.putFloat((float) (target.xOffset + pos.getX() + posX));
         bytes.putFloat((float) (target.yOffset + pos.getY() + posY));
         bytes.putFloat((float) (target.zOffset + pos.getZ() + posZ));
@@ -186,34 +213,30 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         bytes.putFloat(u0);
         bytes.putFloat(v0);
         
-        // NORMAL_3B
-        bytes.put((byte) Math.round(normX * 127));
-        bytes.put((byte) Math.round(normY * 127));
-        bytes.put((byte) Math.round(normZ * 127));
+        //TODO: remove
+        if( Math.abs((normX * normX + normY * normY + normZ * normZ) - 1) > 0.01f)
+            System.out.println("bad input normal");
         
-        // AO - sent as a signed value - add 1 and divide by 2 in shader
-        bytes.put((byte) Math.round(getAo(lightX, lightY, lightZ) * 255f - 127f));
         
-        // LIGHTMAP_AND_GLOWS_4UB
-        int blockLight, skyLight;
-        if(Minecraft.isAmbientOcclusionEnabled())
-        {
-            blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
-            skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
-        }
-        else
-        {
-            //FIXME: sure this isn't right
-            final int packedLight =  this.calcPackedLight(blockInfo, normX, normY, normZ, lightX, lightY, lightZ);
-            blockLight = (packedLight >> 0x03) & 0xFF;
-            skyLight = (packedLight >> 0x13) & 0xFF;
-            
-        }
+        // NORMAL_3UB
+        bytes.put((byte) Math.round(normX * 127 + 127));
+        bytes.put((byte) Math.round(normY * 127 + 127));
+        bytes.put((byte) Math.round(normZ * 127 + 127));
         
+        // AO 1UB
+        bytes.put((byte) ao);
+        
+        
+        //LIGHTMAP_AND_GLOWS_4UB
         bytes.put((byte) blockLight);
-        bytes.put((byte) 0); 
-        bytes.put((byte) 0);
         bytes.put((byte) skyLight);
+        
+        // TODO: remove
+//        if(blockLightMaps != 0)
+//            System.out.println("bpp");
+        
+        bytes.put((byte) ((blockLightMaps >> 16) & 0xF)); 
+        bytes.put((byte) 0);
         
         return target;
     }
@@ -257,6 +280,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         else if((full || x >  e1) && normX >  e2) side = EnumFacing.EAST;
 
         int i = side == null ? 0 : side.ordinal() + 1;
+        
         return blockInfo.getPackedLight()[i];
     }
     
@@ -359,7 +383,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         return l;
     }
     
-    protected float getAo(float x, float y, float z)
+    protected float getAo(BlockInfo blockInfo, float x, float y, float z)
     {
         int sx = x < 0 ? 1 : 2;
         int sy = y < 0 ? 1 : 2;
@@ -370,7 +394,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(z < 0) z++;
 
         float a = 0;
-        float[][][] ao = this.getBlockInfo().getAo();
+        float[][][] ao = blockInfo.getAo();
         a += ao[sx - 1][sy - 1][sz - 1] * (1 - x) * (1 - y) * (1 - z);
         a += ao[sx - 1][sy - 1][sz - 0] * (1 - x) * (1 - y) * (0 + z);
         a += ao[sx - 1][sy - 0][sz - 1] * (1 - x) * (0 + y) * (1 - z);

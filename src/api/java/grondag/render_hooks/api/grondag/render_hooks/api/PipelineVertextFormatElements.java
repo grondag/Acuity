@@ -7,10 +7,13 @@ public class PipelineVertextFormatElements
     public static final VertexFormatElement POSITION_3F = new VertexFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.POSITION, 3);
     public static final VertexFormatElement BASE_RGBA_4UB = new VertexFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.COLOR, 4);
     public static final VertexFormatElement BASE_TEX_2F = new VertexFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.UV, 2);
-    public static final VertexFormatElement NORMAL_AO_4B = new VertexFormatElement(0, VertexFormatElement.EnumType.BYTE, VertexFormatElement.EnumUsage.NORMAL, 4);
+    public static final VertexFormatElement NORMAL_AO_4UB = new VertexFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.NORMAL, 4);
     
     /**
-     * First (lsb) is sky light, others are block light for 1st - 3rd layers (2 & 3 will be 0 if not present);
+     * First byte (r) is block light
+     * Second byte (g) is sky light
+     * Third byte lower four bits is glow level (0-15) for first layer, upper four bits is glow level for second layer
+     * Fourth byte lower four bits is glow level for third layer. Higher bits reserved.
      */
     public static final VertexFormatElement LIGHTMAPS_4UB = new VertexFormatElement(1, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4);
 
