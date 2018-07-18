@@ -9,7 +9,7 @@ public interface IPipelineShaderManager
     
     IPipelineFragmentShader getDefaultFragmentShader(TextureFormat textureFormat);
     
-    IPipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName);
+    IPipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName, TextureFormat textureFormat);
     
-    IPipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName);
+    IPipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName, TextureFormat textureFormat);
 }

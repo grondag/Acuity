@@ -43,6 +43,7 @@ public final class RenderHookRuntime implements IRenderHookRuntime
         RenderHooks.INSTANCE.getLog().info("RenderHooks reloading");
         PipelineShaderManager.INSTANCE.forceReload();
         ProgramManager.INSTANCE.forceReload();
+        PipelineManager.INSTANCE.forceReload();
         PipelineHooks.forceReload();
     }
 }

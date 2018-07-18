@@ -82,6 +82,11 @@ public final class PipelineManager implements IPipelineManager
         this.lavaPipeline = this.getOrCreatePipeline(TextureFormat.SINGLE, ProgramManager.INSTANCE.getLavaProgram(), null);
     }
     
+    public void forceReload()
+    {
+        this.pipelineMap.values().forEach(p -> p.refreshVertexFormats());
+    }
+    
     @Nullable
     @Override
     public synchronized final RenderPipeline getOrCreatePipeline(

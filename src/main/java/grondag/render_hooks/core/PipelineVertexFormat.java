@@ -1,25 +1,21 @@
 package grondag.render_hooks.core;
 
-import static grondag.render_hooks.core.PipelineVertextFormatElements.BASE_RGBA_4UB;
-import static grondag.render_hooks.core.PipelineVertextFormatElements.BASE_TEX_2F;
-import static grondag.render_hooks.core.PipelineVertextFormatElements.LIGHTMAPS_4UB;
-import static grondag.render_hooks.core.PipelineVertextFormatElements.POSITION_3F;
-import static grondag.render_hooks.core.PipelineVertextFormatElements.NORMAL_AO_4UB;
-import static grondag.render_hooks.core.PipelineVertextFormatElements.SECONDARY_RGBA_4UB;
-import static grondag.render_hooks.core.PipelineVertextFormatElements.SECONDARY_TEX_2F;
-import static grondag.render_hooks.core.PipelineVertextFormatElements.TERTIARY_RGBA_4UB;
-import static grondag.render_hooks.core.PipelineVertextFormatElements.TERTIARY_TEX_2F;
+import static grondag.render_hooks.core.PipelineVertextFormatElement.BASE_RGBA_4UB;
+import static grondag.render_hooks.core.PipelineVertextFormatElement.BASE_TEX_2F;
+import static grondag.render_hooks.core.PipelineVertextFormatElement.LIGHTMAPS_4UB;
+import static grondag.render_hooks.core.PipelineVertextFormatElement.NORMAL_AO_4UB;
+import static grondag.render_hooks.core.PipelineVertextFormatElement.POSITION_3F;
+import static grondag.render_hooks.core.PipelineVertextFormatElement.SECONDARY_RGBA_4UB;
+import static grondag.render_hooks.core.PipelineVertextFormatElement.SECONDARY_TEX_2F;
+import static grondag.render_hooks.core.PipelineVertextFormatElement.TERTIARY_RGBA_4UB;
+import static grondag.render_hooks.core.PipelineVertextFormatElement.TERTIARY_TEX_2F;
 
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
+import org.lwjgl.opengl.GL20;
+
 import net.minecraft.client.renderer.vertex.VertexFormat;
 
 public enum PipelineVertexFormat
 {
-    /**
-     * The default MC format, for vanilla fluids (for now) and blocks that opt out.
-     */
-    COMPATIBLE(DefaultVertexFormats.BLOCK),
-    
     /**
      * Same size as default MC format, but lightmaps a 1 byte each, giving room for 3 block lightmaps.
      */
@@ -88,11 +84,36 @@ public enum PipelineVertexFormat
     public final VertexFormat vertexFormat;
     
     public final int attributeCount;
+    protected final int stride;
+    
+    private final PipelineVertextFormatElement [] elements;
     
     private  PipelineVertexFormat(VertexFormat vertexFormat)
     {
         this.vertexFormat = vertexFormat;
-        // the first three elements are always pos, color, tex - anything after that is an attribute
-        this.attributeCount = vertexFormat.getElementCount() - 3;
+        this.stride = vertexFormat.getNextOffset();
+        this.attributeCount = vertexFormat.getElementCount();
+        this.elements = vertexFormat.getElements().toArray(new PipelineVertextFormatElement[attributeCount]);
+    }
+    
+    public void setupAttributes(int bufferOffset)
+    {
+        OpenGlHelperExt.enableAttributes(this.attributeCount);
+        int offset = 0;
+        for(int i = 0; i < this.attributeCount; i++)
+        {
+            PipelineVertextFormatElement e = elements[i];
+            GL20.glVertexAttribPointer(i + 1, e.elementCount, e.glConstant, e.isNormalized, stride, bufferOffset + offset);
+            offset += e.byteSize;
+        }
+    }
+    
+    public void bindAttributes(int  programID)
+    {
+        for(int i = 0; i < this.attributeCount; i++)
+        {
+            PipelineVertextFormatElement e = elements[i];
+            GL20.glBindAttribLocation(programID, i + 1, e.attributeName);
+        }
     }
 }

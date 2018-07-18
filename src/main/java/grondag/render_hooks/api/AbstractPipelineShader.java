@@ -16,15 +16,17 @@ abstract class AbstractPipelineShader
     public final String fileName;
     
     private final int shaderType;
-    
+    public final TextureFormat textureFormat;
+
     private int glId = -1;
     private boolean needsLoad = true;
     private boolean isErrored = false;
     
-    AbstractPipelineShader(@Nonnull String fileName, int shaderType)
+    AbstractPipelineShader(@Nonnull String fileName, int shaderType, @Nonnull TextureFormat textureFormat)
     {
         this.fileName = fileName;
         this.shaderType = shaderType;
+        this.textureFormat = textureFormat;
     }
     
     /**

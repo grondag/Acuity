@@ -2,6 +2,7 @@ package grondag.render_hooks.api;
 
 import org.lwjgl.opengl.GL13;
 
+import grondag.render_hooks.RenderHooks;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -40,21 +41,27 @@ public final class ProgramManager implements IProgramManager
         
         // TODO: create water shader
         this.waterProgram = createProgram(
-                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/passthru.vert"),
-                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/passthru.frag"),
+                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/passthru.vert", TextureFormat.SINGLE),
+                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/passthru.frag", TextureFormat.SINGLE),
                 true).finish();
         
         // TODO: create lava shader
         this.lavaProgram = createProgram(
-                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/passthru.vert"),
-                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/passthru.frag"),
+                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/passthru.vert", TextureFormat.SINGLE),
+                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/passthru.frag", TextureFormat.SINGLE),
                 true).finish();
     }
     
+    //TODO: test for uniform presence in source and ditch parameter
     @Override
     synchronized public IProgram createProgram(IPipelineVertexShader vertexShader, IPipelineFragmentShader fragmentShader, boolean includeStandardUniforms)
     {
-        Program result = new Program(vertexShader, fragmentShader);
+        TextureFormat format = ((AbstractPipelineShader)vertexShader).textureFormat;
+        if(format !=  ((AbstractPipelineShader)fragmentShader).textureFormat)
+        {
+            RenderHooks.INSTANCE.getLog().error("Detected program with mimatched vertex formats in vertex and fragment shader.  Vertex shader format will be used but program probably won't work correctly.");
+        }
+        Program result = new Program(vertexShader, fragmentShader, format);
         if(includeStandardUniforms)
             addStandardUniforms(result);
         programs.add(result);

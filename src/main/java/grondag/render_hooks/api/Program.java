@@ -8,8 +8,8 @@ import javax.annotation.Nullable;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
 
+import grondag.render_hooks.Configurator;
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.core.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -25,6 +25,7 @@ public final class Program implements IProgram
     
     public final PipelineVertexShader vertexShader;
     public final PipelineFragmentShader fragmentShader;
+    public final TextureFormat textureFormat;
     
     private final ObjectArrayList<Uniform<?>> uniforms = new ObjectArrayList<>();
     private final ObjectArrayList<Uniform<?>> renderTickUpdates = new ObjectArrayList<>();
@@ -433,10 +434,11 @@ public final class Program implements IProgram
         return addUniform(new Uniform4i(name, initializer, frequency));
     }
     
-    Program(IPipelineVertexShader vertexShader, IPipelineFragmentShader fragmentShader)
+    Program(IPipelineVertexShader vertexShader, IPipelineFragmentShader fragmentShader, TextureFormat textureFormat)
     {
         this.vertexShader = (PipelineVertexShader) vertexShader;
         this.fragmentShader = (PipelineFragmentShader) fragmentShader;
+        this.textureFormat = textureFormat;
     }
     
     /**
@@ -530,9 +532,7 @@ public final class Program implements IProgram
         OpenGlHelper.glAttachShader(programID, vertId);
         OpenGlHelper.glAttachShader(programID, fragId);
         
-
-        GL20.glBindAttribLocation(programID, 1, "i_normal_ao");
-        GL20.glBindAttribLocation(programID, 2, "i_lightlevels");
+        Configurator.lightingModel.vertexFormat(this.textureFormat).bindAttributes(programID);
         
         //TODO: remove or put back
 //        final int libraryId = PipelineShaderManager.INSTANCE.vertexLibrary.glId();

@@ -3,7 +3,6 @@ package grondag.render_hooks.core;
 import org.lwjgl.opengl.GL11;
 
 import grondag.render_hooks.RenderHooks;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.VboRenderList;
@@ -24,13 +23,19 @@ public class PipelinedVboRenderList extends VboRenderList
             {
                 // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
                 // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
+                // We are using generic vertex attributes and don't want any of these.
+                // Disabling them here does no harm because caller will disable them anyway when we return.
+                GlStateManager.glDisableClientState(GL11.GL_VERTEX_ARRAY);
+                GlStateManager.glDisableClientState(GL11.GL_COLOR_ARRAY);
                 
-                // we don't want the lightmap at all
-                // will be disabled by caller anyway when we return
                 OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
                 GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+                // in lieu of calling EntityRenderer.disableLightmap()
+                // UGLY: is this even needed when using shaders?
+                GlStateManager.disableTexture2D();
+                
                 OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
-                Minecraft.getMinecraft().entityRenderer.disableLightmap();
+                GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
                 
                 for (RenderChunk renderchunk : this.renderChunks)
                 {

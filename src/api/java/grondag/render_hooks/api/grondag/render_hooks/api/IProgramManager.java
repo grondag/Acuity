@@ -8,5 +8,4 @@ public interface IProgramManager
     IProgram getDefaultProgram(TextureFormat textureFormat);
 
     float worldTime();
-
 }
