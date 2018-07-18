@@ -27,14 +27,14 @@ public interface IPipelineManager
      */
     @Nullable
     IRenderPipeline getOrCreatePipeline(
-            @Nonnull PipelineVertexFormat format, 
+            TextureFormat textureFormat, 
             @Nonnull IProgram program, 
             @Nullable IPipelineCallback callback);  
     
     /**
      * Use when you want standard rendering.
      */
-    IRenderPipeline getDefaultPipeline(PipelineVertexFormat format);
+    IRenderPipeline getDefaultPipeline(TextureFormat textureFormat);
 
     IRenderPipeline getWaterPipeline();
 

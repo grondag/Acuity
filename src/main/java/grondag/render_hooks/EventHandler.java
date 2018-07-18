@@ -4,6 +4,7 @@ import org.lwjgl.input.Keyboard;
 
 import grondag.render_hooks.api.ProgramManager;
 import grondag.render_hooks.api.RenderHookRuntime;
+import grondag.render_hooks.core.LightingModel;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.ConfigManager;
@@ -26,9 +27,12 @@ public class EventHandler
     {
         if(event.getModID().equals(RenderHooks.MODID))
         {
+            LightingModel oldModel = Configurator.lightingModel;
             ConfigManager.sync(RenderHooks.MODID, Config.Type.INSTANCE);
             if(RenderHooks.didEnabledStatusChange())
                 Minecraft.getMinecraft().refreshResources();
+            else if (oldModel != Configurator.lightingModel)
+                RenderHookRuntime.INSTANCE.forceReload();
         }
     }
     

@@ -2,9 +2,10 @@ package grondag.render_hooks.core;
 
 import java.util.List;
 
+import grondag.render_hooks.Configurator;
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelinedBakedModel;
-import grondag.render_hooks.api.RenderHookRuntime;
+import grondag.render_hooks.api.PipelineManager;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -18,14 +19,11 @@ import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
-import net.minecraft.init.MobEffects;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.World;
 import net.minecraftforge.client.MinecraftForgeClient;
 import net.minecraftforge.common.property.IExtendedBlockState;
 import net.minecraftforge.fml.relauncher.Side;
@@ -34,14 +32,25 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class PipelineHooks
 {
-    private static final ThreadLocal<CompoundVertexLighter> lighters = new ThreadLocal<CompoundVertexLighter>()
+    @SuppressWarnings("null")
+    private static ThreadLocal<CompoundVertexLighter> lighters;
+    
+    static
     {
-        @Override
-        protected CompoundVertexLighter initialValue()
+        createLighters();
+    }
+    
+    private static void createLighters()
+    {
+        lighters = new ThreadLocal<CompoundVertexLighter>()
         {
-            return new CompoundVertexLighter();
-        }
-    };
+            @Override
+            protected CompoundVertexLighter initialValue()
+            {
+                return Configurator.lightingModel.createLighter();
+            }
+        };
+    }
     
     private static final ThreadLocal<VanillaQuadWrapper> quadWrappers = new ThreadLocal<VanillaQuadWrapper>()
     {
@@ -51,6 +60,11 @@ public class PipelineHooks
             return new VanillaQuadWrapper();
         }
     };
+    
+    public static void forceReload()
+    {
+        createLighters(); 
+    }
     
     private static boolean didWarnUnhandledFluid = false;
     /**
@@ -64,7 +78,7 @@ public class PipelineHooks
             BufferBuilder target;
             if(blockStateIn.getMaterial() == Material.LAVA)
             {
-                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(RenderHookRuntime.INSTANCE.getPipelineManager().getLavaPipeline());
+                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(PipelineManager.INSTANCE.lavaPipeline);
             }
             else
             {
@@ -73,7 +87,7 @@ public class PipelineHooks
                     RenderHooks.INSTANCE.getLog().warn("Unknown fluid sent to vanilla fluid render handler. Will render using water pipeline.");
                     didWarnUnhandledFluid = true;
                 }
-                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(RenderHookRuntime.INSTANCE.getPipelineManager().getWaterPipeline());
+                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(PipelineManager.INSTANCE.waterPipeline);
             }
             return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, target);
         }

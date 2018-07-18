@@ -5,7 +5,7 @@ public interface IProgramManager
 
     IProgram createProgram(IPipelineVertexShader vertexShader, IPipelineFragmentShader fragmentShader, boolean includeStandardUniforms);
 
-    IProgram getDefaultProgram(PipelineVertexFormat format);
+    IProgram getDefaultProgram(TextureFormat textureFormat);
 
     float worldTime();
 

@@ -3,15 +3,14 @@ package grondag.render_hooks.api;
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelineManager;
 import grondag.render_hooks.api.IRenderHookRuntime;
+import grondag.render_hooks.core.PipelineHooks;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public final class RenderHookRuntime implements IRenderHookRuntime
 {
-    // UGLY: hide?
     public static final RenderHookRuntime INSTANCE = new RenderHookRuntime();
-    
 
     private RenderHookRuntime() {};
     
@@ -41,10 +40,9 @@ public final class RenderHookRuntime implements IRenderHookRuntime
     
     public void forceReload()
     {
-        // TODO: remove or improve
-        System.out.println("RenderHooks force reload");
+        RenderHooks.INSTANCE.getLog().info("RenderHooks reloading");
         PipelineShaderManager.INSTANCE.forceReload();
         ProgramManager.INSTANCE.forceReload();
-        
+        PipelineHooks.forceReload();
     }
 }

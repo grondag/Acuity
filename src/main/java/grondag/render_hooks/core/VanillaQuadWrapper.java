@@ -6,9 +6,9 @@ import javax.vecmath.Vector3f;
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedQuadConsumer;
 import grondag.render_hooks.api.IPipelinedVertexConsumer;
-import grondag.render_hooks.api.PipelineVertexFormat;
-import grondag.render_hooks.api.RenderHookRuntime;
 import grondag.render_hooks.api.IRenderPipeline;
+import grondag.render_hooks.api.PipelineManager;
+import grondag.render_hooks.api.TextureFormat;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
@@ -19,7 +19,7 @@ import net.minecraftforge.client.model.pipeline.LightUtil;
 public class VanillaQuadWrapper implements IPipelinedQuad
 {
 
-    private final IRenderPipeline SIMPLE = RenderHookRuntime.INSTANCE.getPipelineManager().getDefaultPipeline(PipelineVertexFormat.SINGLE);
+    private final IRenderPipeline SIMPLE = PipelineManager.INSTANCE.getDefaultPipeline(TextureFormat.SINGLE);
     private @Nullable BakedQuad wrapped;
     private @Nullable BlockRenderLayer layer;
     private float[][] positions = new float[4][3];

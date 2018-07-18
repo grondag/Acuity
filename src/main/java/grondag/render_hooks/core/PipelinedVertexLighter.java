@@ -6,7 +6,8 @@ import java.nio.ByteOrder;
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedVertexConsumer;
 import grondag.render_hooks.api.IRenderPipeline;
-import grondag.render_hooks.api.PipelineVertexFormat;
+import grondag.render_hooks.api.RenderPipeline;
+import grondag.render_hooks.api.TextureFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -23,13 +24,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 {
-    protected final IRenderPipeline pipeline;
-    protected final VertexFormat format;
+    protected final RenderPipeline pipeline;
     
     protected PipelinedVertexLighter(IRenderPipeline pipeline)
     {
-        this.pipeline = pipeline;
-        this.format = pipeline.pipelineVertexFormat().vertexFormat;
+        this.pipeline = (RenderPipeline) pipeline;
     }
     
     @Override
@@ -41,7 +40,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     
     public VertexFormat getVertexFormat()
     {
-        return this.format;
+        return this.pipeline.vertexFormat();
     }
 
     public void acceptQuad(IPipelinedQuad quad)
@@ -64,8 +63,8 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float v0
             )
     {
-        if(this.pipeline.pipelineVertexFormat() != PipelineVertexFormat.SINGLE)
-            throw new UnsupportedOperationException("Single-layer vertex must use single-layer pipeline format.");
+        if(this.pipeline.textureFormat != TextureFormat.SINGLE)
+            throw new UnsupportedOperationException("Single-layer vertex must use single-layer texture format.");
         
         startVertex(posX, posY, posZ, normX, normY, normZ, blockGlowBits, unlitColorARGB0, u0, v0).endVertex();
     }
@@ -87,7 +86,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float v1
             )
     {
-        if(this.pipeline.pipelineVertexFormat() != PipelineVertexFormat.DOUBLE)
+        if(this.pipeline.textureFormat != TextureFormat.DOUBLE)
             throw new UnsupportedOperationException("Double-layer vertex must use double-layer pipeline format.");
         
         BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, blockGlowBits, unlitColorARGB0, u0, v0);
@@ -121,7 +120,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float v2
             )
     {
-        if(this.pipeline.pipelineVertexFormat() != PipelineVertexFormat.TRIPLE)
+        if(this.pipeline.textureFormat != TextureFormat.TRIPLE)
             throw new UnsupportedOperationException("Triple-layer vertex must use triple-layer pipeline format.");
         
         BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, blockGlowBits, unlitColorARGB0, u0, v0);
@@ -199,7 +198,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             blockLight = Math.max(blockLight, (blockLightMaps >> 8) & 0xFF);
         }
         
-        bytes.position(target.getVertexCount() * format.getNextOffset());
+        bytes.position(target.getVertexCount() * target.getVertexFormat().getNextOffset());
 
         // POSITION_3F
         bytes.putFloat((float) (target.xOffset + pos.getX() + posX));

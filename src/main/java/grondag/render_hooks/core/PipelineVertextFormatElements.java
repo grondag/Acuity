@@ -1,4 +1,4 @@
-package grondag.render_hooks.api;
+package grondag.render_hooks.core;
 
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 

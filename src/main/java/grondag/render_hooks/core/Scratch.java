@@ -9,12 +9,15 @@ import net.minecraft.world.World;
 public class Scratch
 {
     private boolean lightmapUpdateNeeded;
+    @SuppressWarnings("null")
     private Minecraft mc;
     private float torchFlickerX;
     private float bossColorModifier;
     private int bossColorModifierPrev;
+    @SuppressWarnings("null")
     private int[] lightmapColors;
 
+    @SuppressWarnings({ "unused", "null" })
     private void updateLightmap(float partialTicks)
     {
         if (this.lightmapUpdateNeeded)

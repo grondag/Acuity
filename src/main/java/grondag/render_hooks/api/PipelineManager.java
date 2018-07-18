@@ -8,36 +8,36 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-final class PipelineManager implements IPipelineManager
+public final class PipelineManager implements IPipelineManager
 {
-    static final PipelineManager INSTANCE = new PipelineManager();
+    public static final PipelineManager INSTANCE = new PipelineManager();
     
     private final RenderPipeline[] pipelines = new RenderPipeline[MAX_PIPELINES];
     
-    private final IRenderPipeline[] defaultPipelines = new RenderPipeline[PipelineVertexFormat.values().length];
-    private final IRenderPipeline waterPipeline;
-    private final IRenderPipeline lavaPipeline;
+    private final RenderPipeline[] defaultPipelines = new RenderPipeline[TextureFormat.values().length];
+    public final RenderPipeline waterPipeline;
+    public final RenderPipeline lavaPipeline;
     
     private final Object2ObjectOpenHashMap<Key, RenderPipeline> pipelineMap = new Object2ObjectOpenHashMap<>();
-
+    
     private class Key
     {
-        private final @Nonnull PipelineVertexFormat format;
+        private final @Nonnull TextureFormat textureFormat;
         private final @Nonnull IProgram program;
         private final @Nullable IPipelineCallback callback;
         
         final int hash;
         
         private Key(
-                @Nonnull PipelineVertexFormat format, 
+                @Nonnull TextureFormat textureFormat, 
                 @Nonnull IProgram program, 
                 @Nullable IPipelineCallback callback)
         {
-            this.format = format;
+            this.textureFormat = textureFormat;
             this.program = program;
             this.callback = callback;
             
-            int hash = format.hashCode();
+            int hash = textureFormat.hashCode();
             hash ^= program.hashCode();
             if(callback != null)
                 hash ^= callback.hashCode();
@@ -60,7 +60,7 @@ final class PipelineManager implements IPipelineManager
             {
                 Key other = (Key)obj;
                 
-                return this.format == other.format
+                return this.textureFormat == other.textureFormat
                         && this.program == other.program
                         && this.callback == other.callback;
             }
@@ -69,32 +69,32 @@ final class PipelineManager implements IPipelineManager
     }
     
     @SuppressWarnings("null")
-    PipelineManager()
+    private PipelineManager()
     {
         super();
         
         // add default pipelines
-        for(PipelineVertexFormat format : PipelineVertexFormat.values())
+        for(TextureFormat textureFormat : TextureFormat.values())
         {
-            defaultPipelines[format.ordinal()] = this.getOrCreatePipeline(format, ProgramManager.INSTANCE.getDefaultProgram(format), null);
+            defaultPipelines[textureFormat.ordinal()] = this.getOrCreatePipeline(textureFormat, ProgramManager.INSTANCE.getDefaultProgram(textureFormat), null);
         }
-        this.waterPipeline = this.getOrCreatePipeline(PipelineVertexFormat.COMPATIBLE, ProgramManager.INSTANCE.getWaterProgram(), null);
-        this.lavaPipeline = this.getOrCreatePipeline(PipelineVertexFormat.COMPATIBLE, ProgramManager.INSTANCE.getLavaProgram(), null);
+        this.waterPipeline = this.getOrCreatePipeline(TextureFormat.SINGLE, ProgramManager.INSTANCE.getWaterProgram(), null);
+        this.lavaPipeline = this.getOrCreatePipeline(TextureFormat.SINGLE, ProgramManager.INSTANCE.getLavaProgram(), null);
     }
     
     @Nullable
     @Override
-    public synchronized final IRenderPipeline getOrCreatePipeline(
-            @Nonnull PipelineVertexFormat format, 
+    public synchronized final RenderPipeline getOrCreatePipeline(
+            @Nonnull TextureFormat textureFormat, 
             @Nonnull IProgram program, 
             @Nullable IPipelineCallback callback)
     {
-        Key key = new Key(format, program, callback);
+        Key key = new Key(textureFormat, program, callback);
         
         RenderPipeline result = this.pipelineMap.get(key);
         if(result == null && pipelineMap.size() < MAX_PIPELINES)
         {
-            result = new RenderPipeline(format, program, callback);
+            result = new RenderPipeline(textureFormat, program, callback);
             this.pipelineMap.put(key, result);
             this.pipelines[result.getIndex()] = result;
         }
@@ -108,9 +108,9 @@ final class PipelineManager implements IPipelineManager
     }
 
     @Override
-    public final IRenderPipeline getDefaultPipeline(PipelineVertexFormat format)
+    public final IRenderPipeline getDefaultPipeline(TextureFormat textureFormat)
     {
-        return pipelines[format.ordinal()];
+        return pipelines[textureFormat.ordinal()];
     }
     
     @Override

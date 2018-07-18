@@ -9,7 +9,6 @@ public interface IPipelinedVertexConsumer
 {
     /**
      * For single-layer renders.<br>
-     * Will throw an error if not used with {@link PipelineVertexFormat#SINGLE}<p>
      * 
      * Similar to Vanilla MC format, but always includes normals and more lighting information.<p>
      * 
@@ -53,7 +52,6 @@ public interface IPipelinedVertexConsumer
     
     /**
      * Adds a second color and uv coordinate.<br>
-     * Will throw an error if not used with {@link PipelineVertexFormat#DOUBLE}
      * 
      * @param posX
      * @param posY
@@ -87,7 +85,6 @@ public interface IPipelinedVertexConsumer
     
     /**
     * For triple-layer renders.<br>
-    * Will throw an error if not used with {@link PipelineVertexFormat#TRIPLE}<p>
     */
     public void acceptVertex(
             float posX,

@@ -16,31 +16,26 @@ public final class ProgramManager implements IProgramManager
     
     final ObjectArrayList<Program> programs = new ObjectArrayList<>();
 
-    private final IProgram[] standards = new IProgram[PipelineVertexFormat.values().length];
+    private final IProgram[] standards = new IProgram[TextureFormat.values().length];
     
     private final IProgram waterProgram;
     private final IProgram lavaProgram;
     
     private ProgramManager()
     {
-        standards[PipelineVertexFormat.COMPATIBLE.ordinal()] = createProgram(
-                PipelineShaderManager.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.COMPATIBLE),
-                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.COMPATIBLE),
+        standards[TextureFormat.SINGLE.ordinal()] = createProgram(
+                PipelineShaderManager.INSTANCE.getDefaultVertexShader(TextureFormat.SINGLE),
+                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(TextureFormat.SINGLE),
                 true).finish();
         
-        standards[PipelineVertexFormat.SINGLE.ordinal()] = createProgram(
-                PipelineShaderManager.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.SINGLE),
-                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.SINGLE),
+        standards[TextureFormat.DOUBLE.ordinal()] = createProgram(
+                PipelineShaderManager.INSTANCE.getDefaultVertexShader(TextureFormat.DOUBLE),
+                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(TextureFormat.DOUBLE),
                 true).finish();
         
-        standards[PipelineVertexFormat.DOUBLE.ordinal()] = createProgram(
-                PipelineShaderManager.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.DOUBLE),
-                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.DOUBLE),
-                true).finish();
-        
-        standards[PipelineVertexFormat.TRIPLE.ordinal()] = createProgram(
-                PipelineShaderManager.INSTANCE.getDefaultVertexShader(PipelineVertexFormat.TRIPLE),
-                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(PipelineVertexFormat.TRIPLE),
+        standards[TextureFormat.TRIPLE.ordinal()] = createProgram(
+                PipelineShaderManager.INSTANCE.getDefaultVertexShader(TextureFormat.TRIPLE),
+                PipelineShaderManager.INSTANCE.getDefaultFragmentShader(TextureFormat.TRIPLE),
                 true).finish();
         
         // TODO: create water shader
@@ -74,9 +69,9 @@ public final class ProgramManager implements IProgramManager
     }
     
     @Override
-    public IProgram getDefaultProgram(PipelineVertexFormat format)
+    public IProgram getDefaultProgram(TextureFormat textureFormat)
     {
-        return standards[format.ordinal()];
+        return standards[textureFormat.ordinal()];
     }
     
     void forceReload()

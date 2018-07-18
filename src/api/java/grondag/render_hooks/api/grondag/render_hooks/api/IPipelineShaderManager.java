@@ -5,9 +5,9 @@ import javax.annotation.Nonnull;
 public interface IPipelineShaderManager
 {
     
-    IPipelineVertexShader getDefaultVertexShader(PipelineVertexFormat format);
+    IPipelineVertexShader getDefaultVertexShader(TextureFormat textureFormat);
     
-    IPipelineFragmentShader getDefaultFragmentShader(PipelineVertexFormat format);
+    IPipelineFragmentShader getDefaultFragmentShader(TextureFormat textureFormat);
     
     IPipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName);
     

@@ -10,22 +10,20 @@ final class PipelineShaderManager implements IPipelineShaderManager
     private Object2ObjectOpenHashMap<String, PipelineVertexShader> vertexShaders = new Object2ObjectOpenHashMap<>();
     private Object2ObjectOpenHashMap<String, PipelineFragmentShader> fragmentShaders = new Object2ObjectOpenHashMap<>();
 
-    private final IPipelineVertexShader[] defaultVertex = new IPipelineVertexShader[PipelineVertexFormat.values().length];
-    private final IPipelineFragmentShader[] defaultFragment = new IPipelineFragmentShader[PipelineVertexFormat.values().length];;
+    private final IPipelineVertexShader[] defaultVertex = new IPipelineVertexShader[TextureFormat.values().length];
+    private final IPipelineFragmentShader[] defaultFragment = new IPipelineFragmentShader[TextureFormat.values().length];;
     
     public final PipelineVertexShader vertexLibrary;
     
     PipelineShaderManager()
     {
         //FIXME: put in real names for double & triple
-        this.defaultVertex[PipelineVertexFormat.COMPATIBLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/passthru.vert");
-        this.defaultVertex[PipelineVertexFormat.SINGLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert");
-        this.defaultVertex[PipelineVertexFormat.DOUBLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert");
-        this.defaultVertex[PipelineVertexFormat.TRIPLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert");
-        this.defaultFragment[PipelineVertexFormat.COMPATIBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/passthru.frag");
-        this.defaultFragment[PipelineVertexFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
-        this.defaultFragment[PipelineVertexFormat.DOUBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
-        this.defaultFragment[PipelineVertexFormat.TRIPLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
+        this.defaultVertex[TextureFormat.SINGLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert");
+        this.defaultVertex[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert");
+        this.defaultVertex[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert");
+        this.defaultFragment[TextureFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
+        this.defaultFragment[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
+        this.defaultFragment[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag");
         
         this.vertexLibrary = (PipelineVertexShader)this.getOrCreateVertexShader("/assets/render_hooks/shader/library.glsl");
         
@@ -62,15 +60,15 @@ final class PipelineShaderManager implements IPipelineShaderManager
     }
 
     @Override
-    public IPipelineVertexShader getDefaultVertexShader(PipelineVertexFormat format)
+    public IPipelineVertexShader getDefaultVertexShader(TextureFormat textureFormat)
     {
-        return this.defaultVertex[format.ordinal()];
+        return this.defaultVertex[textureFormat.ordinal()];
     }
 
     @Override
-    public IPipelineFragmentShader getDefaultFragmentShader(PipelineVertexFormat format)
+    public IPipelineFragmentShader getDefaultFragmentShader(TextureFormat textureFormat)
     {
-        return this.defaultFragment[format.ordinal()];
+        return this.defaultFragment[textureFormat.ordinal()];
     }
     
     public void forceReload()

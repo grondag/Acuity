@@ -3,9 +3,11 @@ package grondag.render_hooks.api;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import grondag.render_hooks.Configurator;
+import grondag.render_hooks.core.PipelineVertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 
-final class RenderPipeline implements IRenderPipeline
+public final class RenderPipeline implements IRenderPipeline
 {
     private static int nextIndex = 0;
     
@@ -19,32 +21,43 @@ final class RenderPipeline implements IRenderPipeline
     };
     
     private final int index = nextIndex++;
-    private final @Nonnull PipelineVertexFormat pipelineVertexFormat;
-    private final @Nonnull VertexFormat vertexFormat;
-    private final @Nonnull IPipelineCallback callback;
-    private final @Nonnull Program program;
+    public final @Nonnull TextureFormat textureFormat;
+    public final @Nonnull IPipelineCallback callback;
+    public final @Nonnull Program program;
     
-    RenderPipeline(@Nonnull PipelineVertexFormat format, 
+    private PipelineVertexFormat pipelineVertexFormat;
+    private VertexFormat vertexFormat;
+    
+    @SuppressWarnings("null")
+    RenderPipeline(@Nonnull TextureFormat textureFormat, 
             IProgram program,
             @Nullable IPipelineCallback callback)
     {
-        this.pipelineVertexFormat = format;
-        this.vertexFormat = format.vertexFormat;
+        this.textureFormat = textureFormat;
         this.program = (Program)program;
         this.callback = callback == null ? DUMMY_CALLBACK : callback;
+        this.refreshVertexFormats();
     }
     
-    @Override
-    public final PipelineVertexFormat pipelineVertexFormat()
+    public void refreshVertexFormats()
+    {
+        this.pipelineVertexFormat = Configurator.lightingModel.vertexFormat(this.textureFormat);
+        this.vertexFormat = this.pipelineVertexFormat.vertexFormat;
+    }
+    
+    public PipelineVertexFormat piplineVertexFormat()
     {
         return this.pipelineVertexFormat;
     }
-
-    @Override
-    public final VertexFormat vertexFormat()
+    
+    /**
+     * Avoids a pointer chase, more concise code.
+     */
+    public VertexFormat vertexFormat()
     {
         return this.vertexFormat;
     }
+
     
     @Override
     public int getIndex()
