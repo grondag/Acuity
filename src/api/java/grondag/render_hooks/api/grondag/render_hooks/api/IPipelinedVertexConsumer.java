@@ -115,6 +115,11 @@ public interface IPipelinedVertexConsumer
     public void setShading(boolean enableDiffuse);
     
     /**
+     * Primarily intended for vanilla model support.  Will be true by default at start of each quad.
+     */
+    public void setAmbientOcclusion(boolean enableAmbientOcclusion);
+    
+    /**
      * blockLightRBGF is a lightmap in the form of an RGB color value.  The alpha (F) value, indicates how
      * much of this light is from torches and thus modified by torch flickering. Zero means no flicker.<p>
      * 
@@ -150,5 +155,5 @@ public interface IPipelinedVertexConsumer
      * Expected values are 0-255, not 0-15.
      */
     public void setSkyLightMap(int skyLightMap);
-    
+
 }

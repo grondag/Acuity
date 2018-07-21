@@ -25,14 +25,17 @@ public class PipelinedVboRenderList extends VboRenderList
                 // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
                 // We are using generic vertex attributes and don't want any of these.
                 // Disabling them here does no harm because caller will disable them anyway when we return.
-                GlStateManager.glDisableClientState(GL11.GL_VERTEX_ARRAY);
+                //
+                // Note that GL_VERTEX_ARRAY can NOT be disabled without breaking everything
+                // even though we are not using it directly in the shader. 
                 GlStateManager.glDisableClientState(GL11.GL_COLOR_ARRAY);
                 
                 OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
                 GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-                // in lieu of calling EntityRenderer.disableLightmap()
-                // UGLY: is this even needed when using shaders?
-                GlStateManager.disableTexture2D();
+                
+                // was doing  in lieu of calling EntityRenderer.disableLightmap()
+                // but caused problems and does not seem needed when using shaders
+//                GlStateManager.disableTexture2D();
                 
                 OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
                 GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);

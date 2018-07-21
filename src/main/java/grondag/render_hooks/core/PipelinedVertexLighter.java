@@ -8,6 +8,7 @@ import grondag.render_hooks.api.IPipelinedVertexConsumer;
 import grondag.render_hooks.api.IRenderPipeline;
 import grondag.render_hooks.api.RenderPipeline;
 import grondag.render_hooks.api.TextureFormat;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
@@ -27,7 +28,8 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     protected int glowFlags = 0;
     protected int blockLightMap = 0;
     protected int skyLightMap = 0;
-    protected  boolean enableDiffuse = true;
+    protected boolean enableDiffuse = true;
+    protected boolean enableAmbientOcclusion = true;
     
     protected PipelinedVertexLighter(IRenderPipeline pipeline)
     {
@@ -71,12 +73,19 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.enableDiffuse = enableDiffuse;
     }
     
+    @Override
+    public void setAmbientOcclusion(boolean enableAmbientOcclusion)
+    {
+        this.enableAmbientOcclusion = enableAmbientOcclusion && Minecraft.isAmbientOcclusionEnabled();
+    }
+    
     protected void resetForNewQuad()
     {
         this.glowFlags = 0;
         this.blockLightMap = 0;
         this.skyLightMap = 0;
         this.enableDiffuse = true;
+        this.enableAmbientOcclusion = Minecraft.isAmbientOcclusionEnabled();
     }
     
     public VertexFormat getVertexFormat()

@@ -3,7 +3,6 @@ package grondag.render_hooks.core;
 import java.nio.ByteBuffer;
 
 import grondag.render_hooks.api.IRenderPipeline;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
@@ -145,7 +144,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                 if(this.enableDiffuse)
                     shade = Math.round(LightUtil.diffuseLight(normX, normY, normZ) * 255);
                 
-                if(Minecraft.isAmbientOcclusionEnabled())
+                if(this.enableAmbientOcclusion)
                 {
                     ao = Math.round(getAo(blockInfo, lightX, lightY, lightZ) * 255);
                     blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);

@@ -23,10 +23,12 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     private @Nullable BakedQuad wrapped;
     private @Nullable BlockRenderLayer layer;
     private float[][] positions = new float[4][3];
+    protected boolean enableAmbientOcclusion = true;
     
-    public void prepare(BlockRenderLayer layer)
+    public void prepare(BlockRenderLayer layer, boolean enableAmbientOcclusion)
     {
         this.layer = layer;
+        this.enableAmbientOcclusion = enableAmbientOcclusion;
     }
     
     @Override
@@ -39,15 +41,13 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     @Override
     public void produceVertices(IPipelinedVertexConsumer vertexLighter)
     {
-        BlockInfo bi = vertexLighter.getBlockInfo();
-        
-        if(bi.getState().getLightValue(bi.getWorld(), bi.getBlockPos()) != 0)
-            vertexLighter.setEmissive(0, true);
-        
         if(!wrapped.shouldApplyDiffuseLighting())
             vertexLighter.setShading(false);
                      
-        final int blockColor = this.getColorMultiplier(bi);
+        if(!this.enableAmbientOcclusion)
+            vertexLighter.setAmbientOcclusion(false);
+
+        final int blockColor = this.getColorMultiplier(vertexLighter.getBlockInfo());
         final int[] data =  wrapped.getVertexData();
         final VertexFormat format = wrapped.getFormat();
         final float[][] pos = this.positions;

@@ -5,8 +5,6 @@ import java.util.List;
 import grondag.render_hooks.Configurator;
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelinedBakedModel;
-import grondag.render_hooks.api.PipelineManager;
-import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockFluidRenderer;
@@ -75,21 +73,24 @@ public class PipelineHooks
     {
         if(RenderHooks.isModEnabled())
         {
-            BufferBuilder target;
-            if(blockStateIn.getMaterial() == Material.LAVA)
-            {
-                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(PipelineManager.INSTANCE.lavaPipeline);
-            }
-            else
-            {
-                if(!didWarnUnhandledFluid && blockStateIn.getMaterial() != Material.WATER)
-                {
-                    RenderHooks.INSTANCE.getLog().warn("Unknown fluid sent to vanilla fluid render handler. Will render using water pipeline.");
-                    didWarnUnhandledFluid = true;
-                }
-                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(PipelineManager.INSTANCE.waterPipeline);
-            }
-            return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, target);
+            
+            //TODO: reimplements
+            return false;
+//            BufferBuilder target;
+//            if(blockStateIn.getMaterial() == Material.LAVA)
+//            {
+//                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(PipelineManager.INSTANCE.lavaPipeline);
+//            }
+//            else
+//            {
+//                if(!didWarnUnhandledFluid && blockStateIn.getMaterial() != Material.WATER)
+//                {
+//                    RenderHooks.INSTANCE.getLog().warn("Unknown fluid sent to vanilla fluid render handler. Will render using water pipeline.");
+//                    didWarnUnhandledFluid = true;
+//                }
+//                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(PipelineManager.INSTANCE.waterPipeline);
+//            }
+//            return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, target);
         }
         else
             return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
@@ -142,7 +143,8 @@ public class PipelineHooks
             final BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
             
             lighter.prepare((CompoundBufferBuilder)bufferIn, layer, worldIn, stateIn, posIn, checkSides);
-            wrapper.prepare(layer);
+            
+            wrapper.prepare(layer, modelIn.isAmbientOcclusion() && stateIn.getLightValue(worldIn, posIn) == 0);
             
             modelIn.getQuads(stateIn, null, lighter.positionRandom()).forEach(q -> wrapper.wrapAndLight(lighter, q));
             for(EnumFacing face : EnumFacing.VALUES)
