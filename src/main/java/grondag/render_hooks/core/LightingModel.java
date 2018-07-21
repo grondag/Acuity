@@ -6,6 +6,7 @@ import static grondag.render_hooks.core.PipelineVertexFormat.*;
 public enum LightingModel
 {
     CLASSIC(VANILLA_SINGLE, VANILLA_DOUBLE, VANILLA_TRIPLE),
+    
     EHNANCED(ENHANCED_SINGLE, ENHANCED_DOUBLE, ENHANCED_TRIPLE)
     {
         @Override
@@ -29,6 +30,6 @@ public enum LightingModel
 
     public CompoundVertexLighter createLighter()
     {
-        return new CompoundVertexLighter();
+        return new VanillaVertexLighter();
     }
 }

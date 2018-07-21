@@ -16,13 +16,11 @@ import net.minecraft.client.renderer.vertex.VertexFormat;
 
 public enum PipelineVertexFormat
 {
-    /**
-     * Same size as default MC format, but lightmaps a 1 byte each, giving room for 3 block lightmaps.
-     */
     VANILLA_SINGLE(new VertexFormat()
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
+            .addElement(NORMAL_AO_4UB)
             .addElement(LIGHTMAPS_4UB)),
     
     /**
@@ -33,6 +31,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
+            .addElement(NORMAL_AO_4UB)
             .addElement(LIGHTMAPS_4UB)
             .addElement(SECONDARY_RGBA_4UB)
             .addElement(SECONDARY_TEX_2F)),
@@ -45,6 +44,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
+            .addElement(NORMAL_AO_4UB)
             .addElement(LIGHTMAPS_4UB)
             .addElement(SECONDARY_RGBA_4UB)
             .addElement(SECONDARY_TEX_2F)

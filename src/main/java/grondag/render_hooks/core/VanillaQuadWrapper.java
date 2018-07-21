@@ -35,30 +35,20 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         return SIMPLE;
     }
 
-    @SuppressWarnings("null")
-    @Override
-    public int getTintIndex()
-    {
-        return wrapped.getTintIndex();
-    }
-
+    @SuppressWarnings({ "deprecation", "null" })
     @Override
     public void produceVertices(IPipelinedVertexConsumer vertexLighter)
     {
         BlockInfo bi = vertexLighter.getBlockInfo();
         
-        @SuppressWarnings("null")
-        int lightmaps = bi.getState().getLightValue(bi.getWorld(), bi.getBlockPos()) == 0
-            ? wrapped.shouldApplyDiffuseLighting()
-                    // block not lit, disable shading if quad requests
-                    ?  0 : 0x10000
-            // block is lit - disable shading and ao
-            :  0x20000;
+        if(bi.getState().getLightValue(bi.getWorld(), bi.getBlockPos()) != 0)
+            vertexLighter.setEmissive(0, true);
+        
+        if(!wrapped.shouldApplyDiffuseLighting())
+            vertexLighter.setShading(false);
                      
-        final int blockColor = blockColorMultiplier(vertexLighter);
-        @SuppressWarnings("null")
+        final int blockColor = this.getColorMultiplier(bi);
         final int[] data =  wrapped.getVertexData();
-        @SuppressWarnings("null")
         final VertexFormat format = wrapped.getFormat();
         final float[][] pos = this.positions;
         float normX = 0, normY = 1, normZ = 0;
@@ -123,10 +113,12 @@ public class VanillaQuadWrapper implements IPipelinedQuad
             {
                 LightUtil.unpack(data, unpack, format, i, lightMapIndex);
                 
-                //FIXME: This isn't right at all - needs to match what ligher expects
+                //FIXME: This isn't right at all - needs to match 0-255 lighter expects
                 // 0-255 in lower half for block/sky light
-                float max = Math.max(unpack[0], unpack[1]);
-                lightmaps |= Math.round(max * 0xFFFF) >> 2;
+                vertexLighter.setSkyLightMap(Math.round(unpack[1] * 255));
+                int blockLight = Math.round(unpack[0] * 255);
+                // pass it as white light with 100% flicker
+                vertexLighter.setBlockLightMap(blockLight | (blockLight << 8) | (blockLight << 16) |  0xFF000000);
             }
             
             int rawColor = data[(i * format.getNextOffset() + format.getColorOffset()) / 4];
@@ -135,7 +127,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
                     
             LightUtil.unpack(data, unpack, format, i, uvIndex);
             
-            vertexLighter.acceptVertex(pos[i][0], pos[i][1], pos[i][2], normX, normY, normZ, lightmaps, rawColor, unpack[0], unpack[1]);
+            vertexLighter.acceptVertex(pos[i][0], pos[i][1], pos[i][2], normX, normY, normZ, rawColor, unpack[0], unpack[1]);
         }
         
     }
@@ -150,13 +142,6 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         return (alpha << 24) | (red << 16) | (green << 8) | blue;
     }
     
-    private int blockColorMultiplier(IPipelinedVertexConsumer vertexLighter)
-    {
-        @SuppressWarnings("null")
-        final int tint = wrapped.getTintIndex();
-        return tint == -1 ? 0xFFFFFFFF : 0xFF000000 | vertexLighter.getBlockInfo().getColorMultiplier(tint); 
-    }
-
     @SuppressWarnings("null")
     @Override
     public BlockRenderLayer getRenderLayer()
@@ -170,4 +155,11 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         lighter.accept(this); 
     }
 
+    @Override
+    public int getColorMultiplier(BlockInfo blockInfo)
+    {
+        @SuppressWarnings("null")
+        final int tint = wrapped.getTintIndex();
+        return tint == -1 ? 0xFFFFFFFF : 0xFF000000 | blockInfo.getColorMultiplier(tint); 
+    }
 }

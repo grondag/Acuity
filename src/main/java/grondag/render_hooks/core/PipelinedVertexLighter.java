@@ -8,11 +8,9 @@ import grondag.render_hooks.api.IPipelinedVertexConsumer;
 import grondag.render_hooks.api.IRenderPipeline;
 import grondag.render_hooks.api.RenderPipeline;
 import grondag.render_hooks.api.TextureFormat;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
@@ -26,6 +24,11 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 {
     protected final RenderPipeline pipeline;
     
+    protected int glowFlags = 0;
+    protected int blockLightMap = 0;
+    protected int skyLightMap = 0;
+    protected  boolean enableDiffuse = true;
+    
     protected PipelinedVertexLighter(IRenderPipeline pipeline)
     {
         this.pipeline = (RenderPipeline) pipeline;
@@ -38,6 +41,44 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     
     protected abstract void reportOutput();
     
+    @Override
+    public void setEmissive(int layerIndex, boolean isEmissive)
+    {
+        if(layerIndex < 0 || layerIndex > 2)
+            throw new IndexOutOfBoundsException();
+        
+        if(isEmissive)
+            this.glowFlags |= (1 << layerIndex);
+        else
+            this.glowFlags &= ~(1 << layerIndex);
+    }   
+
+    @Override
+    public void setBlockLightMap(int blockLightRGBF)
+    {
+        this.blockLightMap = blockLightRGBF;
+    }
+
+    @Override
+    public void setSkyLightMap(int skyLightMap)
+    {
+        this.skyLightMap  = skyLightMap & 0xFF;
+    }
+
+    @Override
+    public void setShading(boolean enableDiffuse)
+    {
+        this.enableDiffuse = enableDiffuse;
+    }
+    
+    protected void resetForNewQuad()
+    {
+        this.glowFlags = 0;
+        this.blockLightMap = 0;
+        this.skyLightMap = 0;
+        this.enableDiffuse = true;
+    }
+    
     public VertexFormat getVertexFormat()
     {
         return this.pipeline.vertexFormat();
@@ -46,6 +87,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     public void acceptQuad(IPipelinedQuad quad)
     {
         this.reportOutput();
+        this.resetForNewQuad();
         quad.produceVertices(this);
     }
     
@@ -57,7 +99,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int blockGlowBits,
             int unlitColorARGB0,
             float u0,
             float v0
@@ -66,7 +107,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.SINGLE)
             throw new UnsupportedOperationException("Single-layer vertex must use single-layer texture format.");
         
-        startVertex(posX, posY, posZ, normX, normY, normZ, blockGlowBits, unlitColorARGB0, u0, v0).endVertex();
+        startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0).endVertex();
     }
     
     @Override
@@ -77,7 +118,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int blockGlowBits,
             int unlitColorARGB0,
             float u0,
             float v0,
@@ -89,8 +129,9 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.DOUBLE)
             throw new UnsupportedOperationException("Double-layer vertex must use double-layer pipeline format.");
         
-        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, blockGlowBits, unlitColorARGB0, u0, v0);
+        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
         final ByteBuffer bytes  = target.getByteBuffer();
+        
         // SECONDARY_RGBA_4UB
         putColorRGBA(bytes, unlitColorARGB1);
         
@@ -108,7 +149,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int blockGlowBits,
             int unlitColorARGB0,
             float u0,
             float v0,
@@ -123,8 +163,9 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.TRIPLE)
             throw new UnsupportedOperationException("Triple-layer vertex must use triple-layer pipeline format.");
         
-        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, blockGlowBits, unlitColorARGB0, u0, v0);
+        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
         final ByteBuffer bytes  = target.getByteBuffer();
+        
         // SECONDARY_RGBA_4UB
         putColorRGBA(bytes, unlitColorARGB1);
         
@@ -141,106 +182,23 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         target.endVertex();
     }
     
-    private static final float LIGHTMAP_TO_255 = 34815.47f;
+    protected static final float LIGHTMAP_TO_255 = 34815.47f;
+    protected static final float LIGHTMAP_TO_127 = LIGHTMAP_TO_255 * 127f / 255f;
 //    private static final float LIGHTMAP_TO_15 = 34815.47f * 15f / 255f;
     
-    private BufferBuilder startVertex(
+    protected abstract BufferBuilder startVertex(
             float posX,
             float posY,
             float posZ,
             float normX,
             float normY,
             float normZ,
-            int blockLightMaps,
             int unlitColorARGB0,
             float u0,
-            float v0)
-    {
-            
-        // TODO: make this work for multiple layers
-        final boolean wantsAo = (blockLightMaps & 0xF0000) <= 0x10000 && Minecraft.isAmbientOcclusionEnabled();
-            
-        final BlockInfo blockInfo = getBlockInfo();
-        
-        // local position is vertex, + block-state-driven shift (if any);
-        posX += blockInfo.getShx();
-        posY += blockInfo.getShy();
-        posZ += blockInfo.getShz();
-        
-        final float lightX = posX - .5f + normX * .5f;
-        final float lightY = posY - .5f + normY * .5f;
-        final float lightZ = posZ - .5f + normZ * .5f;
-        
-        final BufferBuilder target = getPipelineBuffer();
-        final ByteBuffer bytes  = target.getByteBuffer();
-        final BlockPos pos = blockInfo.getBlockPos();
-
-        // Compute light
-        int blockLight, skyLight, ao = 255;
-        
-        if(wantsAo)
-        {
-            ao = Math.round(getAo(blockInfo, lightX, lightY, lightZ) * 255f);
-            blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
-            skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
-        }
-        else
-        {
-            // what we get back is raw (0-15) sky << 20 | block << 4
-            final int packedLight =  this.calcPackedLight(blockInfo, normX, normY, normZ, lightX, lightY, lightZ);
-            blockLight = packedLight & 0xFF;
-            skyLight = (packedLight >> 16) & 0xFF;
-        }
-        
-        if(blockLightMaps != 0)
-        {
-            blockLight = Math.max(blockLight, blockLightMaps & 0xFF);
-            blockLight = Math.max(blockLight, (blockLightMaps >> 8) & 0xFF);
-        }
-        
-        bytes.position(target.getVertexCount() * target.getVertexFormat().getNextOffset());
-
-        // POSITION_3F
-        bytes.putFloat((float) (target.xOffset + pos.getX() + posX));
-        bytes.putFloat((float) (target.yOffset + pos.getY() + posY));
-        bytes.putFloat((float) (target.zOffset + pos.getZ() + posZ));
-        
-        // BASE_RGBA_4UB
-        putColorRGBA(bytes, unlitColorARGB0);
-        
-        // BASE_TEX_2F
-        bytes.putFloat(u0);
-        bytes.putFloat(v0);
-        
-        //TODO: remove
-        if( Math.abs((normX * normX + normY * normY + normZ * normZ) - 1) > 0.01f)
-            System.out.println("bad input normal");
-        
-        
-        // NORMAL_3UB
-        bytes.put((byte) Math.round(normX * 127 + 127));
-        bytes.put((byte) Math.round(normY * 127 + 127));
-        bytes.put((byte) Math.round(normZ * 127 + 127));
-        
-        // AO 1UB
-        bytes.put((byte) ao);
-        
-        
-        //LIGHTMAP_AND_GLOWS_4UB
-        bytes.put((byte) blockLight);
-        bytes.put((byte) skyLight);
-        
-        // TODO: remove
-//        if(blockLightMaps != 0)
-//            System.out.println("bpp");
-        
-        bytes.put((byte) ((blockLightMaps >> 16) & 0xF)); 
-        bytes.put((byte) 0);
-        
-        return target;
-    }
+            float v0);
     
-    private static void putColorRGBA(ByteBuffer bytes, int colorARGB)
+    
+    protected static void putColorRGBA(ByteBuffer bytes, int colorARGB)
     {
         byte alpha = (byte)(colorARGB >> 24 & 0xFF);
         byte red = (byte)(colorARGB >> 16 & 0xFF);
@@ -405,5 +363,17 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 
         a = MathHelper.clamp(a, 0, 1);
         return a;
+    }
+
+    /**
+     * Multiplies RGB by given factor and returns with alpha unmodified.
+     */
+    protected static int shadeColor(int colorRGBA, float shade)
+    {
+        int red = Math.round(((colorRGBA >> 16) & 0xFF) * shade);
+        int green = Math.round(((colorRGBA >> 8) & 0xFF) * shade);
+        int blue = Math.round((colorRGBA & 0xFF) * shade);
+    
+        return (colorRGBA & 0xFF000000) | (red << 16) | (green << 8) | blue;
     }
 }

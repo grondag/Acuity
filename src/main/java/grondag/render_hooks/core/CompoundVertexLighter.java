@@ -1,66 +1,36 @@
 package grondag.render_hooks.core;
 
-import grondag.render_hooks.api.IPipelinedQuad;
-import grondag.render_hooks.api.IPipelinedQuadConsumer;
-
 import javax.annotation.Nullable;
 
 import grondag.render_hooks.api.IPipelineManager;
+import grondag.render_hooks.api.IPipelinedQuad;
+import grondag.render_hooks.api.IPipelinedQuadConsumer;
 import grondag.render_hooks.api.IRenderPipeline;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public class CompoundVertexLighter implements IPipelinedQuadConsumer
+public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
 {
     protected final LazyBlockInfo blockInfo;
     
     private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[IPipelineManager.MAX_PIPELINES];
 
-    private @Nullable BlockRenderLayer renderLayer;
-    private @Nullable CompoundBufferBuilder target;
-    private boolean didOutput;
+    protected @Nullable BlockRenderLayer renderLayer;
+    protected @Nullable CompoundBufferBuilder target;
+    protected boolean didOutput;
 
     
-    private @Nullable IBlockState blockState;
-    private long positionRandom = Long.MIN_VALUE;
-    private int sideFlags;
-    
-    private class ChildLighter extends PipelinedVertexLighter
-    {
-        protected ChildLighter(IRenderPipeline pipeline)
-        {
-            super(pipeline);
-        }
-
-        @Override
-        public final BlockInfo getBlockInfo()
-        {
-            return blockInfo;
-        }
-        
-        @SuppressWarnings("null")
-        @Override
-        public final BufferBuilder getPipelineBuffer()
-        {
-            return target.getPipelineBuffer(this.pipeline);
-        }
-        
-        @Override
-        protected void reportOutput()
-        {
-            didOutput = true;
-        }
-    }
+    protected @Nullable IBlockState blockState;
+    protected long positionRandom = Long.MIN_VALUE;
+    protected int sideFlags;
     
     public void prepare(CompoundBufferBuilder target, BlockRenderLayer layer, IBlockAccess world, IBlockState blockState, BlockPos pos, boolean checkSides)
     {
@@ -104,13 +74,15 @@ public class CompoundVertexLighter implements IPipelinedQuadConsumer
     {
         this.blockInfo = new LazyBlockInfo(Minecraft.getMinecraft().getBlockColors());
     }
+    
+    protected abstract PipelinedVertexLighter createChildLighter(IRenderPipeline pipeline);
 
     private PipelinedVertexLighter getPipelineLighter(IRenderPipeline pipeline)
     {
         PipelinedVertexLighter result = lighters[pipeline.getIndex()];
         if(result == null)
         {
-            result = new ChildLighter(pipeline);
+            result = createChildLighter(pipeline);
             lighters[pipeline.getIndex()] = result;
         }
         return result;

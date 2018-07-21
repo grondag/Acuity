@@ -36,20 +36,31 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     public CompoundBufferBuilder(int bufferSizeIn)
     {
-        super(bufferSizeIn);
+        super(limitBufferSize(bufferSizeIn));
+    }
+    
+    // the RegionRenderCacheBuilder instantiates this with pretty large sizes
+    // but in most cases the super instance won't be used when the mod is enabled
+    // so don't honor these when mod is enabled to reduce memory footprint
+    static final int limitBufferSize(int bufferSizeIn)
+    {
+        if(RenderHooks.isModEnabled())
+        {
+            if(bufferSizeIn == 2097152 || bufferSizeIn == 131072 || bufferSizeIn == 262144)
+            {
+                return 2800;
+            }
+        }
+        return bufferSizeIn;
     }
     
     @Override
     public void begin(int glMode, VertexFormat format)
     {
-        // UGLY:  means this class can only be used for chunk rebuilds
-        // one alternative would be to honor input format but then create separate buffers - wasteful
-     
-        super.begin(glMode, RenderHooks.isModEnabled() ? PipelineVertexFormat.VANILLA_SINGLE.vertexFormat : format);
+        super.begin(glMode, format);
         pipelineList.clear();
         this.totalBytes = 0;
         System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, IPipelineManager.MAX_PIPELINES);
-        pipelineArray[IPipelineManager.VANILLA_MC_PIPELINE_INDEX] = this;
     }
     
     public BufferBuilder getPipelineBuffer(RenderPipeline pipeline)
@@ -76,7 +87,9 @@ public class CompoundBufferBuilder extends BufferBuilder
         }
         else
         {
-            result = new BufferBuilder(1024);
+            // UGLY: this size may be too small and buffer growth logic 
+            // grows only in multiples of 2MB - needs profiling
+            result = new BufferBuilder(512000);
             childBuffers.add(result);
         }
         result.begin(GL11.GL_QUADS, pipeline.vertexFormat());
@@ -88,7 +101,6 @@ public class CompoundBufferBuilder extends BufferBuilder
     public void finishDrawing()
     {
         super.finishDrawing();
-        this.totalBytes = this.byteBuffer.limit();
         
         if(!pipelineList.isEmpty())
             pipelineList.forEach(p -> 
@@ -102,17 +114,14 @@ public class CompoundBufferBuilder extends BufferBuilder
     public void uploadTo(CompoundVertexBuffer target)
     {
         target.prepareForUpload(this.totalBytes);
-//        if(this.vertexCount > 0)
-//        {
-//            target.uploadBuffer(VANILLA_PIPELINE, this.getByteBuffer());
-//            super.reset();
-//        }
         if(!pipelineList.isEmpty())
             pipelineList.forEach(p -> target.uploadBuffer(p, pipelineArray[p.getIndex()].getByteBuffer()));
         
         target.completeUpload();
     }
 
+    
+    //TODO: for display lists need to refactor for new design where the super instance isn't used
     public void uploadTo(CompoundListedRenderChunk target, int vanillaList)
     {
         if(this.vertexCount == 0 && pipelineList.isEmpty())

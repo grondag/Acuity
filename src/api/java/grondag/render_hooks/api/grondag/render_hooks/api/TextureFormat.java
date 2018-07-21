@@ -4,5 +4,10 @@ public enum TextureFormat
 {
     SINGLE,
     DOUBLE,
-    TRIPLE
+    TRIPLE;
+
+    public int layerCount()
+    {
+        return this.ordinal() + 1;
+    }
 }

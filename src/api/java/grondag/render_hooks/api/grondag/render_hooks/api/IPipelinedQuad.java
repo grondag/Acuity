@@ -11,7 +11,7 @@ public interface IPipelinedQuad
 {
     public IRenderPipeline getPipeline();
 
-    public int getTintIndex();
+    public int getColorMultiplier(BlockInfo blockInfo);
     
     /**
      * Quad must call {@link IPipelinedVertexConsumer#acceptVertex(IPipelinedVertex)} with
