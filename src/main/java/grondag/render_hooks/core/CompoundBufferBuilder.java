@@ -1,6 +1,13 @@
 package grondag.render_hooks.core;
 
+import java.nio.IntBuffer;
+import java.util.Arrays;
+import java.util.BitSet;
+import java.util.Comparator;
+
 import org.lwjgl.opengl.GL11;
+
+import com.google.common.primitives.Floats;
 
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelineManager;
@@ -137,5 +144,75 @@ public class CompoundBufferBuilder extends BufferBuilder
             pipelineList.forEach(p -> target.uploadBuffer(p, pipelineArray[p.getIndex()]));
         
         target.completeUpload();
+    }
+    
+    @Override
+    public void sortVertexData(float p_181674_1_, float p_181674_2_, float p_181674_3_)
+    {
+        int quadCount = this.vertexCount / 4;
+        
+        final float[] perQuadDistance = new float[quadCount];
+
+        for (int j = 0; j < quadCount; ++j)
+        {
+            perQuadDistance[j] = getDistanceSq(this.rawFloatBuffer, (float)((double)p_181674_1_ + this.xOffset), (float)((double)p_181674_2_ + this.yOffset), (float)((double)p_181674_3_ + this.zOffset), this.vertexFormat.getIntegerSize(), j * this.vertexFormat.getNextOffset());
+        }
+
+        // assign an index to each quad
+        // is a boxed type to support comparator?
+        Integer[] quadIndexes = new Integer[quadCount];
+
+        for (int k = 0; k < quadIndexes.length; ++k)
+        {
+            quadIndexes[k] = k;
+        }
+
+        // sort the indexes by distance
+        Arrays.sort(quadIndexes, new Comparator<Integer>()
+        {
+            public int compare(Integer p_compare_1_, Integer p_compare_2_)
+            {
+                return Floats.compare(perQuadDistance[p_compare_2_.intValue()], perQuadDistance[p_compare_1_.intValue()]);
+            }
+        });
+        
+        BitSet bitset = new BitSet();
+        int perVertexStride = this.vertexFormat.getNextOffset();
+        
+        // because stride is bytes and this is an int, holds all data for one quad
+        int[] quadDataToMove = new int[perVertexStride];
+
+        for (int targetIndex = bitset.nextClearBit(0); targetIndex < quadIndexes.length; targetIndex = bitset.nextClearBit(targetIndex + 1))
+        {
+            int sourceIndex = quadIndexes[targetIndex].intValue();
+
+            if (sourceIndex != targetIndex)
+            {
+                this.rawIntBuffer.limit(sourceIndex * perVertexStride + perVertexStride);
+                this.rawIntBuffer.position(sourceIndex * perVertexStride);
+                this.rawIntBuffer.get(quadDataToMove);
+                int k1 = sourceIndex;
+
+                for (int l1 = quadIndexes[sourceIndex].intValue(); k1 != targetIndex; l1 = quadIndexes[l1].intValue())
+                {
+                    this.rawIntBuffer.limit(l1 * perVertexStride + perVertexStride);
+                    this.rawIntBuffer.position(l1 * perVertexStride);
+                    IntBuffer intbuffer = this.rawIntBuffer.slice();
+                    this.rawIntBuffer.limit(k1 * perVertexStride + perVertexStride);
+                    this.rawIntBuffer.position(k1 * perVertexStride);
+                    this.rawIntBuffer.put(intbuffer);
+                    bitset.set(k1);
+                    k1 = l1;
+                }
+
+                this.rawIntBuffer.limit(targetIndex * perVertexStride + perVertexStride);
+                this.rawIntBuffer.position(targetIndex * perVertexStride);
+                this.rawIntBuffer.put(quadDataToMove);
+            }
+
+            bitset.set(targetIndex);
+        }
+        this.rawIntBuffer.limit(this.rawIntBuffer.capacity());
+        this.rawIntBuffer.position(this.getBufferSize());
     }
 }
