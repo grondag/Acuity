@@ -27,18 +27,18 @@ public class CompoundBufferBuilder extends BufferBuilder
     /**
      * Cache all instantiated buffers for reuse. Does not include this instance<p>
      */
-    private ObjectArrayList<VertexCollector> collectors = new ObjectArrayList<>();
+    private final ObjectArrayList<VertexCollector> collectors = new ObjectArrayList<>();
     
     /**
      * Track pipelines in use as list for fast upload 
      * and to know if we ned to allocate more.  Never includes the vanilla pipeline.
      */
-    private ObjectArrayList<RenderPipeline> pipelineList = new ObjectArrayList<>();
+    private final ObjectArrayList<RenderPipeline> pipelineList = new ObjectArrayList<>();
     
     /**
      * Fast lookup of buffers by pipeline index.  Element 0 will always be this.
      */
-    VertexCollector[] pipelineArray = new VertexCollector[IPipelineManager.MAX_PIPELINES];
+    private final VertexCollector[] pipelineArray = new VertexCollector[IPipelineManager.MAX_PIPELINES];
     
     /**
      * Holds vertex data ready for upload if we have it.
@@ -52,6 +52,18 @@ public class CompoundBufferBuilder extends BufferBuilder
      * passed on to rendering to control vertex draw batches.
      */
     @Nullable VertexPackingList uploadPackingList = null;
+    
+    private class CompoundState extends State
+    {
+        private ObjectArrayList<RenderPipeline> pipelineList;
+        private VertexCollector[] pipelineArray = new VertexCollector[IPipelineManager.MAX_PIPELINES];
+        
+        @SuppressWarnings("null")
+        public CompoundState(int[] buffer, VertexFormat format)
+        {
+            super(buffer, format);
+        }
+    }
     
     public CompoundBufferBuilder(int bufferSizeIn)
     {
@@ -74,13 +86,47 @@ public class CompoundBufferBuilder extends BufferBuilder
     }
     
     @Override
-    public void begin(int glMode, VertexFormat format)
+    public State getVertexState()
     {
-        super.begin(glMode, format);
         if(RenderHooks.isModEnabled())
         {
-            pipelineList.clear();
+            State inner = super.getVertexState();
+            CompoundState result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat());
+            result.pipelineList = this.pipelineList.clone();
+            pipelineList.forEach(p -> 
+            {
+                final int i = p.getIndex();
+                result.pipelineArray[i] = this.pipelineArray[i].clone();
+            });
+            return result;
+        }
+        else
+            return super.getVertexState();
+    }
+
+    @Override
+    public void setVertexState(State state)
+    {
+        super.setVertexState(state);
+        if(RenderHooks.isModEnabled())
+        {
+            CompoundState compState = (CompoundState)state;
+            this.pipelineList.clear();
+            this.pipelineList.addAll(compState.pipelineList);
+            System.arraycopy(compState.pipelineArray, 0, this.pipelineArray, 0, this.pipelineArray.length);
+        }
+    }
+
+    @Override
+    public void reset()
+    {
+        super.reset();
+        if(RenderHooks.isModEnabled())
+        {
             System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, IPipelineManager.MAX_PIPELINES);
+            this.pipelineList.clear();
+            this.uploadBuffer = null;
+            this.uploadPackingList = null;
         }
     }
     
@@ -181,7 +227,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         this.uploadBuffer = null;
         this.uploadPackingList = null;
     }
-    
+
     @Deprecated
     public void uploadTo(CompoundListedRenderChunk target, int vanillaList)
     {

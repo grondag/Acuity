@@ -1,5 +1,7 @@
 package grondag.render_hooks.core;
 
+import net.minecraft.util.math.MathHelper;
+
 public class VertexCollector
 {
     private int[] data;
@@ -12,7 +14,7 @@ public class VertexCollector
     
     public VertexCollector(int initialCapacity)
     {
-        data = new int[initialCapacity];
+        data = new int[MathHelper.smallestEncompassingPowerOfTwo(initialCapacity)];
     }
     
     public int size()
@@ -28,6 +30,15 @@ public class VertexCollector
     public void clear()
     {
         this.size = 0;
+    }
+    
+    @Override
+    public VertexCollector clone()
+    {
+        VertexCollector result = new VertexCollector(this.data.length);
+        System.arraycopy(this.data, 0, result.data, 0, this.size);
+        result.size = this.size;
+        return result;
     }
     
     public final void add(final int i)
