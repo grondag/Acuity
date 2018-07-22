@@ -2,10 +2,11 @@ package grondag.render_hooks.core;
 
 import java.nio.ByteBuffer;
 
+import javax.annotation.Nullable;
+
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
-import grondag.render_hooks.api.IPipelineManager;
 import grondag.render_hooks.api.RenderPipeline;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -24,50 +25,20 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundVertexBuffer extends VertexBuffer
 {
-    private int slotsInUse = 0;
-    private int nextStartIndex = 0;
-    private int currentAllocationBytes = 0;
     
-    private RenderPipeline[] pipelines = new RenderPipeline[IPipelineManager.MAX_PIPELINES];
-    private int[] pipelineBufferOffset = new int[IPipelineManager.MAX_PIPELINES];
-    private int[] pipelineCounts = new int[IPipelineManager.MAX_PIPELINES];
+    private @Nullable VertexPackingList vertexPackingList;
     
     public CompoundVertexBuffer(VertexFormat vertexFormatIn)
     {
         super(vertexFormatIn);
     }
 
-    public void prepareForUpload(int totalBytes)
+    public void upload(ByteBuffer buffer, VertexPackingList packing)
     {
-        this.slotsInUse = 0;
-        this.nextStartIndex = 0;
+        this.vertexPackingList = packing;
+        buffer.position(0);
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        if(totalBytes > this.currentAllocationBytes)
-        {
-            OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, totalBytes, GL15.GL_STATIC_DRAW);
-            this.currentAllocationBytes = totalBytes;
-        }
-    }
-    
-    public void uploadBuffer(RenderPipeline pipeline, ByteBuffer data)
-    {
-        this.pipelines[slotsInUse] = pipeline;
-        this.pipelineBufferOffset[slotsInUse] = this.nextStartIndex;
-        pipelineCounts[slotsInUse] = data.limit() / pipeline.vertexFormat().getNextOffset();
-        slotsInUse++;
-        
-        // shouldn't matter normally but if have partial ASM failure could prevent a break
-        if(pipeline.getIndex() == IPipelineManager.VANILLA_MC_PIPELINE_INDEX)
-            this.count = pipelineCounts[0];
-
-        OpenGlHelperExt.glBufferSubData(OpenGlHelper.GL_ARRAY_BUFFER, this.nextStartIndex, data);
-        
-        this.nextStartIndex += data.limit();
-        
-    }
-    
-    public void completeUpload()
-    {
+        OpenGlHelper.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, 0);
     }
     
@@ -75,8 +46,6 @@ public class CompoundVertexBuffer extends VertexBuffer
     public void deleteGlBuffers()
     {
         super.deleteGlBuffers();
-        this.slotsInUse = 0;
-        this.nextStartIndex = 0;
     }
 
 //    static int totalSlots;
@@ -88,7 +57,8 @@ public class CompoundVertexBuffer extends VertexBuffer
      */
     public void renderChunk()
     {
-        if(this.slotsInUse == 0) return;
+        final VertexPackingList packing = this.vertexPackingList;
+        if(packing == null || packing.size() == 0) return;
         
 //        totalSlots += this.slotsInUse;
 //        if(++runCount >=  2000)
@@ -100,15 +70,13 @@ public class CompoundVertexBuffer extends VertexBuffer
         
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         
-        for(int i = 0; i < this.slotsInUse; i++)
+        packing.forEach((RenderPipeline p, int offset, int vertexCount) ->
         {
-            final RenderPipeline p  = this.pipelines[i];
-            final int offset = this.pipelineBufferOffset[i];
             GlStateManager.glVertexPointer(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), p.piplineVertexFormat().stride, offset);
             p.piplineVertexFormat().setupAttributes(offset);
             p.preDraw();
-            GlStateManager.glDrawArrays(GL11.GL_QUADS, offset, this.pipelineCounts[i]);
+            GlStateManager.glDrawArrays(GL11.GL_QUADS, offset, vertexCount);
             p.postDraw();
-        }
+        });
     }
 }

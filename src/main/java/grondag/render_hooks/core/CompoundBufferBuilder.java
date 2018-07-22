@@ -7,13 +7,12 @@ import java.util.Comparator;
 
 import javax.annotation.Nullable;
 
-import org.lwjgl.opengl.GL11;
-
 import com.google.common.primitives.Floats;
 
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelineManager;
 import grondag.render_hooks.api.RenderPipeline;
+import grondag.render_hooks.core.BufferStore.ExpandableByteBuffer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -28,7 +27,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     /**
      * Cache all instantiated buffers for reuse. Does not include this instance<p>
      */
-    private ObjectArrayList<VertexCollector> childBuffers = new ObjectArrayList<>();
+    private ObjectArrayList<VertexCollector> collectors = new ObjectArrayList<>();
     
     /**
      * Track pipelines in use as list for fast upload 
@@ -41,9 +40,18 @@ public class CompoundBufferBuilder extends BufferBuilder
      */
     VertexCollector[] pipelineArray = new VertexCollector[IPipelineManager.MAX_PIPELINES];
     
-    @Nullable BufferBuilder uploadBuffer  = null;
+    /**
+     * Holds vertex data ready for upload if we have it.
+     * Obtained from BufferStore and released back to store when uploads are complete.
+     */
+    @Nullable ExpandableByteBuffer uploadBuffer  = null;
     
-    private int totalBytes = 0;
+    /**
+     * Describes vertex packing in {@link #uploadBuffer}.
+     * Must be a new instance each time because will be
+     * passed on to rendering to control vertex draw batches.
+     */
+    @Nullable VertexPackingList uploadPackingList = null;
     
     public CompoundBufferBuilder(int bufferSizeIn)
     {
@@ -69,37 +77,39 @@ public class CompoundBufferBuilder extends BufferBuilder
     public void begin(int glMode, VertexFormat format)
     {
         super.begin(glMode, format);
-        pipelineList.clear();
-        this.totalBytes = 0;
-        System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, IPipelineManager.MAX_PIPELINES);
+        if(RenderHooks.isModEnabled())
+        {
+            pipelineList.clear();
+            System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, IPipelineManager.MAX_PIPELINES);
+        }
     }
     
-    public VertexCollector getPipelineBuffer(RenderPipeline pipeline)
+    public VertexCollector getVertexCollector(RenderPipeline pipeline)
     {
         final int i = pipeline.getIndex();
         VertexCollector result = pipelineArray[i];
         if(result == null)
         {
-            result = getInitializedBuffer(pipeline);
+            result = getInitializedCollector(pipeline);
             pipelineArray[i] = result;
             pipelineList.add(pipeline);
         }
         return result;
     }
     
-    private VertexCollector getInitializedBuffer(RenderPipeline pipeline)
+    private VertexCollector getInitializedCollector(RenderPipeline pipeline)
     {
         VertexCollector result;
         
         final int count = pipelineList.size();
-        if(count < childBuffers.size())
+        if(count < collectors.size())
         {
-            result = childBuffers.get(count);
+            result = collectors.get(count);
         }
         else
         {
             result = new VertexCollector(1024);
-            childBuffers.add(result);
+            collectors.add(result);
         }
         result.clear();
         return result;
@@ -110,62 +120,86 @@ public class CompoundBufferBuilder extends BufferBuilder
     {
         super.finishDrawing();
         
-        if(!pipelineList.isEmpty())
-            pipelineList.forEach(p -> 
+        if(RenderHooks.isModEnabled())
+        {
+            
+            final VertexPackingList packing = new VertexPackingList();
+            int byteCount = 0;
+            if(!pipelineList.isEmpty())
             {
-                final VertexCollector b = pipelineArray[p.getIndex()];
-                this.totalBytes += b.size() * 4;
+                for(RenderPipeline p : pipelineList)
+                {
+                    final VertexCollector b = pipelineArray[p.getIndex()];
+                    final int byteSize = b.size() * 4;
+                    final int vertexCount = byteSize / p.piplineVertexFormat().stride;
+                    if(byteSize != 0)
+                    {
+                        packing.addPacking(p, byteCount, vertexCount);
+                        byteCount += byteSize;
+                    }
+                }
+            }
+            
+            final ExpandableByteBuffer buffer = BufferStore.claim();
+            buffer.expand(byteCount);
+            final IntBuffer intBuffer = buffer.intBuffer();
+            packing.forEach((RenderPipeline p, int byteOffset, int vertexCount) ->
+            {
+                VertexCollector data = pipelineArray[p.getIndex()];
+                intBuffer.position(byteOffset / 4);
+                intBuffer.put(data.rawData(), 0, data.size());
             });
+            
+            this.uploadPackingList = packing;
+            this.uploadBuffer = buffer;
+            this.uploadBuffer.byteBuffer().limit(byteCount);
+        }
     }
 
-    private BufferBuilder populateUploadBuffer(VertexCollector fromData, RenderPipeline pipeline)
-    {
-        final BufferBuilder b = this.uploadBuffer;
-        final VertexFormat format = pipeline.vertexFormat();
-        b.reset();
-        b.begin(GL11.GL_QUADS, format);
-        b.growBuffer(fromData.size() * 4 + format.getNextOffset());
-        b.rawIntBuffer.position(0);
-        b.rawIntBuffer.put(fromData.rawData(), 0, fromData.size());
-        b.vertexCount += fromData.size() / format.getIntegerSize();
-        b.finishDrawing();
-        return b;
-    }
-    
     public void uploadTo(CompoundVertexBuffer target)
     {   
-        this.uploadBuffer = BufferStore.claim();
-        target.prepareForUpload(this.totalBytes);
-        if(!pipelineList.isEmpty())
-            pipelineList.forEach(p -> target.uploadBuffer(p, populateUploadBuffer(pipelineArray[p.getIndex()], p).getByteBuffer()));
-        
-        target.completeUpload();
-        BufferStore.release(this.uploadBuffer);
+        final ExpandableByteBuffer uploadBuffer = this.uploadBuffer;
+        final VertexPackingList packingList = this.uploadPackingList;
+        if(uploadBuffer != null)
+        {
+            if(packingList != null)
+                target.upload(this.uploadBuffer.byteBuffer(), this.uploadPackingList);
+            
+            BufferStore.release(this.uploadBuffer);
+        }
         this.uploadBuffer = null;
+        this.uploadPackingList = null;
     }
-
     
     //TODO: for display lists need to refactor for new design where the super instance isn't used
     @Deprecated
     public void uploadTo(CompoundListedRenderChunk target, int vanillaList)
     {
-        if(this.vertexCount == 0 && pipelineList.isEmpty())
-            return;
-        
-        target.prepareForUpload(vanillaList);
-//        if(this.vertexCount > 0)
-//        {
-//            target.uploadBuffer(VANILLA_PIPELINE, this);
-//            super.reset();
-//        }
-        if(!pipelineList.isEmpty())
-            pipelineList.forEach(p -> target.uploadBuffer(p, populateUploadBuffer(pipelineArray[p.getIndex()], p)));
-        
-        target.completeUpload();
+//        if(this.vertexCount == 0 && pipelineList.isEmpty())
+//            return;
+//        
+//        target.prepareForUpload(vanillaList);
+////        if(this.vertexCount > 0)
+////        {
+////            target.uploadBuffer(VANILLA_PIPELINE, this);
+////            super.reset();
+////        }
+//        if(!pipelineList.isEmpty())
+//            pipelineList.forEach(p -> target.uploadBuffer(p, populateUploadBuffer(pipelineArray[p.getIndex()], p)));
+//        
+//        target.completeUpload();
     }
     
     @Override
-    public void sortVertexData(float p_181674_1_, float p_181674_2_, float p_181674_3_)
+    public void sortVertexData(float x, float y, float z)
+    {
+        if(RenderHooks.isModEnabled())
+            sortCompondVertexData(x, y, z);
+        else
+            super.sortVertexData(x, y, z);
+    }
+    
+    private void sortCompondVertexData(float p_181674_1_, float p_181674_2_, float p_181674_3_)
     {
         int quadCount = this.vertexCount / 4;
         

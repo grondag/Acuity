@@ -32,7 +32,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         @Override
         public final VertexCollector getPipelineBuffer()
         {
-            return target.getPipelineBuffer(this.pipeline);
+            return target.getVertexCollector(this.pipeline);
         }
         
         @Override
