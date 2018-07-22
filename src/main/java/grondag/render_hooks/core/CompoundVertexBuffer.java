@@ -18,7 +18,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 /**
  * Multi-pipeline version of VertexBuffer.<p>
  * 
- * RenderChunk keeps a separate VerteXBuffer for each BlockRenderLayer,
+ * RenderChunk keeps a separate VertexBuffer for each BlockRenderLayer,
  * so we can assume that all pipeline IDs are for a single layer.
  */
 @SideOnly(Side.CLIENT)
@@ -79,6 +79,8 @@ public class CompoundVertexBuffer extends VertexBuffer
         this.nextStartIndex = 0;
     }
 
+//    static int totalSlots;
+//    static int runCount;
     /**
      * Renders all uploaded vbos.
      * Layer is passed in because was easier (ASM-wise) to not track this here.
@@ -86,11 +88,23 @@ public class CompoundVertexBuffer extends VertexBuffer
      */
     public void renderChunk()
     {
+        if(this.slotsInUse == 0) return;
+        
+//        totalSlots += this.slotsInUse;
+//        if(++runCount >=  2000)
+//        {
+//            RenderHooks.INSTANCE.getLog().info("Average slots per renderChunk() = " + (float) totalSlots / runCount);
+//            totalSlots = 0;
+//            runCount = 0;
+//        }
+        
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+        
         for(int i = 0; i < this.slotsInUse; i++)
         {
             final RenderPipeline p  = this.pipelines[i];
             final int offset = this.pipelineBufferOffset[i];
+            GlStateManager.glVertexPointer(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), p.piplineVertexFormat().stride, offset);
             p.piplineVertexFormat().setupAttributes(offset);
             p.preDraw();
             GlStateManager.glDrawArrays(GL11.GL_QUADS, offset, this.pipelineCounts[i]);

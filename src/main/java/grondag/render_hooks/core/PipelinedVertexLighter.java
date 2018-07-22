@@ -60,6 +60,18 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     {
         this.blockLightMap = blockLightRGBF;
     }
+    
+    @Override
+    public void setBlockLightMap(int red, int green, int blue, int flicker)
+    {
+        this.setBlockLightMap(red | (green << 8) | (blue << 16) |  (flicker << 24));
+    }
+    
+    @Override
+    public void setBlockLightMap(float red, float green, float blue, float flicker)
+    {
+        this.setBlockLightMap(Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255), Math.round(flicker * 255));
+    }
 
     @Override
     public void setSkyLightMap(int skyLightMap)

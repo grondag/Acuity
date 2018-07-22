@@ -14,10 +14,13 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class PipelinedRenderList extends RenderList
 {
     private final boolean isModEnabled = RenderHooks.isModEnabled();
+    private long totalNanos;
+    private int runCount;
     
     @Override
     public void renderChunkLayer(BlockRenderLayer layer)
     {
+        long start = System.nanoTime();
         if(isModEnabled)
         {
             if (!this.renderChunks.isEmpty() && this.initialized)
@@ -40,5 +43,13 @@ public class PipelinedRenderList extends RenderList
         }
         else 
             super.renderChunkLayer(layer);
+        
+        totalNanos += (System.nanoTime() - start);
+        if(++runCount >= 6000)
+        {
+            RenderHooks.INSTANCE.getLog().info("Nanoseconds per renderChunkLayer: " + totalNanos / runCount);
+            totalNanos = 0;
+            runCount = 0;
+        }
     }
 }

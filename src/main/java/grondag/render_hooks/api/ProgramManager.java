@@ -39,16 +39,14 @@ public final class ProgramManager implements IProgramManager
                 PipelineShaderManager.INSTANCE.getDefaultFragmentShader(TextureFormat.TRIPLE),
                 true).finish();
         
-        // TODO: create water shader
         this.waterProgram = createProgram(
-                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/passthru.vert", TextureFormat.SINGLE),
-                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/passthru.frag", TextureFormat.SINGLE),
+                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/water.vert", TextureFormat.SINGLE),
+                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/water.frag", TextureFormat.SINGLE),
                 true).finish();
         
-        // TODO: create lava shader
         this.lavaProgram = createProgram(
-                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/passthru.vert", TextureFormat.SINGLE),
-                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/passthru.frag", TextureFormat.SINGLE),
+                PipelineShaderManager.INSTANCE.getOrCreateVertexShader("/assets/render_hooks/shader/lava.vert", TextureFormat.SINGLE),
+                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader("/assets/render_hooks/shader/lava.frag", TextureFormat.SINGLE),
                 true).finish();
     }
     

@@ -147,7 +147,11 @@ public interface IPipelinedVertexConsumer
      * causing it to always be full white brightness (in lighting models that use vertex lightmaps.)
      * 
      */
-    public void setBlockLightMap(int blockLightRGBF);
+    public void setBlockLightMap(int blockLightRBGF);
+    
+    public void setBlockLightMap(int red, int green, int blue, int flicker);
+    
+    public void setBlockLightMap(float red, float green, float blue, float flicker);
     
     /**
      * Deprecation: only intended for vanilla model compatibility and only honored in vanilla lighting model.<p>

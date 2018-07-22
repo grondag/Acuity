@@ -118,7 +118,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
                 vertexLighter.setSkyLightMap(Math.round(unpack[1] * 255));
                 int blockLight = Math.round(unpack[0] * 255);
                 // pass it as white light with 100% flicker
-                vertexLighter.setBlockLightMap(blockLight | (blockLight << 8) | (blockLight << 16) |  0xFF000000);
+                vertexLighter.setBlockLightMap(blockLight, blockLight, blockLight, 0xFF);
             }
             
             int rawColor = data[(i * format.getNextOffset() + format.getColorOffset()) / 4];
@@ -155,7 +155,6 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         lighter.accept(this); 
     }
 
-    @Override
     public int getColorMultiplier(BlockInfo blockInfo)
     {
         @SuppressWarnings("null")

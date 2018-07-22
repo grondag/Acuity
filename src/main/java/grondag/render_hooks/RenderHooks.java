@@ -10,6 +10,7 @@ import org.apache.logging.log4j.Logger;
 
 import grondag.render_hooks.api.IRenderHookRuntime;
 import grondag.render_hooks.api.RenderHookRuntime;
+import grondag.render_hooks.core.OpenGlHelperExt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.resources.IResourceManager;
@@ -95,6 +96,9 @@ public class RenderHooks
 	@EventHandler
 	public void postInit(FMLPostInitializationEvent event)
 	{
+        // try to get faster access to GL calls
+        OpenGlHelperExt.initialize();
+        
         IResourceManager rm = Minecraft.getMinecraft().getResourceManager();
         if(rm instanceof IReloadableResourceManager)
         {

@@ -4,6 +4,7 @@
 uniform sampler2D u_textures;
 uniform sampler2D u_lightmap;
 
+attribute vec3 in_position;
 attribute vec4 in_color_0;
 attribute vec2 in_uv_0;
 attribute vec4 in_normal_ao;
@@ -23,7 +24,8 @@ varying vec2 v_texcoord;
 
 void main()
 {
-    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    gl_Position = gl_ModelViewProjectionMatrix * vec4(in_position, 1.0);
+//    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
 
     // the lightmap texture matrix is scaled to 1/256 and then offset + 8
     // it is also clamped to repeat and has linear min/mag
@@ -34,7 +36,10 @@ void main()
     float glow = fract(in_lightmaps.a * 0.5) * 2.0;
     vec3 shade = max(lightColor.rgb * ao * diffuse, vec3(glow));
 
+//    vec3 shade = vec3(1.0);
     v_color = vec4(in_color_0.rgb * shade, in_color_0.a);
 
+//    if(gl_Vertex.w == 1.0)
+//    	v_color = vec4(0.0, 1.0, 0.0, 1.0);
     v_texcoord = in_uv_0;
 }

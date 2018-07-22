@@ -92,28 +92,36 @@ public enum PipelineVertexFormat
     {
         this.vertexFormat = vertexFormat;
         this.stride = vertexFormat.getNextOffset();
-        this.attributeCount = vertexFormat.getElementCount();
-        this.elements = vertexFormat.getElements().toArray(new PipelineVertextFormatElement[attributeCount]);
+        this.elements = vertexFormat.getElements().toArray(new PipelineVertextFormatElement[vertexFormat.getElementCount()]);
+        int count = 0;
+        for(PipelineVertextFormatElement e : elements)
+        {
+            if(e.attributeName != null)
+                count++;
+        }
+        this.attributeCount = count;
     }
     
     public void setupAttributes(int bufferOffset)
     {
         OpenGlHelperExt.enableAttributes(this.attributeCount);
         int offset = 0;
-        for(int i = 0; i < this.attributeCount; i++)
+        int index = 1;
+        for(PipelineVertextFormatElement e : elements)
         {
-            PipelineVertextFormatElement e = elements[i];
-            GL20.glVertexAttribPointer(i + 1, e.elementCount, e.glConstant, e.isNormalized, stride, bufferOffset + offset);
+            if(e.attributeName != null)
+                OpenGlHelperExt.glVertexAttribPointerFast(index++, e.elementCount, e.glConstant, e.isNormalized, stride, bufferOffset + offset);
             offset += e.byteSize;
         }
     }
     
     public void bindAttributes(int  programID)
     {
-        for(int i = 0; i < this.attributeCount; i++)
+        int index = 1;
+        for(PipelineVertextFormatElement e : elements)
         {
-            PipelineVertextFormatElement e = elements[i];
-            GL20.glBindAttribLocation(programID, i + 1, e.attributeName);
+            if(e.attributeName != null)
+                GL20.glBindAttribLocation(programID, index++, e.attributeName);
         }
     }
 }

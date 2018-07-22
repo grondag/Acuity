@@ -5,6 +5,9 @@ import java.util.List;
 import grondag.render_hooks.Configurator;
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelinedBakedModel;
+import grondag.render_hooks.api.PipelineManager;
+import grondag.render_hooks.api.RenderPipeline;
+import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.BlockFluidRenderer;
@@ -32,6 +35,8 @@ public class PipelineHooks
 {
     @SuppressWarnings("null")
     private static ThreadLocal<CompoundVertexLighter> lighters;
+    @SuppressWarnings("null")
+    private static ThreadLocal<FluidBuilder> fluidBuilders;
     
     static
     {
@@ -46,6 +51,15 @@ public class PipelineHooks
             protected CompoundVertexLighter initialValue()
             {
                 return Configurator.lightingModel.createLighter();
+            }
+        };
+        
+        fluidBuilders = new ThreadLocal<FluidBuilder>()
+        {
+            @Override
+            protected FluidBuilder initialValue()
+            {
+                return new FluidBuilder();
             }
         };
     }
@@ -73,24 +87,23 @@ public class PipelineHooks
     {
         if(RenderHooks.isModEnabled())
         {
-            
-            //TODO: reimplements
-            return false;
-//            BufferBuilder target;
-//            if(blockStateIn.getMaterial() == Material.LAVA)
-//            {
-//                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(PipelineManager.INSTANCE.lavaPipeline);
-//            }
-//            else
-//            {
-//                if(!didWarnUnhandledFluid && blockStateIn.getMaterial() != Material.WATER)
-//                {
-//                    RenderHooks.INSTANCE.getLog().warn("Unknown fluid sent to vanilla fluid render handler. Will render using water pipeline.");
-//                    didWarnUnhandledFluid = true;
-//                }
-//                target = ((CompoundBufferBuilder)bufferBuilderIn).getPipelineBuffer(PipelineManager.INSTANCE.waterPipeline);
-//            }
-//            return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, target);
+            RenderPipeline target;
+            if(blockStateIn.getMaterial() == Material.LAVA)
+            {
+                target = PipelineManager.INSTANCE.lavaPipeline;
+            }
+            else
+            {
+                if(!didWarnUnhandledFluid && blockStateIn.getMaterial() != Material.WATER)
+                {
+                    RenderHooks.INSTANCE.getLog().warn("Unknown fluid sent to vanilla fluid render handler. Will render using water pipeline.");
+                    didWarnUnhandledFluid = true;
+                }
+                target = PipelineManager.INSTANCE.waterPipeline;
+            }
+            final CompoundVertexLighter lighter = lighters.get();
+            lighter.prepare((CompoundBufferBuilder)bufferBuilderIn, MinecraftForgeClient.getRenderLayer(), blockAccess, blockStateIn, blockPosIn, false);
+            return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, fluidBuilders.get().prepare(target, lighter));
         }
         else
             return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
