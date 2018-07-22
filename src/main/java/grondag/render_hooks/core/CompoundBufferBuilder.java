@@ -122,40 +122,51 @@ public class CompoundBufferBuilder extends BufferBuilder
         
         if(RenderHooks.isModEnabled())
         {
-            
-            final VertexPackingList packing = new VertexPackingList();
-            int byteCount = 0;
-            if(!pipelineList.isEmpty())
+            // In transparency layer, packing list will already
+            // have been built via vertex sort.  
+            // If it is null, assume is non-transparent layer and build it now.
+            VertexPackingList packing = this.uploadPackingList;
+            if(packing == null)
             {
-                for(RenderPipeline p : pipelineList)
+                packing = new VertexPackingList();
+                if(!pipelineList.isEmpty())
                 {
-                    final VertexCollector b = pipelineArray[p.getIndex()];
-                    final int byteSize = b.size() * 4;
-                    final int vertexCount = byteSize / p.piplineVertexFormat().stride;
-                    if(byteSize != 0)
+                    for(RenderPipeline p : pipelineList)
                     {
-                        packing.addPacking(p, byteCount, vertexCount);
-                        byteCount += byteSize;
+                        final VertexCollector b = pipelineArray[p.getIndex()];
+                        final int byteSize = b.size() * 4;
+                        final int vertexCount = byteSize / p.piplineVertexFormat().stride;
+                        if(byteSize != 0)
+                        {
+                            packing.addPacking(p, vertexCount);
+                        }
                     }
                 }
+                this.uploadPackingList = packing;
             }
-            
-            final ExpandableByteBuffer buffer = BufferStore.claim();
-            buffer.expand(byteCount);
-            final IntBuffer intBuffer = buffer.intBuffer();
-            packing.forEach((RenderPipeline p, int byteOffset, int vertexCount) ->
-            {
-                VertexCollector data = pipelineArray[p.getIndex()];
-                intBuffer.position(byteOffset / 4);
-                intBuffer.put(data.rawData(), 0, data.size());
-            });
-            
-            this.uploadPackingList = packing;
-            this.uploadBuffer = buffer;
-            this.uploadBuffer.byteBuffer().limit(byteCount);
+            this.prepareUploadBuffer();
         }
     }
 
+    private void prepareUploadBuffer()
+    {
+        final VertexPackingList packing = this.uploadPackingList;
+        if(packing == null)
+            return;
+        
+        final ExpandableByteBuffer buffer = BufferStore.claim();
+        buffer.expand(packing.totalBytes());
+        final IntBuffer intBuffer = buffer.intBuffer();
+        packing.forEach((RenderPipeline p, int byteOffset, int vertexCount) ->
+        {
+            VertexCollector data = pipelineArray[p.getIndex()];
+            intBuffer.position(byteOffset / 4);
+            intBuffer.put(data.rawData(), 0, data.size());
+        });
+        this.uploadBuffer = buffer;
+        this.uploadBuffer.byteBuffer().limit(packing.totalBytes());
+    }
+    
     public void uploadTo(CompoundVertexBuffer target)
     {   
         final ExpandableByteBuffer uploadBuffer = this.uploadBuffer;
@@ -163,15 +174,14 @@ public class CompoundBufferBuilder extends BufferBuilder
         if(uploadBuffer != null)
         {
             if(packingList != null)
-                target.upload(this.uploadBuffer.byteBuffer(), this.uploadPackingList);
+                target.upload(uploadBuffer.byteBuffer(), packingList);
             
-            BufferStore.release(this.uploadBuffer);
+            BufferStore.release(uploadBuffer);
         }
         this.uploadBuffer = null;
         this.uploadPackingList = null;
     }
     
-    //TODO: for display lists need to refactor for new design where the super instance isn't used
     @Deprecated
     public void uploadTo(CompoundListedRenderChunk target, int vanillaList)
     {
@@ -222,6 +232,8 @@ public class CompoundBufferBuilder extends BufferBuilder
         // sort the indexes by distance
         Arrays.sort(quadIndexes, new Comparator<Integer>()
         {
+            @Override
+            @SuppressWarnings("null")
             public int compare(Integer p_compare_1_, Integer p_compare_2_)
             {
                 return Floats.compare(perQuadDistance[p_compare_2_.intValue()], perQuadDistance[p_compare_1_.intValue()]);

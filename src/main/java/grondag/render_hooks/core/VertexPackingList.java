@@ -11,10 +11,12 @@ public class VertexPackingList
     private RenderPipeline[] pipelines = new RenderPipeline[16];
     
     private int size = 0;
+    private int totalBytes = 0;
     
     public void clear()
     {
         this.size = 0;
+        this.totalBytes = 0;
     }
     
     public int size()
@@ -22,7 +24,12 @@ public class VertexPackingList
         return this.size;
     }
     
-    public void addPacking(RenderPipeline pipeline, int byteOffset, int vertexCount)
+    public int totalBytes()
+    {
+        return this.totalBytes;
+    }
+    
+    public void addPacking(RenderPipeline pipeline, int vertexCount)
     {
         if (size == this.pipelines.length)
         {
@@ -37,7 +44,8 @@ public class VertexPackingList
         this.pipelines[size] = pipeline;
         final int index = size++ * 2;
         this.countsAndOffsets[index] = vertexCount;
-        this.countsAndOffsets[index + 1] = byteOffset;
+        this.countsAndOffsets[index + 1] = this.totalBytes;
+        this.totalBytes += pipeline.piplineVertexFormat().stride * vertexCount;
     }
     
     @FunctionalInterface
