@@ -1,13 +1,10 @@
 package grondag.render_hooks.core;
 
 import java.nio.IntBuffer;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.Comparator;
+
 
 import javax.annotation.Nullable;
 
-import com.google.common.primitives.Floats;
 
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelineManager;
@@ -157,7 +154,7 @@ public class CompoundBufferBuilder extends BufferBuilder
             result = new VertexCollector(1024);
             collectors.add(result);
         }
-        result.clear();
+        result.prepare(pipeline);
         return result;
     }
 
@@ -180,12 +177,9 @@ public class CompoundBufferBuilder extends BufferBuilder
                     for(RenderPipeline p : pipelineList)
                     {
                         final VertexCollector b = pipelineArray[p.getIndex()];
-                        final int byteSize = b.size() * 4;
-                        final int vertexCount = byteSize / p.piplineVertexFormat().stride;
-                        if(byteSize != 0)
-                        {
+                        final int vertexCount = b.vertexCount();
+                        if(vertexCount != 0)
                             packing.addPacking(p, vertexCount);
-                        }
                     }
                 }
                 this.uploadPackingList = packing;
@@ -200,14 +194,21 @@ public class CompoundBufferBuilder extends BufferBuilder
         if(packing == null)
             return;
         
+        // tracks current position within vertex collectors
+        // necessary in transparency layer when splitting pipelines
+        int[] pipelineStarts = new int[IPipelineManager.MAX_PIPELINES];
+        
         final ExpandableByteBuffer buffer = BufferStore.claim();
         buffer.expand(packing.totalBytes());
         final IntBuffer intBuffer = buffer.intBuffer();
         packing.forEach((RenderPipeline p, int byteOffset, int vertexCount) ->
         {
-            VertexCollector data = pipelineArray[p.getIndex()];
+            final int pipelineIndex = p.getIndex();
+            final int startInt = pipelineStarts[pipelineIndex];
+            final int intLength = vertexCount * p.piplineVertexFormat().stride / 4;
             intBuffer.position(byteOffset / 4);
-            intBuffer.put(data.rawData(), 0, data.size());
+            intBuffer.put(pipelineArray[pipelineIndex].rawData(), startInt, intLength);
+            pipelineStarts[pipelineIndex] = startInt + intLength;
         });
         this.uploadBuffer = buffer;
         this.uploadBuffer.byteBuffer().limit(packing.totalBytes());
@@ -255,74 +256,19 @@ public class CompoundBufferBuilder extends BufferBuilder
             super.sortVertexData(x, y, z);
     }
     
-    private void sortCompondVertexData(float p_181674_1_, float p_181674_2_, float p_181674_3_)
+    private void sortCompondVertexData(float x, float y, float z)
     {
-        int quadCount = this.vertexCount / 4;
+        // First sort quads within each pipeline
+        final float relativeX = (float)((double)x + this.xOffset);
+        final float relativeY = (float)((double)y + this.yOffset);
+        final float relativeZ = (float)((double)z + this.zOffset);
         
-        final float[] perQuadDistance = new float[quadCount];
-
-        for (int j = 0; j < quadCount; ++j)
+        for(RenderPipeline p : this.pipelineList)
         {
-            perQuadDistance[j] = getDistanceSq(this.rawFloatBuffer, (float)((double)p_181674_1_ + this.xOffset), (float)((double)p_181674_2_ + this.yOffset), (float)((double)p_181674_3_ + this.zOffset), this.vertexFormat.getIntegerSize(), j * this.vertexFormat.getNextOffset());
+            this.pipelineArray[p.getIndex()].sortQuads(relativeX, relativeY, relativeZ);
         }
-
-        // assign an index to each quad
-        // is a boxed type to support comparator?
-        Integer[] quadIndexes = new Integer[quadCount];
-
-        for (int k = 0; k < quadIndexes.length; ++k)
-        {
-            quadIndexes[k] = k;
-        }
-
-        // sort the indexes by distance
-        Arrays.sort(quadIndexes, new Comparator<Integer>()
-        {
-            @Override
-            @SuppressWarnings("null")
-            public int compare(Integer p_compare_1_, Integer p_compare_2_)
-            {
-                return Floats.compare(perQuadDistance[p_compare_2_.intValue()], perQuadDistance[p_compare_1_.intValue()]);
-            }
-        });
         
-        BitSet bitset = new BitSet();
-        int perVertexStride = this.vertexFormat.getNextOffset();
-        
-        // because stride is bytes and this is an int, holds all data for one quad
-        int[] quadDataToMove = new int[perVertexStride];
-
-        for (int targetIndex = bitset.nextClearBit(0); targetIndex < quadIndexes.length; targetIndex = bitset.nextClearBit(targetIndex + 1))
-        {
-            int sourceIndex = quadIndexes[targetIndex].intValue();
-
-            if (sourceIndex != targetIndex)
-            {
-                this.rawIntBuffer.limit(sourceIndex * perVertexStride + perVertexStride);
-                this.rawIntBuffer.position(sourceIndex * perVertexStride);
-                this.rawIntBuffer.get(quadDataToMove);
-                int k1 = sourceIndex;
-
-                for (int l1 = quadIndexes[sourceIndex].intValue(); k1 != targetIndex; l1 = quadIndexes[l1].intValue())
-                {
-                    this.rawIntBuffer.limit(l1 * perVertexStride + perVertexStride);
-                    this.rawIntBuffer.position(l1 * perVertexStride);
-                    IntBuffer intbuffer = this.rawIntBuffer.slice();
-                    this.rawIntBuffer.limit(k1 * perVertexStride + perVertexStride);
-                    this.rawIntBuffer.position(k1 * perVertexStride);
-                    this.rawIntBuffer.put(intbuffer);
-                    bitset.set(k1);
-                    k1 = l1;
-                }
-
-                this.rawIntBuffer.limit(targetIndex * perVertexStride + perVertexStride);
-                this.rawIntBuffer.position(targetIndex * perVertexStride);
-                this.rawIntBuffer.put(quadDataToMove);
-            }
-
-            bitset.set(targetIndex);
-        }
-        this.rawIntBuffer.limit(this.rawIntBuffer.capacity());
-        this.rawIntBuffer.position(this.getBufferSize());
+        // TODO: interleave sorted pipeline segments into packing list
+        // Exploit special case when there is only one pipeline in this renderchunk
     }
 }

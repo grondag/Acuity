@@ -14,14 +14,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class PipelinedVboRenderList extends VboRenderList
 {
-    
-    private long totalNanos;
-    private int runCount;
+    //TODO: remove
+//    private long totalNanos;
+//    private int runCount;
     
     @Override
     public void renderChunkLayer(BlockRenderLayer layer)
     {
-        long start = System.nanoTime();
+//        long start = System.nanoTime();
         if(RenderHooks.isModEnabled())
         {
             if (!this.renderChunks.isEmpty() && this.initialized)
@@ -65,12 +65,12 @@ public class PipelinedVboRenderList extends VboRenderList
         else
             super.renderChunkLayer(layer);
         
-        totalNanos += (System.nanoTime() - start);
-        if(++runCount >= 600)
-        {
-            RenderHooks.INSTANCE.getLog().info("Milliseconds per renderChunkLayer: " + totalNanos / runCount / 1000000f);
-            totalNanos = 0;
-            runCount = 0;
-        }
+//        totalNanos += (System.nanoTime() - start);
+//        if(++runCount >= 600)
+//        {
+//            RenderHooks.INSTANCE.getLog().info("Milliseconds per renderChunkLayer: " + totalNanos / runCount / 1000000f);
+//            totalNanos = 0;
+//            runCount = 0;
+//        }
     }
 }
