@@ -21,12 +21,12 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundBufferBuilder extends BufferBuilder
 {
-    private static final BufferBuilder[] EMPTY_ARRAY = new BufferBuilder[IPipelineManager.MAX_PIPELINES];
+    private static final VertexCollector[] EMPTY_ARRAY = new VertexCollector[IPipelineManager.MAX_PIPELINES];
     
     /**
      * Cache all instantiated buffers for reuse. Does not include this instance<p>
      */
-    private ObjectArrayList<BufferBuilder> childBuffers = new ObjectArrayList<>();
+    private ObjectArrayList<VertexCollector> childBuffers = new ObjectArrayList<>();
     
     /**
      * Track pipelines in use as list for fast upload 
@@ -37,7 +37,9 @@ public class CompoundBufferBuilder extends BufferBuilder
     /**
      * Fast lookup of buffers by pipeline index.  Element 0 will always be this.
      */
-    BufferBuilder[] pipelineArray = new BufferBuilder[IPipelineManager.MAX_PIPELINES];
+    VertexCollector[] pipelineArray = new VertexCollector[IPipelineManager.MAX_PIPELINES];
+    
+    BufferBuilder uploadBuffer  = new BufferBuilder(2097152);
     
     private int totalBytes = 0;
     
@@ -70,10 +72,10 @@ public class CompoundBufferBuilder extends BufferBuilder
         System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, IPipelineManager.MAX_PIPELINES);
     }
     
-    public BufferBuilder getPipelineBuffer(RenderPipeline pipeline)
+    public VertexCollector getPipelineBuffer(RenderPipeline pipeline)
     {
         final int i = pipeline.getIndex();
-        BufferBuilder result = pipelineArray[i];
+        VertexCollector result = pipelineArray[i];
         if(result == null)
         {
             result = getInitializedBuffer(pipeline);
@@ -83,9 +85,9 @@ public class CompoundBufferBuilder extends BufferBuilder
         return result;
     }
     
-    private BufferBuilder getInitializedBuffer(RenderPipeline pipeline)
+    private VertexCollector getInitializedBuffer(RenderPipeline pipeline)
     {
-        BufferBuilder result;
+        VertexCollector result;
         
         final int count = pipelineList.size();
         if(count < childBuffers.size())
@@ -94,13 +96,10 @@ public class CompoundBufferBuilder extends BufferBuilder
         }
         else
         {
-            // UGLY: this size may be too small and buffer growth logic 
-            // grows only in multiples of 2MB - needs profiling
-            result = new BufferBuilder(512000);
+            result = new VertexCollector(1024);
             childBuffers.add(result);
         }
-        result.begin(GL11.GL_QUADS, pipeline.vertexFormat());
-        result.setTranslation(this.xOffset, this.yOffset, this.zOffset);
+        result.clear();
         return result;
     }
 
@@ -112,17 +111,30 @@ public class CompoundBufferBuilder extends BufferBuilder
         if(!pipelineList.isEmpty())
             pipelineList.forEach(p -> 
             {
-                final BufferBuilder b = pipelineArray[p.getIndex()];
-                b.finishDrawing();
-                this.totalBytes += b.getByteBuffer().limit();
+                final VertexCollector b = pipelineArray[p.getIndex()];
+                this.totalBytes += b.size() * 4;
             });
     }
 
+    private BufferBuilder populateUploadBuffer(VertexCollector fromData, RenderPipeline pipeline)
+    {
+        final BufferBuilder b = this.uploadBuffer;
+        final VertexFormat format = pipeline.vertexFormat();
+        b.reset();
+        b.begin(GL11.GL_QUADS, format);
+        b.growBuffer(fromData.size() * 4 + format.getNextOffset());
+        b.rawIntBuffer.position(0);
+        b.rawIntBuffer.put(fromData.rawData(), 0, fromData.size());
+        b.vertexCount += fromData.size() / format.getIntegerSize();
+        b.finishDrawing();
+        return b;
+    }
+    
     public void uploadTo(CompoundVertexBuffer target)
     {
         target.prepareForUpload(this.totalBytes);
         if(!pipelineList.isEmpty())
-            pipelineList.forEach(p -> target.uploadBuffer(p, pipelineArray[p.getIndex()].getByteBuffer()));
+            pipelineList.forEach(p -> target.uploadBuffer(p, populateUploadBuffer(pipelineArray[p.getIndex()], p).getByteBuffer()));
         
         target.completeUpload();
     }
@@ -141,7 +153,7 @@ public class CompoundBufferBuilder extends BufferBuilder
 //            super.reset();
 //        }
         if(!pipelineList.isEmpty())
-            pipelineList.forEach(p -> target.uploadBuffer(p, pipelineArray[p.getIndex()]));
+            pipelineList.forEach(p -> target.uploadBuffer(p, populateUploadBuffer(pipelineArray[p.getIndex()], p)));
         
         target.completeUpload();
     }

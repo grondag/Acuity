@@ -1,9 +1,6 @@
 package grondag.render_hooks.core;
 
-import java.nio.ByteBuffer;
-
 import grondag.render_hooks.api.IRenderPipeline;
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;
@@ -32,9 +29,8 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             return blockInfo;
         }
         
-        @SuppressWarnings("null")
         @Override
-        public final BufferBuilder getPipelineBuffer()
+        public final VertexCollector getPipelineBuffer()
         {
             return target.getPipelineBuffer(this.pipeline);
         }
@@ -104,7 +100,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         }
 
         @Override
-        protected BufferBuilder startVertex(
+        protected VertexCollector startVertex(
                 float posX,
                 float posY,
                 float posZ,
@@ -123,8 +119,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             posY += blockInfo.getShy();
             posZ += blockInfo.getShz();
             
-            final BufferBuilder target = getPipelineBuffer();
-            final ByteBuffer bytes  = target.getByteBuffer();
+            final VertexCollector output = getPipelineBuffer();
             final BlockPos pos = blockInfo.getBlockPos();
     
             // Compute light
@@ -163,39 +158,35 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                 skyLight = Math.max(skyLight, this.skyLightMap);
             }
             
-            bytes.position(target.getVertexCount() * target.getVertexFormat().getNextOffset());
-    
             // POSITION_3F
-            bytes.putFloat((float) (target.xOffset + pos.getX() + posX));
-            bytes.putFloat((float) (target.yOffset + pos.getY() + posY));
-            bytes.putFloat((float) (target.zOffset + pos.getZ() + posZ));
+            output.add(target.xOffset + pos.getX() + posX);
+            output.add(target.yOffset + pos.getY() + posY);
+            output.add(target.zOffset + pos.getZ() + posZ);
             
             // BASE_RGBA_4UB
-            putColorRGBA(bytes, unlitColorARGB0);
+            output.add(unlitColorARGB0);
             
             // BASE_TEX_2F
-            bytes.putFloat(u0);
-            bytes.putFloat(v0);
+            output.add(u0);
+            output.add(v0);
             
             //TODO: remove
             if( Math.abs((normX * normX + normY * normY + normZ * normZ) - 1) > 0.01f)
                 System.out.println("bad input normal");
             
             // NORMAL_3UB
-            bytes.put((byte) Math.round(normX * 127 + 127));
-            bytes.put((byte) Math.round(normY * 127 + 127));
-            bytes.put((byte) Math.round(normZ * 127 + 127));
-            
+            int normAo = Math.round(normX * 127 + 127);
+            normAo |= (Math.round(normY * 127 + 127) << 8);
+            normAo |= (Math.round(normZ * 127 + 127) << 16);
             // AO 1UB
-            bytes.put((byte) ao);
+            normAo |= (ao << 24);
+            
+            output.add(normAo);
             
             //LIGHTMAP_AND_GLOWS_4UB
-            bytes.put((byte) blockLight);
-            bytes.put((byte) skyLight);
-            bytes.put((byte) shade);
-            bytes.put((byte) this.glowFlags);
+            output.add(blockLight | (skyLight << 8) | (shade << 16) | (this.glowFlags << 24));
             
-            return target;
+            return output;
         }
     }
 

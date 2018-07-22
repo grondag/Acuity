@@ -9,7 +9,6 @@ import grondag.render_hooks.api.IRenderPipeline;
 import grondag.render_hooks.api.RenderPipeline;
 import grondag.render_hooks.api.TextureFormat;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.MathHelper;
@@ -39,7 +38,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     @Override
     public abstract BlockInfo getBlockInfo();
     
-    public abstract BufferBuilder getPipelineBuffer();
+    public abstract VertexCollector getPipelineBuffer();
     
     protected abstract void reportOutput();
     
@@ -128,7 +127,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.SINGLE)
             throw new UnsupportedOperationException("Single-layer vertex must use single-layer texture format.");
         
-        startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0).endVertex();
+        startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
     }
     
     @Override
@@ -150,16 +149,14 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.DOUBLE)
             throw new UnsupportedOperationException("Double-layer vertex must use double-layer pipeline format.");
         
-        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
-        final ByteBuffer bytes  = target.getByteBuffer();
+        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
         
         // SECONDARY_RGBA_4UB
-        putColorRGBA(bytes, unlitColorARGB1);
+        target.add(unlitColorARGB1);
         
         // SECONDARY_TEX_2F
-        bytes.putFloat(u1);
-        bytes.putFloat(v1);
-        target.endVertex();
+        target.add(u1);
+        target.add(v1);
     }
     
     @Override
@@ -184,30 +181,28 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.TRIPLE)
             throw new UnsupportedOperationException("Triple-layer vertex must use triple-layer pipeline format.");
         
-        BufferBuilder target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
-        final ByteBuffer bytes  = target.getByteBuffer();
+        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
         
         // SECONDARY_RGBA_4UB
-        putColorRGBA(bytes, unlitColorARGB1);
+        target.add(unlitColorARGB1);
         
         // SECONDARY_TEX_2F
-        bytes.putFloat(u1);
-        bytes.putFloat(v1);
+        target.add(u1);
+        target.add(v1);
         
         // TERTIARY_RGBA_4UB
-        putColorRGBA(bytes, unlitColorARGB2);
+        target.add(unlitColorARGB2);
         
         // TERTIARY_TEX_2F
-        bytes.putFloat(u2);
-        bytes.putFloat(v2);
-        target.endVertex();
+        target.add(u2);
+        target.add(v2);
     }
     
     protected static final float LIGHTMAP_TO_255 = 34815.47f;
     protected static final float LIGHTMAP_TO_127 = LIGHTMAP_TO_255 * 127f / 255f;
 //    private static final float LIGHTMAP_TO_15 = 34815.47f * 15f / 255f;
     
-    protected abstract BufferBuilder startVertex(
+    protected abstract VertexCollector startVertex(
             float posX,
             float posY,
             float posZ,

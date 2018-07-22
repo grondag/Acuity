@@ -24,7 +24,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[IPipelineManager.MAX_PIPELINES];
 
     protected @Nullable BlockRenderLayer renderLayer;
-    protected @Nullable CompoundBufferBuilder target;
+    protected CompoundBufferBuilder target;
     protected boolean didOutput;
 
     
@@ -70,6 +70,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
             getPipelineLighter(quad.getPipeline()).acceptQuad(quad);
     }
     
+    @SuppressWarnings("null")
     public CompoundVertexLighter()
     {
         this.blockInfo = new LazyBlockInfo(Minecraft.getMinecraft().getBlockColors());
