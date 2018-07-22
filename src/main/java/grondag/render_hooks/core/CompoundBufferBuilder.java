@@ -5,6 +5,8 @@ import java.util.Arrays;
 import java.util.BitSet;
 import java.util.Comparator;
 
+import javax.annotation.Nullable;
+
 import org.lwjgl.opengl.GL11;
 
 import com.google.common.primitives.Floats;
@@ -39,7 +41,7 @@ public class CompoundBufferBuilder extends BufferBuilder
      */
     VertexCollector[] pipelineArray = new VertexCollector[IPipelineManager.MAX_PIPELINES];
     
-    BufferBuilder uploadBuffer  = new BufferBuilder(2097152);
+    @Nullable BufferBuilder uploadBuffer  = null;
     
     private int totalBytes = 0;
     
@@ -131,16 +133,20 @@ public class CompoundBufferBuilder extends BufferBuilder
     }
     
     public void uploadTo(CompoundVertexBuffer target)
-    {
+    {   
+        this.uploadBuffer = BufferStore.claim();
         target.prepareForUpload(this.totalBytes);
         if(!pipelineList.isEmpty())
             pipelineList.forEach(p -> target.uploadBuffer(p, populateUploadBuffer(pipelineArray[p.getIndex()], p).getByteBuffer()));
         
         target.completeUpload();
+        BufferStore.release(this.uploadBuffer);
+        this.uploadBuffer = null;
     }
 
     
     //TODO: for display lists need to refactor for new design where the super instance isn't used
+    @Deprecated
     public void uploadTo(CompoundListedRenderChunk target, int vanillaList)
     {
         if(this.vertexCount == 0 && pipelineList.isEmpty())
