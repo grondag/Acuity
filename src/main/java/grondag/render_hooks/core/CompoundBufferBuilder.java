@@ -1,7 +1,8 @@
 package grondag.render_hooks.core;
 
 import java.nio.IntBuffer;
-
+import java.util.Comparator;
+import java.util.PriorityQueue;
 
 import javax.annotation.Nullable;
 
@@ -247,6 +248,34 @@ public class CompoundBufferBuilder extends BufferBuilder
             super.sortVertexData(x, y, z);
     }
     
+    private static final Comparator<VertexCollector> vertexCollectionComparator = new Comparator<VertexCollector>() 
+    {
+        @SuppressWarnings("null")
+        @Override
+        public int compare(VertexCollector o1, VertexCollector o2)
+        {
+            // note reverse order - take most distant first
+            return Float.compare(o2.firstUnpackedDistance(), o1.firstUnpackedDistance());
+        }
+    };
+    
+    private static final ThreadLocal<PriorityQueue<VertexCollector>> sorters = new ThreadLocal<PriorityQueue<VertexCollector>>()
+    {
+        @Override
+        protected PriorityQueue<VertexCollector> initialValue()
+        {
+            return new PriorityQueue<VertexCollector>(vertexCollectionComparator);
+        }
+
+        @Override
+        public PriorityQueue<VertexCollector> get()
+        {
+            PriorityQueue<VertexCollector> result = super.get();
+            result.clear();
+            return result;
+        }
+    };
+    
     private void sortCompondVertexData(float x, float y, float z)
     {
         // First sort quads within each pipeline
@@ -254,32 +283,46 @@ public class CompoundBufferBuilder extends BufferBuilder
         final float relativeY = (float)((double)y + this.yOffset);
         final float relativeZ = (float)((double)z + this.zOffset);
         
-        for(RenderPipeline p : this.pipelineList)
-        {
-            this.pipelineArray[p.getIndex()].sortQuads(relativeX, relativeY, relativeZ);
-        }
-        
         VertexPackingList packing = new VertexPackingList();
         packing = new VertexPackingList();
-        
+
         // Exploit special case when there is only one transparent pipeline in this renderchunk
         if(pipelineList.size() == 1)
         {
             RenderPipeline p = pipelineList.get(0);
-            final VertexCollector b = pipelineArray[p.getIndex()];
-            final int vertexCount = b.vertexCount();
+            final VertexCollector collector = pipelineArray[p.getIndex()];
+            collector.sortQuads(relativeX, relativeY, relativeZ);
+            final int vertexCount = collector.vertexCount();
             if(vertexCount != 0)
                 packing.addPacking(p, vertexCount);
         }
         else if(!pipelineList.isEmpty())
         {
-            for(RenderPipeline p : pipelineList)
+            final PriorityQueue<VertexCollector> sorter = sorters.get();
+            
+            for(RenderPipeline p : this.pipelineList)
             {
-                final VertexCollector b = pipelineArray[p.getIndex()];
-                final int vertexCount = b.vertexCount();
-                if(vertexCount != 0)
-                    packing.addPacking(p, vertexCount);
+                final VertexCollector collector = pipelineArray[p.getIndex()];
+                collector.sortQuads(relativeX, relativeY, relativeZ);
+                sorter.add(collector);
             }
+            
+            VertexCollector first = sorter.poll();
+            VertexCollector second = sorter.poll();
+            do
+            {   
+                // x4 because packing is vertices vs quads
+                packing.addPacking(first.pipeline(), 4 * first.unpackUntilDistance(second.firstUnpackedDistance()));
+                
+                if(first.hasUnpackedSortedQuads())
+                    sorter.add(first);
+                
+                first = second;
+                second = sorter.poll();
+                
+            } while(second != null);
+            
+            packing.addPacking(first.pipeline(), 4 * first.unpackUntilDistance(Float.MIN_VALUE));
         }
         
         this.uploadPackingList = packing;

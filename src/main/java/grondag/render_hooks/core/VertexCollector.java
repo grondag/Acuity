@@ -1,5 +1,7 @@
 package grondag.render_hooks.core;
 
+import javax.annotation.Nullable;
+
 import com.google.common.primitives.Floats;
 
 import grondag.render_hooks.api.RenderPipeline;
@@ -12,6 +14,17 @@ public class VertexCollector
     private int[] data;
     private int integerSize = 0;
     private RenderPipeline pipeline;
+    
+    /**
+     * Holds per-quad distance after {@link #sortQuads(float, float, float)} is called
+     */
+    @Nullable private float[] perQuadDistance;
+    
+    /**
+     * Pointer to next sorted quad in sort iteration methods.<br>
+     * After {@link #sortQuads(float, float, float)} is called this will be zero.
+     */
+    private int sortReadIndex = 0;
     
     public VertexCollector()
     {
@@ -28,6 +41,11 @@ public class VertexCollector
     {
         this.integerSize = 0;
         this.pipeline = pipeline;
+    }
+    
+    public RenderPipeline pipeline()
+    {
+        return this.pipeline;
     }
     
     public int byteSize()
@@ -120,6 +138,9 @@ public class VertexCollector
                 System.arraycopy(quadSwap, 0, data, b * quadIntStride, quadIntStride);
             }
         });
+        
+        this.perQuadDistance = perQuadDistance;
+        this.sortReadIndex = 0;
     }
     
     private float getDistanceSq(float x, float y, float z, int integerStride, int vertexIndex)
@@ -151,5 +172,42 @@ public class VertexCollector
         float dz = (z0 + z1 + z2 + z3) * 0.25F - z;
         
         return dx * dx + dy * dy + dz * dz;
+    }
+    
+    @SuppressWarnings("null")
+    public boolean hasUnpackedSortedQuads()
+    {
+        return this.perQuadDistance != null && this.sortReadIndex < this.perQuadDistance.length;
+    }
+    
+    /**
+     * Will return {@link Float#MIN_VALUE} if no unpacked quads remaining.
+     */
+    @SuppressWarnings("null")
+    public float firstUnpackedDistance()
+    {
+        return hasUnpackedSortedQuads() ? this.perQuadDistance[this.sortReadIndex] : Float.MIN_VALUE;
+    }
+    
+    /**
+     * Returns the number of quads that are more or as distant than the distance provided
+     * and advances the usage pointer so that {@link #firstUnpackedDistance()}
+     * will return the distance to the next quad after that. <p>
+     * 
+     * (All distances are actually squared distances, to be clear.)
+     */
+    @SuppressWarnings("null")
+    public int unpackUntilDistance(float minDistanceSquared)
+    {
+        if(!hasUnpackedSortedQuads())
+            return 0;
+        
+        int result = 0;
+        while(sortReadIndex < perQuadDistance.length && minDistanceSquared <= perQuadDistance[sortReadIndex])
+        {
+            result++;
+            sortReadIndex++;
+        }
+        return result;
     }
 }
