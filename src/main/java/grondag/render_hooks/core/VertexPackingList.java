@@ -3,11 +3,11 @@ package grondag.render_hooks.core;
 import grondag.render_hooks.api.RenderPipeline;
 
 /**
- * Tracks byte offets, number of vertices, and pipeline within a buffer.
+ * Tracks number of vertices, pipeline and sequence thereof within a buffer.
  */
 public class VertexPackingList
 {
-    private int[] countsAndOffsets = new int[32];
+    private int[] counts = new int[16];
     private RenderPipeline[] pipelines = new RenderPipeline[16];
     
     private int size = 0;
@@ -33,28 +33,27 @@ public class VertexPackingList
     {
         if (size == this.pipelines.length)
         {
-            final int iCopy[] = new int[size * 4];
-            System.arraycopy(this.countsAndOffsets, 0, iCopy, 0, size * 2);
-            this.countsAndOffsets  = iCopy;
+            final int iCopy[] = new int[size * 2];
+            System.arraycopy(this.counts, 0, iCopy, 0, size);
+            this.counts  = iCopy;
             
             final RenderPipeline pCopy[] = new RenderPipeline[size * 2];
             System.arraycopy(this.pipelines, 0, pCopy, 0, size);
             this.pipelines  = pCopy;
         }
         this.pipelines[size] = pipeline;
-        final int index = size++ * 2;
-        this.countsAndOffsets[index] = vertexCount;
-        this.countsAndOffsets[index + 1] = this.totalBytes;
+        this.counts[size] = vertexCount;
         this.totalBytes += pipeline.piplineVertexFormat().stride * vertexCount;
+        this.size++;
     }
     
     @FunctionalInterface
-    public static interface IListConsumer
+    public static interface IVertexPackingConsumer
     {
-        public void accept(RenderPipeline pipeline, int byteOffset, int vertexCount);
+        public void accept(RenderPipeline pipeline, int vertexCount);
     }
     
-    public void forEach(IListConsumer consumer)
+    public void forEach(IVertexPackingConsumer consumer)
     {
         final int size = this.size;
         if(size == 0) 
@@ -62,8 +61,7 @@ public class VertexPackingList
         
         for(int i = 0; i < size; i++)
         {
-            final int j = i * 2;
-            consumer.accept(this.pipelines[i], this.countsAndOffsets[j + 1], this.countsAndOffsets[j]);
+            consumer.accept(this.pipelines[i], this.counts[i]);
         }
     }
 }

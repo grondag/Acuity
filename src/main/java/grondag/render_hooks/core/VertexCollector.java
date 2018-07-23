@@ -28,9 +28,6 @@ public class VertexCollector
     {
         this.integerSize = 0;
         this.pipeline = pipeline;
-        this.lastX = Float.MIN_VALUE;
-        this.lastY = -1;
-        this.lastZ = -1;
     }
     
     public int byteSize()
@@ -60,9 +57,6 @@ public class VertexCollector
         System.arraycopy(this.data, 0, result.data, 0, this.integerSize);
         result.integerSize = this.integerSize;
         result.pipeline = this.pipeline;
-        result.lastX = this.lastX;
-        result.lastY = this.lastY;
-        result.lastZ = this.lastZ;
         return result;
     }
     
@@ -87,19 +81,9 @@ public class VertexCollector
         this.add((float)d);
     }
     
-    private float lastX = Float.MIN_VALUE;
-    private float lastY = -1;
-    private float lastZ = -1;
-    
     @SuppressWarnings("serial")
     public void sortQuads(float x, float y, float z)
     {
-        if(lastX != Float.MIN_VALUE)
-            System.out.println(String.format("Sorting, last = %f, %f, %f   current =  %f, %f, %f", lastX, lastY, lastZ, x, y, z));
-        lastX = x;
-        lastY = y;
-        lastZ = z;
-        
         // works because 4 bytes per int
         final int quadIntStride = this.pipeline.piplineVertexFormat().stride;
         final int vertexIntStride = quadIntStride / 4;

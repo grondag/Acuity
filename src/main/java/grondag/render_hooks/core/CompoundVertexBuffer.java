@@ -8,6 +8,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
 import grondag.render_hooks.api.RenderPipeline;
+import grondag.render_hooks.core.VertexPackingList.IVertexPackingConsumer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
@@ -27,6 +28,43 @@ public class CompoundVertexBuffer extends VertexBuffer
 {
     
     private @Nullable VertexPackingList vertexPackingList;
+    
+    private class VertexPackingConsumer implements IVertexPackingConsumer
+    {
+        int bufferOffset = 0;
+        int vertexOffset = 0;
+        @Nullable PipelineVertexFormat lastFormat = null;
+        
+        private void reset()
+        {
+            bufferOffset = 0;
+            vertexOffset = 0;
+            lastFormat = null;
+        }
+        
+        @SuppressWarnings("null")
+        @Override
+        public void accept(RenderPipeline pipeline, int vertexCount)
+        {
+            if(pipeline.piplineVertexFormat() != lastFormat)
+            {
+                vertexOffset = 0;
+                lastFormat = pipeline.piplineVertexFormat();
+                GlStateManager.glVertexPointer(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), pipeline.piplineVertexFormat().stride, bufferOffset);
+                pipeline.piplineVertexFormat().setupAttributes(bufferOffset);
+                
+            }
+            
+            pipeline.preDraw();
+            GlStateManager.glDrawArrays(GL11.GL_QUADS, vertexOffset, vertexCount);
+            pipeline.postDraw();     
+            
+            vertexOffset += vertexCount;
+            bufferOffset += vertexCount * lastFormat.stride;
+        }
+    }
+    
+    private final VertexPackingConsumer vertexPackingConsumer = new VertexPackingConsumer();
     
     public CompoundVertexBuffer(VertexFormat vertexFormatIn)
     {
@@ -48,35 +86,16 @@ public class CompoundVertexBuffer extends VertexBuffer
         super.deleteGlBuffers();
     }
 
-//    static int totalSlots;
-//    static int runCount;
     /**
      * Renders all uploaded vbos.
-     * Layer is passed in because was easier (ASM-wise) to not track this here.
-     * Must know layer to look up pipelines.
      */
     public void renderChunk()
     {
         final VertexPackingList packing = this.vertexPackingList;
         if(packing == null || packing.size() == 0) return;
         
-//        totalSlots += this.slotsInUse;
-//        if(++runCount >=  2000)
-//        {
-//            RenderHooks.INSTANCE.getLog().info("Average slots per renderChunk() = " + (float) totalSlots / runCount);
-//            totalSlots = 0;
-//            runCount = 0;
-//        }
-        
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        
-        packing.forEach((RenderPipeline p, int offset, int vertexCount) ->
-        {
-            GlStateManager.glVertexPointer(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), p.piplineVertexFormat().stride, offset);
-            p.piplineVertexFormat().setupAttributes(offset);
-            p.preDraw();
-            GlStateManager.glDrawArrays(GL11.GL_QUADS, offset, vertexCount);
-            p.postDraw();
-        });
+        vertexPackingConsumer.reset();
+        packing.forEach(vertexPackingConsumer);
     }
 }

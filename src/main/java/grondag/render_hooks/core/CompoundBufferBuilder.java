@@ -10,6 +10,7 @@ import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.api.IPipelineManager;
 import grondag.render_hooks.api.RenderPipeline;
 import grondag.render_hooks.core.BufferStore.ExpandableByteBuffer;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -22,9 +23,9 @@ public class CompoundBufferBuilder extends BufferBuilder
     private static final VertexCollector[] EMPTY_ARRAY = new VertexCollector[IPipelineManager.MAX_PIPELINES];
     
     /**
-     * Cache all instantiated buffers for reuse. Does not include this instance<p>
+     * Cache instantiated buffers for reuse.<p>
      */
-    private final ObjectArrayList<VertexCollector> collectors = new ObjectArrayList<>();
+    private final ObjectArrayFIFOQueue<VertexCollector> collectors = new ObjectArrayFIFOQueue<>();
     
     /**
      * Track pipelines in use as list for fast upload 
@@ -90,11 +91,7 @@ public class CompoundBufferBuilder extends BufferBuilder
             State inner = super.getVertexState();
             CompoundState result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat());
             result.pipelineList = this.pipelineList.clone();
-            pipelineList.forEach(p -> 
-            {
-                final int i = p.getIndex();
-                result.pipelineArray[i] = this.pipelineArray[i].clone();
-            });
+            System.arraycopy(this.pipelineArray, 0, result.pipelineArray, 0, IPipelineManager.MAX_PIPELINES);
             return result;
         }
         else
@@ -142,18 +139,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     private VertexCollector getInitializedCollector(RenderPipeline pipeline)
     {
-        VertexCollector result;
-        
-        final int count = pipelineList.size();
-        if(count < collectors.size())
-        {
-            result = collectors.get(count);
-        }
-        else
-        {
-            result = new VertexCollector(1024);
-            collectors.add(result);
-        }
+        VertexCollector result = this.collectors.isEmpty() ? new VertexCollector(1024) : this.collectors.dequeue();
         result.prepare(pipeline);
         return result;
     }
@@ -180,6 +166,10 @@ public class CompoundBufferBuilder extends BufferBuilder
                         final int vertexCount = b.vertexCount();
                         if(vertexCount != 0)
                             packing.addPacking(p, vertexCount);
+                        
+                        // Collectors used in non-transparency layers can be reused.
+                        // (Transparency collectors are retained in compiled chunk for resorting.)
+                        this.collectors.enqueue(b);
                     }
                 }
                 this.uploadPackingList = packing;
@@ -201,12 +191,13 @@ public class CompoundBufferBuilder extends BufferBuilder
         final ExpandableByteBuffer buffer = BufferStore.claim();
         buffer.expand(packing.totalBytes());
         final IntBuffer intBuffer = buffer.intBuffer();
-        packing.forEach((RenderPipeline p, int byteOffset, int vertexCount) ->
+        intBuffer.position(0);
+        
+        packing.forEach((RenderPipeline p, int vertexCount) ->
         {
             final int pipelineIndex = p.getIndex();
             final int startInt = pipelineStarts[pipelineIndex];
             final int intLength = vertexCount * p.piplineVertexFormat().stride / 4;
-            intBuffer.position(byteOffset / 4);
             intBuffer.put(pipelineArray[pipelineIndex].rawData(), startInt, intLength);
             pipelineStarts[pipelineIndex] = startInt + intLength;
         });
@@ -268,7 +259,29 @@ public class CompoundBufferBuilder extends BufferBuilder
             this.pipelineArray[p.getIndex()].sortQuads(relativeX, relativeY, relativeZ);
         }
         
-        // TODO: interleave sorted pipeline segments into packing list
-        // Exploit special case when there is only one pipeline in this renderchunk
+        VertexPackingList packing = new VertexPackingList();
+        packing = new VertexPackingList();
+        
+        // Exploit special case when there is only one transparent pipeline in this renderchunk
+        if(pipelineList.size() == 1)
+        {
+            RenderPipeline p = pipelineList.get(0);
+            final VertexCollector b = pipelineArray[p.getIndex()];
+            final int vertexCount = b.vertexCount();
+            if(vertexCount != 0)
+                packing.addPacking(p, vertexCount);
+        }
+        else if(!pipelineList.isEmpty())
+        {
+            for(RenderPipeline p : pipelineList)
+            {
+                final VertexCollector b = pipelineArray[p.getIndex()];
+                final int vertexCount = b.vertexCount();
+                if(vertexCount != 0)
+                    packing.addPacking(p, vertexCount);
+            }
+        }
+        
+        this.uploadPackingList = packing;
     }
 }
