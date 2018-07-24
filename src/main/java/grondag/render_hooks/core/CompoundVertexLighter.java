@@ -38,9 +38,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
         this.target = target;
         this.didOutput = false;
         this.positionRandom = Long.MIN_VALUE;
-        this.blockInfo.setWorld(world);
-        this.blockInfo.setState(blockState);
-        this.blockInfo.setBlockPos(pos);
+        this.blockInfo.prepare(world, blockState, pos);
         this.blockInfo.updateShift();
         this.blockState = blockState;
         this.sideFlags = checkSides ? getSideFlags() : 0xFFFF;

@@ -159,5 +159,18 @@ public interface IPipelinedVertexConsumer
      * Expected values are 0-255, not 0-15.
      */
     public void setSkyLightMap(int skyLightMap);
+    
+    /**
+     * AVOID.  INTENDED FOR USE BY FLUID RENDERING AND LIKELY TO BE REMOVED. <p>
+     * 
+     * Fluid renderer already looks up the lightmaps from world and this avoids
+     * cost of looking them up again and possibly getting slightly different results
+     * due to variation in logic.
+     * 
+     * UGLY: remove this after determining how to render fluids in 1.13
+     */
+    @Deprecated
+    public void setPrecomputedLighting(boolean isPrecomputedLighting);
+    
 
 }

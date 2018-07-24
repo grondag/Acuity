@@ -24,8 +24,12 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     protected int glowFlags = 0;
     protected int blockLightMap = 0;
     protected int skyLightMap = 0;
+    
+    // UGLY: these are reset per-quad and not changed in nominal case, 
+    // profile and see if worth consolidating to bit flags or otherwise optimizing
     protected boolean enableDiffuse = true;
     protected boolean enableAmbientOcclusion = true;
+    protected boolean usePrecomputedLightmaps = false;
     
     protected PipelinedVertexLighter(IRenderPipeline pipeline)
     {
@@ -87,6 +91,13 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.enableAmbientOcclusion = enableAmbientOcclusion && Minecraft.isAmbientOcclusionEnabled();
     }
     
+    @Override
+    @Deprecated
+    public void setPrecomputedLighting(boolean isPrecomputedLighting)
+    {
+        this.usePrecomputedLightmaps = isPrecomputedLighting;
+    }
+    
     protected void resetForNewQuad()
     {
         this.glowFlags = 0;
@@ -94,6 +105,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.skyLightMap = 0;
         this.enableDiffuse = true;
         this.enableAmbientOcclusion = Minecraft.isAmbientOcclusionEnabled();
+        this.usePrecomputedLightmaps = false;
     }
     
     public VertexFormat getVertexFormat()

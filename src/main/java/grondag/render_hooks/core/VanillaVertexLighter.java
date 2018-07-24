@@ -123,7 +123,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             final BlockPos pos = blockInfo.getBlockPos();
     
             // Compute light
-            int blockLight, skyLight, ao = 255, shade = 255;
+            int blockLight = 0, skyLight = 0, ao = 255, shade = 255;
             
             if(this.areAllLayersEmissive)
             {
@@ -142,16 +142,22 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                 if(this.enableAmbientOcclusion)
                 {
                     ao = Math.round(getAo(blockInfo, lightX, lightY, lightZ) * 255);
-                    blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
-                    skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
+                    if(!this.usePrecomputedLightmaps)
+                    {
+                        blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
+                        skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
+                    }
                 }
                 else
                 {
-                    // what we get back is raw (0-15) sky << 20 | block << 4
-                    // we want to output 0-255
-                    final int packedLight =  this.calcPackedLight(blockInfo, normX, normY, normZ, lightX, lightY, lightZ);
-                    blockLight = ((packedLight >> 4) & 0xF) * 17;
-                    skyLight = ((packedLight >> 20) & 0xF) * 17;
+                    if(!this.usePrecomputedLightmaps)
+                    {
+                        // what we get back is raw (0-15) sky << 20 | block << 4
+                        // we want to output 0-255
+                        final int packedLight =  this.calcPackedLight(blockInfo, normX, normY, normZ, lightX, lightY, lightZ);
+                        blockLight = ((packedLight >> 4) & 0xF) * 17;
+                        skyLight = ((packedLight >> 20) & 0xF) * 17;
+                    }
                 }
             
                 blockLight = Math.max(blockLight, this.blockLightMap);

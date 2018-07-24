@@ -184,6 +184,7 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
         // We are sending to the lighter, which will do that again and expects 
         // floats so reverse the change and store in a format appropriate for our use.
         final BlockPos blockPos = lighter.pos();
+        
         this.pos[this.vertexCount].set((float)(x - blockPos.getX()), (float)(y - blockPos.getY()), (float)(z - blockPos.getZ()));
         return this;
     }
