@@ -107,7 +107,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                 float normX,
                 float normY,
                 float normZ,
-                int unlitColorARGB0,
+                int unlitColorRGBA0,
                 float u0,
                 float v0)
         {
@@ -164,7 +164,9 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             output.add(target.zOffset + pos.getZ() + posZ);
             
             // BASE_RGBA_4UB
-            output.add(unlitColorARGB0);
+            // really not sure why the swizzle is needed here, but it seems to be needed
+            
+            output.add(Useful.swizzleColor(unlitColorRGBA0));
             
             // BASE_TEX_2F
             output.add(u0);

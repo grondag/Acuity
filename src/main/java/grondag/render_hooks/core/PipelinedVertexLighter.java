@@ -1,8 +1,5 @@
 package grondag.render_hooks.core;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
-
 import grondag.render_hooks.api.IPipelinedQuad;
 import grondag.render_hooks.api.IPipelinedVertexConsumer;
 import grondag.render_hooks.api.IRenderPipeline;
@@ -119,7 +116,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorARGB0,
+            int unlitColorRGBA0,
             float u0,
             float v0
             )
@@ -127,7 +124,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.SINGLE)
             throw new UnsupportedOperationException("Single-layer vertex must use single-layer texture format.");
         
-        startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
+        startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorRGBA0, u0, v0);
     }
     
     @Override
@@ -138,10 +135,10 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorARGB0,
+            int unlitColorRGBA0,
             float u0,
             float v0,
-            int unlitColorARGB1,
+            int unlitColorRGBA1,
             float u1,
             float v1
             )
@@ -149,10 +146,10 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.DOUBLE)
             throw new UnsupportedOperationException("Double-layer vertex must use double-layer pipeline format.");
         
-        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
+        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorRGBA0, u0, v0);
         
         // SECONDARY_RGBA_4UB
-        target.add(unlitColorARGB1);
+        target.add(Useful.swizzleColor(unlitColorRGBA1));
         
         // SECONDARY_TEX_2F
         target.add(u1);
@@ -167,13 +164,13 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorARGB0,
+            int unlitColorRGBA0,
             float u0,
             float v0,
-            int unlitColorARGB1,
+            int unlitColorRGBA1,
             float u1,
             float v1,
-            int unlitColorARGB2,
+            int unlitColorRGBA2,
             float u2,
             float v2
             )
@@ -181,17 +178,17 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.TRIPLE)
             throw new UnsupportedOperationException("Triple-layer vertex must use triple-layer pipeline format.");
         
-        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
+        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorRGBA0, u0, v0);
         
         // SECONDARY_RGBA_4UB
-        target.add(unlitColorARGB1);
+        target.add(Useful.swizzleColor(unlitColorRGBA1));
         
         // SECONDARY_TEX_2F
         target.add(u1);
         target.add(v1);
         
         // TERTIARY_RGBA_4UB
-        target.add(unlitColorARGB2);
+        target.add(Useful.swizzleColor(unlitColorRGBA2));
         
         // TERTIARY_TEX_2F
         target.add(u2);
@@ -209,33 +206,10 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorARGB0,
+            int unlitColorRGBA0,
             float u0,
             float v0);
     
-    
-    protected static void putColorRGBA(ByteBuffer bytes, int colorARGB)
-    {
-        byte alpha = (byte)(colorARGB >> 24 & 0xFF);
-        byte red = (byte)(colorARGB >> 16 & 0xFF);
-        byte green = (byte)(colorARGB >> 8 & 0xFF);
-        byte blue = (byte)(colorARGB & 0xFF);
-        
-        if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN)
-        {
-            bytes.put(red);
-            bytes.put(green);
-            bytes.put(blue);
-            bytes.put(alpha);
-        }
-        else
-        {
-            bytes.put(alpha);
-            bytes.put(blue);
-            bytes.put(green);
-            bytes.put(red);
-        }
-    }
     
     protected int calcPackedLight(BlockInfo blockInfo, float normX, float normY, float normZ, float x, float y, float z)
     {
@@ -379,17 +353,5 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 
         a = MathHelper.clamp(a, 0, 1);
         return a;
-    }
-
-    /**
-     * Multiplies RGB by given factor and returns with alpha unmodified.
-     */
-    protected static int shadeColor(int colorRGBA, float shade)
-    {
-        int red = Math.round(((colorRGBA >> 16) & 0xFF) * shade);
-        int green = Math.round(((colorRGBA >> 8) & 0xFF) * shade);
-        int blue = Math.round((colorRGBA & 0xFF) * shade);
-    
-        return (colorRGBA & 0xFF000000) | (red << 16) | (green << 8) | blue;
     }
 }

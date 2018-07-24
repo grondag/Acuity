@@ -21,7 +21,7 @@ public interface IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorARGB0,
+            int unlitColorRGBA0,
             float u0,
             float v0
             );
@@ -36,10 +36,10 @@ public interface IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorARGB0,
+            int unlitColorRGBA0,
             float u0,
             float v0,
-            int unlitColorARGB1,
+            int unlitColorRGBA1,
             float u1,
             float v1
             );
@@ -54,13 +54,13 @@ public interface IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorARGB0,
+            int unlitColorRGBA0,
             float u0,
             float v0,
-            int unlitColorARGB1,
+            int unlitColorRGBA1,
             float u1,
             float v1,
-            int unlitColorARGB2,
+            int unlitColorRGBA2,
             float u2,
             float v2
             );

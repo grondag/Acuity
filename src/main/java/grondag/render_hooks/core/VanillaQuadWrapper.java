@@ -12,6 +12,7 @@ import grondag.render_hooks.api.TextureFormat;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;
@@ -46,8 +47,12 @@ public class VanillaQuadWrapper implements IPipelinedQuad
                      
         if(!this.enableAmbientOcclusion)
             vertexLighter.setAmbientOcclusion(false);
-
+        
+//        if(vertexLighter.getBlockInfo().getState().getBlock() == Blocks.VINE)
+//            System.out.println("vine");
+        
         final int blockColor = this.getColorMultiplier(vertexLighter.getBlockInfo());
+        
         final int[] data =  wrapped.getVertexData();
         final VertexFormat format = wrapped.getFormat();
         final float[][] pos = this.positions;
@@ -122,24 +127,13 @@ public class VanillaQuadWrapper implements IPipelinedQuad
             }
             
             int rawColor = data[(i * format.getNextOffset() + format.getColorOffset()) / 4];
-            if(blockColor != 0xFFFFFFFF)
-                rawColor = multiplyColor(rawColor, blockColor);
+            rawColor = Useful.multiplyColor(rawColor, blockColor);
                     
             LightUtil.unpack(data, unpack, format, i, uvIndex);
             
             vertexLighter.acceptVertex(pos[i][0], pos[i][1], pos[i][2], normX, normY, normZ, rawColor, unpack[0], unpack[1]);
         }
         
-    }
-    
-    private int multiplyColor(int color1, int color2)
-    {
-        int red = ((color1 >> 16) & 0xFF) * ((color2 >> 16) & 0xFF) / 0xFF;
-        int green = ((color1 >> 8) & 0xFF) * ((color2 >> 8) & 0xFF) / 0xFF;
-        int blue = (color1 & 0xFF) * (color2 & 0xFF) / 0xFF;
-        int alpha = ((color1 >> 24) & 0xFF) * ((color2 >> 24) & 0xFF) / 0xFF;
-    
-        return (alpha << 24) | (red << 16) | (green << 8) | blue;
     }
     
     @SuppressWarnings("null")
@@ -159,6 +153,6 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     {
         @SuppressWarnings("null")
         final int tint = wrapped.getTintIndex();
-        return tint == -1 ? 0xFFFFFFFF : 0xFF000000 | blockInfo.getColorMultiplier(tint); 
+        return tint == -1 ? 0xFFFFFFFF : (0xFF000000 | blockInfo.getColorMultiplier(tint)); 
     }
 }
