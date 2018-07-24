@@ -51,9 +51,6 @@ public enum PipelineVertexFormat
             .addElement(TERTIARY_RGBA_4UB)
             .addElement(TERTIARY_TEX_2F)),
     
-    /**
-     * Adds normal and separate per-vertex AO for sky lighting.
-     */
     ENHANCED_SINGLE(new VertexFormat()
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)

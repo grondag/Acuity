@@ -10,9 +10,6 @@ public class PipelineVertextFormatElement extends VertexFormatElement
     // slows to a crawl otherwise
     public static final PipelineVertextFormatElement POSITION_3F = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.POSITION, 3, null);
     
-    /**
-     * Alpha values are packed to 0-127. The highest bit (128) if set, means layer is emissive, and disables lightmap, AO and diffuse
-     */
     public static final PipelineVertextFormatElement BASE_RGBA_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_color_0");
     public static final PipelineVertextFormatElement BASE_TEX_2F = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_uv_0");
     public static final PipelineVertextFormatElement NORMAL_AO_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_normal_ao", false);
