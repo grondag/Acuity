@@ -1,11 +1,17 @@
 package grondag.render_hooks.api;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.ByteBuffer;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+
+import com.google.common.io.CharStreams;
 
 import grondag.render_hooks.RenderHooks;
 import grondag.render_hooks.core.OpenGlHelperExt;
@@ -51,12 +57,12 @@ abstract class AbstractPipelineShader
         this.isErrored = false;
         try
         {
-            @Nullable ByteBuffer source = OpenGlHelperExt.readFileAsString(this.fileName);
-            if(source == null)
-            {
-                this.isErrored = true;
-                return;
-            }
+            String source = this.getSource();
+            
+            byte[] abyte = source.getBytes();
+            ByteBuffer bytebuffer = BufferUtils.createByteBuffer(abyte.length);
+            bytebuffer.put(abyte);
+            bytebuffer.position(0);
             
             if(this.glId <= 0)
             {
@@ -69,7 +75,7 @@ abstract class AbstractPipelineShader
                 }
             }
             
-            OpenGlHelper.glShaderSource(this.glId, source);
+            OpenGlHelper.glShaderSource(this.glId, bytebuffer);
             OpenGlHelper.glCompileShader(this.glId);
     
             if (OpenGlHelper.glGetShaderi(this.glId, OpenGlHelper.GL_COMPILE_STATUS) == GL11.GL_FALSE)
@@ -85,6 +91,28 @@ abstract class AbstractPipelineShader
                 this.glId = -1;
             }
             RenderHooks.INSTANCE.getLog().error("Unable to create shader " + this.fileName + " " + e.getMessage());
+        }
+    }
+    
+    public String getSource()
+    {
+        return getShaderSource(this.fileName);
+    }
+    
+    public static String getShaderSource(String fileName)
+    {
+        InputStream in = ProgramManager.class.getResourceAsStream(fileName);
+        
+        if(in == null)
+            return "";
+        
+        try (final Reader reader = new InputStreamReader(in))
+        {
+            return CharStreams.toString(reader);
+        }
+        catch (IOException e)
+        {
+            return "";
         }
     }
 }

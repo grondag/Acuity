@@ -10,4 +10,12 @@ public final class PipelineVertexShader  extends AbstractPipelineShader implemen
     {
         super(fileName, OpenGlHelper.GL_VERTEX_SHADER, textureFormat);
     }
+    
+    @Override
+    public String getSource()
+    {
+        String result = super.getSource();
+        result = result.replaceAll("#version\\s+120", "");
+        return PipelineShaderManager.INSTANCE.vertexLibrarySource + result;
+    }
 }

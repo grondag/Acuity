@@ -202,8 +202,8 @@ public class CompoundBufferBuilder extends BufferBuilder
             intBuffer.put(pipelineArray[pipelineIndex].rawData(), startInt, intLength);
             pipelineStarts[pipelineIndex] = startInt + intLength;
         });
+        buffer.byteBuffer().limit(packing.totalBytes());
         this.uploadBuffer = buffer;
-        this.uploadBuffer.byteBuffer().limit(packing.totalBytes());
     }
     
     public void uploadTo(CompoundVertexBuffer target)

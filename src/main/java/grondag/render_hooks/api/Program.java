@@ -58,10 +58,13 @@ public final class Program implements IProgram
         protected void markForInitialization()
         {
             if(this.initializer != null)
+            {
                 this.needsInitialization = true;
+                hasDirtyUniform = true;
+            }
         }
         
-        @SuppressWarnings("unchecked")
+        @SuppressWarnings({ "unchecked", "null" })
         protected void initialize()
         {
             if(this.needsInitialization && this.initializer != null)
@@ -88,11 +91,14 @@ public final class Program implements IProgram
         
         protected final void upload()
         {
-            if(this.unifID >= 0 && this.isUniformDirty)
+            if(this.unifID >= 0)
             {
                 this.initialize();
-                this.isUniformDirty = false;
-                this.uploadInner();
+                if(this.isUniformDirty)
+                {
+                    this.isUniformDirty = false;
+                    this.uploadInner();
+                }
             }
         }
         
@@ -533,11 +539,6 @@ public final class Program implements IProgram
         OpenGlHelper.glAttachShader(programID, fragId);
         
         Configurator.lightingModel.vertexFormat(this.textureFormat).bindAttributes(programID);
-        
-        //TODO: remove or put back
-//        final int libraryId = PipelineShaderManager.INSTANCE.vertexLibrary.glId();
-//        if(libraryId > 0)
-//            OpenGlHelper.glAttachShader(programID, libraryId);
         
         OpenGlHelper.glLinkProgram(programID);
         if(OpenGlHelper.glGetProgrami(programID, OpenGlHelper.GL_LINK_STATUS) == GL11.GL_FALSE)

@@ -40,14 +40,14 @@ public class EventHandler
     public static void onRenderTick(TickEvent.RenderTickEvent event)
     {
         if(event.phase == Phase.START) 
-            ProgramManager.INSTANCE.onRenderTick();
+            ProgramManager.INSTANCE.onRenderTick(event);
     }
     
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent event) 
     {
         if(event.phase == Phase.START) 
-            ProgramManager.INSTANCE.onGameTick();
+            ProgramManager.INSTANCE.onGameTick(event);
     }
     
     @SubscribeEvent

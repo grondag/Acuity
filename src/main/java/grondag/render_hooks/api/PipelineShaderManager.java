@@ -13,8 +13,10 @@ final class PipelineShaderManager implements IPipelineShaderManager
     private final IPipelineVertexShader[] defaultVertex = new IPipelineVertexShader[TextureFormat.values().length];
     private final IPipelineFragmentShader[] defaultFragment = new IPipelineFragmentShader[TextureFormat.values().length];;
     
-    public final PipelineVertexShader vertexLibrary;
+    String vertexLibrarySource;
+    String fragmentLibrarySource;
     
+    @SuppressWarnings("null")
     PipelineShaderManager()
     {
         //FIXME: put in real names for double & triple
@@ -24,9 +26,15 @@ final class PipelineShaderManager implements IPipelineShaderManager
         this.defaultFragment[TextureFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag", TextureFormat.SINGLE);
         this.defaultFragment[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag", TextureFormat.DOUBLE);
         this.defaultFragment[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag", TextureFormat.TRIPLE);
-        
-        this.vertexLibrary = (PipelineVertexShader)this.getOrCreateVertexShader("/assets/render_hooks/shader/library.glsl", TextureFormat.SINGLE);
-        
+    
+        this.loadLibrarySources();
+    }
+    
+    private void loadLibrarySources()
+    {
+        String commonSource = AbstractPipelineShader.getShaderSource("/assets/render_hooks/shader/common_lib.glsl");
+        this.vertexLibrarySource = AbstractPipelineShader.getShaderSource("/assets/render_hooks/shader/vertex_lib.glsl") + commonSource;
+        this.fragmentLibrarySource = AbstractPipelineShader.getShaderSource("/assets/render_hooks/shader/fragment_lib.glsl") + commonSource;
     }
     
     @Override
@@ -73,6 +81,7 @@ final class PipelineShaderManager implements IPipelineShaderManager
     
     public void forceReload()
     {
+        this.loadLibrarySources();
         this.fragmentShaders.values().forEach(s -> s.forceReload());
         this.vertexShaders.values().forEach(s -> s.forceReload());
     }
