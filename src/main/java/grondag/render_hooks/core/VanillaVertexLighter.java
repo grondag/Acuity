@@ -170,17 +170,11 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             output.add(target.zOffset + pos.getZ() + posZ);
             
             // BASE_RGBA_4UB
-            // really not sure why the swizzle is needed here, but it seems to be needed
-            
-            output.add(Useful.swizzleColor(unlitColorRGBA0));
+            output.add(unlitColorRGBA0);
             
             // BASE_TEX_2F
             output.add(u0);
             output.add(v0);
-            
-            //TODO: remove
-            if( Math.abs((normX * normX + normY * normY + normZ * normZ) - 1) > 0.01f)
-                System.out.println("bad input normal");
             
             // NORMAL_3UB
             int normAo = Math.round(normX * 127 + 127);

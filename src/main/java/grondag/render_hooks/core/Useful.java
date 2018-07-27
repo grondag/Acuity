@@ -35,16 +35,11 @@ public class Useful
     }
     
     /**
-     * Swaps the R and B components, because OpenGL seems to want it that way.
-     * TODO: Find out why this hack is needed.  There is an extension for vertex attributes
-     * that forces BGRA component ordering for DirectX compatibility, but not obvious if/where
-     * we would be activating it.  Or byte ordering is fundamentally wrong somewhere.
-     * Could also be an endianess problem, but intel is little-endian so shouldn't be an issue.
-     * Also, endian problem should break alpha and alpha is fine.
+     * Swaps the R and B components, leaving green and alpha intact.
      */
-    public static int swizzleColor(int colorRGBA)
+    public static int swapRedBlue(int color)
     {
-        return (colorRGBA & 0xFF00FF00) | ((colorRGBA >> 16) & 0xFF) | ((colorRGBA & 0xFF) << 16);
+        return (color & 0xFF00FF00) | ((color >> 16) & 0xFF) | ((color & 0xFF) << 16);
     }
 
 }

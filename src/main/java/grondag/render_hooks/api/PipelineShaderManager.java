@@ -19,13 +19,12 @@ final class PipelineShaderManager implements IPipelineShaderManager
     @SuppressWarnings("null")
     PipelineShaderManager()
     {
-        //FIXME: put in real names for double & triple
         this.defaultVertex[TextureFormat.SINGLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert", TextureFormat.SINGLE);
-        this.defaultVertex[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert", TextureFormat.DOUBLE);
-        this.defaultVertex[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_single.vert", TextureFormat.TRIPLE);
+        this.defaultVertex[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_double.vert", TextureFormat.DOUBLE);
+        this.defaultVertex[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateVertexShader("/assets/render_hooks/shader/default_triple.vert", TextureFormat.TRIPLE);
         this.defaultFragment[TextureFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag", TextureFormat.SINGLE);
-        this.defaultFragment[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag", TextureFormat.DOUBLE);
-        this.defaultFragment[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_single.frag", TextureFormat.TRIPLE);
+        this.defaultFragment[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_double.frag", TextureFormat.DOUBLE);
+        this.defaultFragment[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateFragmentShader("/assets/render_hooks/shader/default_triple.frag", TextureFormat.TRIPLE);
     
         this.loadLibrarySources();
     }

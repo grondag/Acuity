@@ -9,7 +9,7 @@ public class EnhancedVertexLighter extends CompoundVertexLighter
     @Override
     protected PipelinedVertexLighter createChildLighter(IRenderPipeline pipeline)
     {
-        // TODO Auto-generated method stub
+        // TODO implement enhanced lighting
         return null;
     }
 

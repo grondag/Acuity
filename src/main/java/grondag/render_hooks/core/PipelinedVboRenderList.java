@@ -14,7 +14,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class PipelinedVboRenderList extends VboRenderList
 {
-    //TODO: remove
 //    private long totalNanos;
 //    private int runCount;
     
@@ -32,7 +31,7 @@ public class PipelinedVboRenderList extends VboRenderList
                 // Disabling them here does no harm because caller will disable them anyway when we return.
                 //
                 // Note that GL_VERTEX_ARRAY can NOT be disabled without breaking everything
-                // even though we are not using it directly in the shader. 
+                // (on my system at least) even though we are not using it directly in the shader. 
                 GlStateManager.glDisableClientState(GL11.GL_COLOR_ARRAY);
                 
                 OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
