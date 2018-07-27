@@ -12,6 +12,7 @@ import grondag.render_hooks.api.IRenderHookRuntime;
 import grondag.render_hooks.api.RenderHookRuntime;
 import grondag.render_hooks.core.OpenGlHelperExt;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.resources.IReloadableResourceManager;
 import net.minecraft.client.resources.IResourceManager;
 import net.minecraft.client.resources.IResourceManagerReloadListener;
@@ -43,12 +44,13 @@ public class RenderHooks
 	@SideOnly(Side.CLIENT)
 	public static final boolean isModEnabled()
 	{
-	    return ASMTransformer.allPatchesSuccessful() && Configurator.enabled;
+	    return glCapabilitiesMet && ASMTransformer.allPatchesSuccessful() && Configurator.enabled;
 	}
 	
 	@SideOnly(Side.CLIENT)
 	private static boolean lastEnabledSetting = isModEnabled();
 	
+	private static boolean glCapabilitiesMet = false;
 	/**
 	 * For use by config event handler.
 	 */
@@ -83,6 +85,24 @@ public class RenderHooks
     @EventHandler
 	public void preInit(FMLPreInitializationEvent event)
 	{
+        // check for needed opengl capabilities
+        if(!OpenGlHelper.vboSupported)
+        {
+            getLog().warn("RenderHooks will be disabled because hardware does not support VBOs.");
+            return;
+        }
+        if(!OpenGlHelper.areShadersSupported() )
+        {
+            getLog().warn("RenderHooks will be disabled because hardware does not support shaders.");
+            return;
+        }
+        if(!OpenGlHelper.openGL21)
+        {
+            getLog().warn("RenderHooks will be disabled because hardware does not support OpenGL version 2.1");
+            return;
+        }
+        getLog().warn("RenderHooks can run on this hardware. VBOs, shaders and OpenGL 2.1 are all supported.");
+        glCapabilitiesMet = true;
 	}
 
     @SideOnly(Side.CLIENT)
@@ -98,6 +118,7 @@ public class RenderHooks
 	{
         // try to get faster access to GL calls
         OpenGlHelperExt.initialize();
+        
         
         IResourceManager rm = Minecraft.getMinecraft().getResourceManager();
         if(rm instanceof IReloadableResourceManager)

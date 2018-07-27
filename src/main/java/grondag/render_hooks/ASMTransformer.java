@@ -362,6 +362,50 @@ public class ASMTransformer implements IClassTransformer
         }
     };
     
+    private Consumer<ClassNode> patchOpenGlHelper = classNode ->
+    {
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+        boolean worked = false;
+        
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            if (m.name.equals("func_176075_f") || m.name.equals("useVbo")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    if(next.getOpcode() == GETSTATIC)
+                    {
+                        // delete all operations up until return
+                        while(next.getOpcode() != IRETURN && i < m.instructions.size())
+                        {
+                            m.instructions.remove(next);
+                            next = m.instructions.get(i);
+                        }
+                       
+                        if(next.getOpcode() == IRETURN)
+                        {
+                            // insert call to our hook before return statement
+                            m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/render_hooks/core/PipelineHooks", "useVbo", "()Z", false));
+                            worked = true;
+                        }
+                        break;
+                    }
+                }
+                break;
+            }
+        }
+        if(!worked)
+        {
+            RenderHooks.INSTANCE.getLog().error("Unable to locate and patch useVbo() OpenGlHelper");
+            allPatchesSuccessful = false;
+        }
+    };
+
+    
     @SuppressWarnings("null")
     @Override
     public byte[] transform(String name, String transformedName, byte[] basicClass)
@@ -388,6 +432,9 @@ public class ASMTransformer implements IClassTransformer
         
         if (transformedName.equals("net.minecraft.client.renderer.vertex.VertexFormatElement"))
             return patch(transformedName, basicClass, obfuscated, patchVertexFormatElement, ClassWriter.COMPUTE_FRAMES); 
+        
+        if (transformedName.equals("net.minecraft.client.renderer.OpenGlHelper"))
+            return patch(transformedName, basicClass, obfuscated, patchOpenGlHelper, ClassWriter.COMPUTE_FRAMES); 
         
         return basicClass;
     }

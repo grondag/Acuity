@@ -30,7 +30,14 @@ public class EventHandler
             LightingModel oldModel = Configurator.lightingModel;
             ConfigManager.sync(RenderHooks.MODID, Config.Type.INSTANCE);
             if(RenderHooks.didEnabledStatusChange())
-                Minecraft.getMinecraft().refreshResources();
+            {
+                // important to reload renderers immediately in case 
+                // this results in change of vbo to/from  displaylists
+                Minecraft.getMinecraft().renderGlobal.loadRenderers();
+                
+                // Don't think this is needed because different interface for pipelined models
+                // Minecraft.getMinecraft().refreshResources();
+            }
             else if (oldModel != Configurator.lightingModel)
                 RenderHookRuntime.INSTANCE.forceReload();
         }
