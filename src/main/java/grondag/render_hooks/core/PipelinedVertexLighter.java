@@ -161,7 +161,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorRGBA0, u0, v0);
         
         // SECONDARY_RGBA_4UB
-        target.add(Useful.swizzleColor(unlitColorRGBA1));
+        target.add(unlitColorRGBA1);
         
         // SECONDARY_TEX_2F
         target.add(u1);
@@ -193,14 +193,14 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorRGBA0, u0, v0);
         
         // SECONDARY_RGBA_4UB
-        target.add(Useful.swizzleColor(unlitColorRGBA1));
+        target.add(unlitColorRGBA1);
         
         // SECONDARY_TEX_2F
         target.add(u1);
         target.add(v1);
         
         // TERTIARY_RGBA_4UB
-        target.add(Useful.swizzleColor(unlitColorRGBA2));
+        target.add(unlitColorRGBA2);
         
         // TERTIARY_TEX_2F
         target.add(u2);
