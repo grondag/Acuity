@@ -220,24 +220,6 @@ public class CompoundBufferBuilder extends BufferBuilder
         this.uploadBuffer = null;
         this.uploadPackingList = null;
     }
-
-    @Deprecated
-    public void uploadTo(CompoundListedRenderChunk target, int vanillaList)
-    {
-//        if(this.vertexCount == 0 && pipelineList.isEmpty())
-//            return;
-//        
-//        target.prepareForUpload(vanillaList);
-////        if(this.vertexCount > 0)
-////        {
-////            target.uploadBuffer(VANILLA_PIPELINE, this);
-////            super.reset();
-////        }
-//        if(!pipelineList.isEmpty())
-//            pipelineList.forEach(p -> target.uploadBuffer(p, populateUploadBuffer(pipelineArray[p.getIndex()], p)));
-//        
-//        target.completeUpload();
-    }
     
     @Override
     public void sortVertexData(float x, float y, float z)

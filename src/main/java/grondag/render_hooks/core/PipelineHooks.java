@@ -15,7 +15,6 @@ import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.crash.CrashReport;
@@ -178,14 +177,6 @@ public class PipelineHooks
             CrashReportCategory.addBlockInfo(crashreportcategory, posIn, stateIn);
             throw new ReportedException(crashreport);
         }
-    }
-    
-    public static void  uploadDisplayList(BufferBuilder source, int vanillaList, RenderChunk target)
-    {
-        if(RenderHooks.isModEnabled())
-            ((CompoundBufferBuilder)source).uploadTo((CompoundListedRenderChunk)target, vanillaList);
-        else
-            Minecraft.getMinecraft().renderGlobal.renderDispatcher.uploadDisplayList(source, vanillaList, target);
     }
 
     public static void uploadVertexBuffer(BufferBuilder source, VertexBuffer target)

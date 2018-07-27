@@ -181,60 +181,13 @@ public class ASMTransformer implements IClassTransformer
         }
     };
     
-    private Consumer<ClassNode> patchListChunkFactory = classNode ->
-    {
-        Iterator<MethodNode> methods = classNode.methods.iterator();
-        boolean newWorked = false;
-        boolean invokedWorked = false;
-        
-        while (methods.hasNext())
-        {
-            MethodNode m = methods.next();
-            
-            if (m.name.equals("func_189565_a") || m.name.equals("create")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    
-                    if(next.getOpcode() == NEW)
-                    {
-                        TypeInsnNode op = (TypeInsnNode)next;
-                        if(op.desc.equals("net/minecraft/client/renderer/chunk/ListedRenderChunk"))
-                        {
-                            op.desc = "grondag/render_hooks/core/CompoundListedRenderChunk";
-                            newWorked = true;
-                        }
-                    }
-                    // constructors are always INVOKESPECIAL
-                    else if(next.getOpcode() == INVOKESPECIAL)
-                    {
-                        MethodInsnNode op = (MethodInsnNode)next;
-                        if(op.owner.equals("net/minecraft/client/renderer/chunk/ListedRenderChunk") && op.name.equals("<init>"))
-                        {
-                            op.owner = "grondag/render_hooks/core/CompoundListedRenderChunk";
-                            op.itf = false;
-                            invokedWorked = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        if(!newWorked || !invokedWorked)
-        {
-            RenderHooks.INSTANCE.getLog().error("Unable to locate ListedRenderChunk instance in ListChunkFactory.<init>");
-            allPatchesSuccessful = false;
-        }
-    };
-    
     private Consumer<ClassNode> patchChunkRenderDispatcher = classNode ->
     {
         Iterator<MethodNode> methods = classNode.methods.iterator();
         
         boolean worked = false;
         
-        while (methods.hasNext())
+        while (methods.hasNext() && !worked)
         {
             MethodNode m = methods.next();
             
@@ -267,8 +220,12 @@ public class ASMTransformer implements IClassTransformer
                             if(next.getOpcode() != ALOAD)
                                 break;
                             
-                            // push this on stack before the other arguments
-                            m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
+                            // no longer needed to push *this* on stack before calling static hook
+                            if(((VarInsnNode)next).var == 0)
+                            {
+                                m.instructions.remove(next);
+                                next = m.instructions.get(j++);
+                            }
                             
                             // skip until call to vbo upload instance method
                             // might be INVOKESPECIAL or might be INVOKEVIRTUAL if access transfomer made public
@@ -287,44 +244,6 @@ public class ASMTransformer implements IClassTransformer
                                         ins.setOpcode(INVOKESTATIC);
                                         ins.owner = "grondag/render_hooks/core/PipelineHooks";
                                         ins.name = "uploadVertexBuffer";
-                                        ins.itf = false;
-                                        looking = false;
-                                    }
-                                }
-                            } while(looking && j < m.instructions.size());
-
-                            if(looking)
-                                break;
-                            
-                            // skip to next ALOAD
-                            do
-                            {
-                                next = m.instructions.get(j++);
-                            } while(next.getOpcode() != ALOAD && j < m.instructions.size());
-                            
-                            if(next.getOpcode() != ALOAD)
-                                break;
-                            
-                            // push this on stack before the other arguments
-                            m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
-                            
-                            // skip until call to display list upload instance method
-                            // might be INVOKESPECIAL or might be INVOKEVIRTUAL if access transfomer made public
-                            // so check the node class instead of the op code
-                            looking = true;
-                            do
-                            {
-                                next = m.instructions.get(j++);
-                                if(next instanceof MethodInsnNode)
-                                {
-                                    MethodInsnNode ins = (MethodInsnNode)next;
-                                    if(ins.owner.equals("net/minecraft/client/renderer/chunk/ChunkRenderDispatcher")
-                                            && (ins.name.equals("func_178510_a") || ins.name.equals("uploadDisplayList"))
-                                            && ins.desc.equals("(Lnet/minecraft/client/renderer/BufferBuilder;ILnet/minecraft/client/renderer/chunk/RenderChunk;)V"))
-                                    {
-                                        ins.setOpcode(INVOKESTATIC);
-                                        ins.owner = "grondag/render_hooks/core/PipelineHooks";
-                                        ins.name = "uploadDisplayList";
                                         ins.itf = false;
                                         looking = false;
                                     }
@@ -374,12 +293,7 @@ public class ASMTransformer implements IClassTransformer
                     if(next.getOpcode() == NEW)
                     {
                         TypeInsnNode op = (TypeInsnNode)next;
-                        if(op.desc.equals("net/minecraft/client/renderer/RenderList"))
-                        {
-                            op.desc = "grondag/render_hooks/core/PipelinedRenderList";
-                            newCount++;
-                        }
-                        else if(op.desc.equals("net/minecraft/client/renderer/VboRenderList"))
+                        if(op.desc.equals("net/minecraft/client/renderer/VboRenderList"))
                         {
                             op.desc = "grondag/render_hooks/core/PipelinedVboRenderList";
                             newCount++;
@@ -389,13 +303,7 @@ public class ASMTransformer implements IClassTransformer
                     else if(next.getOpcode() == INVOKESPECIAL)
                     {
                         MethodInsnNode op = (MethodInsnNode)next;
-                        if(op.owner.equals("net/minecraft/client/renderer/RenderList") && op.name.equals("<init>"))
-                        {
-                            op.owner = "grondag/render_hooks/core/PipelinedRenderList";
-                            op.itf = false;
-                            invokeCount++;
-                        }
-                        else if(op.owner.equals("net/minecraft/client/renderer/VboRenderList") && op.name.equals("<init>"))
+                        if(op.owner.equals("net/minecraft/client/renderer/VboRenderList") && op.name.equals("<init>"))
                         {
                             op.owner = "grondag/render_hooks/core/PipelinedVboRenderList";
                             op.itf = false;
@@ -405,9 +313,9 @@ public class ASMTransformer implements IClassTransformer
                 }
             }
         }
-        if(newCount != 4 || invokeCount != 4)
+        if(newCount != 2 || invokeCount != 2)
         {
-            RenderHooks.INSTANCE.getLog().error("Unable to locate all VBORenderList & RenderList instances in RenderGlobal");
+            RenderHooks.INSTANCE.getLog().error("Unable to locate all VBORenderList instances in RenderGlobal");
             allPatchesSuccessful = false;
         }
     };
@@ -471,9 +379,6 @@ public class ASMTransformer implements IClassTransformer
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.RenderChunk"))
             return patch(transformedName, basicClass, obfuscated, patchRenderChunk); 
-        
-        if (transformedName.equals("net.minecraft.client.renderer.chunk.ListChunkFactory"))
-            return patch(transformedName, basicClass, obfuscated, patchListChunkFactory); 
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher"))
             return patch(transformedName, basicClass, obfuscated, patchChunkRenderDispatcher, ClassWriter.COMPUTE_FRAMES); 
