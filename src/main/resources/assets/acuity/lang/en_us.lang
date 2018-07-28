@@ -1,0 +1,34 @@
+#MISC
+misc.fail_no_vbo = Acuity Rendering API will be disabled because hardware does not support VBOs.
+misc.fail_no_shaders = Acuity Rendering API will be disabled because hardware does not support shaders.
+misc.fail_opengl_version = Acuity Rendering API will be disabled because hardware does not support OpenGL version 2.1.
+misc.hardware_ok = Acuity Rendering API can run on this hardware. VBOs, shaders and OpenGL 2.1 are all supported.
+misc.fail_imc = Error in inter-mod communication request for Acuity Rendering API runtime.
+misc.fail_patch_locate = Unable to locate and patch %s
+misc.fail_patch_buffer_builder = Unable to locate four expected BufferBuilder instances in RegionRenderCacheBuilder.<init>
+misc.fail_patch_render_chunk = Unable to locate VertexBuffer instance in RenderChunk.<init>
+misc.fail_patch_render_global = Unable to locate and patch all VBORenderList instances in RenderGlobal
+misc.fail_patch_vertex_format_element = Unable to locate and patch isFirstOrUV() reference in VertexFormatElement.<init>
+misc.patching_notice = Patching %s
+misc.patching_fail = Unable to patch %s due to unexpected error 
+misc.patching_fail_warning_1 = Acuity Rendering API will be disabled and partial patches may cause problems.
+misc.patching_fail_warning_2 = Acuity Rendering API or a conflicting mod should be removed to prevent strangeness or crashing.
+misc.field_already_exists = Unable to add field %s to class %s - field already exists.
+misc.fail_create_shader = Unable to create shader %s due to unexpected error %s
+misc.info_reloading = Acuity Rendering API is reloading
+misc.debug_missing_uniform = Unable to find uniform %s in shaders %s, %s. This is normal if the uniform isn't used in the shader.
+misc.warn_uniform_program_immutable_exception = Cannot add uniform to finished program.
+misc.error_program_link_failure = Unable to create linked shader due to unexpected error.
+misc.error_mismatched_vertex_formats = Detected program with mismatched vertex formats in vertex and fragment shader.  Vertex shader format will be used but program probably won't work correctly. Shaders are %s and %s.
+misc.error_wrapped_buffer_unsupported = Unsupported operation for wrapped buffer.
+misc.warn_slow_block_info = Unable to access BlockInfo parent fields via reflection. Will use slow initialization of world state during model lighting.
+misc.warn_slow_gl_call = Unable to obtain a direct call path to %s due to reflection error. Render performance may be reduced when Acuity is enabled.
+misc.error_vertex_texture_format_mismatch_single = Single-layer vertex must use single-layer texture format.
+misc.error_vertex_texture_format_mismatch_double = Double-layer vertex must use double-layer texture format.
+misc.error_vertex_texture_format_mismatch_triple = Triple-layer vertex must use triple-layer texture format.
+misc.warn_unknown_fluid_render = Unknown fluid sent to vanilla fluid render handler. Will render using water pipeline.
+
+#CONFIG LABELS
+config.max_pipelines = Max Rendering Pipelines
+config.acuity_enabled = Enabled
+config.lighting_model = Lighting Model (WIP)
