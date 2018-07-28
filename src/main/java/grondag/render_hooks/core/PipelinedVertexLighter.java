@@ -25,8 +25,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     protected int blockLightMap = 0;
     protected int skyLightMap = 0;
     
-    // UGLY: these are reset per-quad and not changed in nominal case, 
-    // profile and see if worth consolidating to bit flags or otherwise optimizing
     protected boolean enableDiffuse = true;
     protected boolean enableAmbientOcclusion = true;
     protected boolean usePrecomputedLightmaps = false;
