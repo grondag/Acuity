@@ -135,7 +135,6 @@ public class PipelineHooks
             final CompoundVertexLighter lighter = lighters.get();
             lighter.prepare((CompoundBufferBuilder)bufferIn, layer, worldIn, (IExtendedBlockState) stateIn, posIn, checkSides);
             model.produceQuads(lighter);
-            lighter.releaseResources();
             return lighter.didOutput();
         }
         catch (Throwable throwable)
@@ -166,8 +165,6 @@ public class PipelineHooks
                 if (!list.isEmpty() && (!checkSides || stateIn.shouldSideBeRendered(worldIn, posIn, face)))
                    list.forEach(q -> wrapper.wrapAndLight(lighter, q));
             }
-            
-            lighter.releaseResources();
             
             return lighter.didOutput();
         }

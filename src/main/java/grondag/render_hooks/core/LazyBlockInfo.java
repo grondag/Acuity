@@ -92,8 +92,6 @@ public class LazyBlockInfo extends BlockInfo
         }
     }
     
-    // UGLY: In call stack looks like this is getting called more often than needs to be
-    // Should profile and see if matters - probably not, doesn't do much, but is called per-block
     @Override
     public void reset()
     {

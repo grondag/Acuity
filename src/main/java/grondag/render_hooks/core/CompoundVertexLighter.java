@@ -44,11 +44,6 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
         this.sideFlags = checkSides ? getSideFlags() : 0xFFFF;
     }
     
-    public void releaseResources()
-    {
-        this.blockInfo.reset();
-    }
-    
     @SuppressWarnings("null")
     private int getSideFlags()
     {
