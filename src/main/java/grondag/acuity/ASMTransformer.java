@@ -16,16 +16,26 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import net.minecraft.launchwrapper.IClassTransformer;
-import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 
-@SuppressWarnings("deprecation")
 @SideOnly(Side.CLIENT)
 public class ASMTransformer implements IClassTransformer
 {
     private static boolean allPatchesSuccessful = true;
+    
+    // language translation won't be enabled while some patches are running
+    private static final String msg_fail_patch_locate = "Unable to locate and patch %s";
+    private static final String msg_fail_patch_buffer_builder = "Unable to locate four expected BufferBuilder instances in RegionRenderCacheBuilder.<init>";
+    private static final String msg_fail_patch_render_chunk = "Unable to locate VertexBuffer instance in RenderChunk.<init>";
+    private static final String msg_fail_patch_render_global = "Unable to locate and patch all VBORenderList instances in RenderGlobal";
+    private static final String msg_fail_patch_vertex_format_element = "Unable to locate and patch isFirstOrUV() reference in VertexFormatElement.<init>";
+    private static final String msg_patching_notice = "Patching %s";
+    private static final String msg_patching_fail = "Unable to patch %s due to unexpected error ";
+    private static final String msg_patching_fail_warning_1 = "Acuity Rendering API will be disabled and partial patches may cause problems.";
+    private static final String msg_patching_fail_warning_2 = "Acuity Rendering API or a conflicting mod should be removed to prevent strangeness or crashing.";
+    private static final String msg_field_already_exists = "Unable to add field %s to class %s - field already exists.";
     
     public static final boolean allPatchesSuccessful()
     {
@@ -82,7 +92,7 @@ public class ASMTransformer implements IClassTransformer
         }
         if(!blockWorked || !fluidWorked)
         {
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.fail_patch_locate", "net/minecraft/client/renderer/BlockModelRenderer.renderBlock"));
+            Acuity.INSTANCE.getLog().error(String.format(msg_fail_patch_locate, "net/minecraft/client/renderer/BlockModelRenderer.renderBlock"));
             allPatchesSuccessful = false;
         }
     };
@@ -129,7 +139,7 @@ public class ASMTransformer implements IClassTransformer
         }
         if(newCount != 4 || invokeCount != 4)
         {
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocal("misc.fail_patch_buffer_builder"));
+            Acuity.INSTANCE.getLog().error(msg_fail_patch_buffer_builder);
             allPatchesSuccessful = false;
         }
     };
@@ -178,7 +188,7 @@ public class ASMTransformer implements IClassTransformer
         }
         if(!newWorked || !invokedWorked)
         {
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocal("misc.fail_patch_render_chunk"));
+            Acuity.INSTANCE.getLog().error(msg_fail_patch_render_chunk);
             allPatchesSuccessful = false;
         }
     };
@@ -265,7 +275,7 @@ public class ASMTransformer implements IClassTransformer
         }
         if(!worked)
         {
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.fail_patch_locate", "net/minecraft/client/renderer/chunk/ChunkRenderDispatcher.uploadChunk"));
+            Acuity.INSTANCE.getLog().error(String.format(msg_fail_patch_locate, "net/minecraft/client/renderer/chunk/ChunkRenderDispatcher.uploadChunk"));
             allPatchesSuccessful = false;
         }
     };
@@ -312,7 +322,7 @@ public class ASMTransformer implements IClassTransformer
         }
         if(newCount != 2 || invokeCount != 2)
         {
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocal("misc.fail_patch_render_global"));
+            Acuity.INSTANCE.getLog().error(msg_fail_patch_render_global);
             allPatchesSuccessful = false;
         }
     };
@@ -354,7 +364,7 @@ public class ASMTransformer implements IClassTransformer
         }
         if(!worked)
         {
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocal("misc.fail_patch_vertex_format_element"));
+            Acuity.INSTANCE.getLog().error(msg_fail_patch_vertex_format_element);
             allPatchesSuccessful = false;
         }
     };
@@ -397,7 +407,7 @@ public class ASMTransformer implements IClassTransformer
         }
         if(!worked)
         {
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.fail_patch_locate", "OpenGlHelper.useVbo()"));
+            Acuity.INSTANCE.getLog().error(String.format(msg_fail_patch_locate, "OpenGlHelper.useVbo()"));
             allPatchesSuccessful = false;
         }
     };
@@ -443,7 +453,7 @@ public class ASMTransformer implements IClassTransformer
     
     public byte[] patch(String name, byte[] bytes, boolean obfuscated, Consumer<ClassNode> patcher, int flags)
     {
-        Acuity.INSTANCE.getLog().info(I18n.translateToLocalFormatted("misc.patching_notice", name));
+        Acuity.INSTANCE.getLog().info(String.format(msg_patching_notice, name));
 
         byte[] result = bytes;
         try
@@ -461,14 +471,14 @@ public class ASMTransformer implements IClassTransformer
         }
         catch(Exception e)
         {
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.patching_fail", name), e);
+            Acuity.INSTANCE.getLog().error(String.format(msg_patching_fail, name), e);
             allPatchesSuccessful = false;
         }
         
         if(!allPatchesSuccessful)
         {
-            Acuity.INSTANCE.getLog().warn(I18n.translateToLocal("misc.patching_fail_warning_1"));
-            Acuity.INSTANCE.getLog().warn(I18n.translateToLocal("misc.patching_fail_warning_2"));
+            Acuity.INSTANCE.getLog().warn(msg_patching_fail_warning_1);
+            Acuity.INSTANCE.getLog().warn(msg_patching_fail_warning_2);
         }
         return result;
     }
@@ -480,7 +490,7 @@ public class ASMTransformer implements IClassTransformer
         {
             if (f.name.equals(fieldName)) 
             {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.field_already_exists", fieldName, classNode.name));
+                Acuity.INSTANCE.getLog().error(String.format(msg_field_already_exists, fieldName, classNode.name));
                 return;
             }
         }

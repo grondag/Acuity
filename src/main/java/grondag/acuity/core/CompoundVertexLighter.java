@@ -2,10 +2,10 @@ package grondag.acuity.core;
 
 import javax.annotation.Nullable;
 
-import grondag.acuity.api.IPipelineManager;
+import grondag.acuity.api.PipelineManager;
+import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedQuadConsumer;
-import grondag.acuity.api.RenderPipeline;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.BlockRenderLayer;
@@ -21,7 +21,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
 {
     protected final LazyBlockInfo blockInfo;
     
-    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[IPipelineManager.MAX_PIPELINES];
+    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[PipelineManager.MAX_PIPELINES];
 
     protected @Nullable BlockRenderLayer renderLayer;
     protected CompoundBufferBuilder target;

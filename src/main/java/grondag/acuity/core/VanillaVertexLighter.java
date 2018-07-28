@@ -1,7 +1,7 @@
 package grondag.acuity.core;
 
-import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.IRenderPipeline;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;

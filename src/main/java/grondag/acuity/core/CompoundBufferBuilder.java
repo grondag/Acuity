@@ -7,7 +7,7 @@ import java.util.PriorityQueue;
 import javax.annotation.Nullable;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.IPipelineManager;
+import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
@@ -20,7 +20,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundBufferBuilder extends BufferBuilder
 {
-    private static final VertexCollector[] EMPTY_ARRAY = new VertexCollector[IPipelineManager.MAX_PIPELINES];
+    private static final VertexCollector[] EMPTY_ARRAY = new VertexCollector[PipelineManager.MAX_PIPELINES];
     
     /**
      * Cache instantiated buffers for reuse.<p>
@@ -36,7 +36,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     /**
      * Fast lookup of buffers by pipeline index.  Element 0 will always be this.
      */
-    private final VertexCollector[] pipelineArray = new VertexCollector[IPipelineManager.MAX_PIPELINES];
+    private final VertexCollector[] pipelineArray = new VertexCollector[PipelineManager.MAX_PIPELINES];
     
     /**
      * Holds vertex data ready for upload if we have it.
@@ -54,7 +54,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     private class CompoundState extends State
     {
         private ObjectArrayList<RenderPipeline> pipelineList;
-        private VertexCollector[] pipelineArray = new VertexCollector[IPipelineManager.MAX_PIPELINES];
+        private VertexCollector[] pipelineArray = new VertexCollector[PipelineManager.MAX_PIPELINES];
         
         @SuppressWarnings("null")
         public CompoundState(int[] buffer, VertexFormat format)
@@ -91,7 +91,7 @@ public class CompoundBufferBuilder extends BufferBuilder
             State inner = super.getVertexState();
             CompoundState result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat());
             result.pipelineList = this.pipelineList.clone();
-            System.arraycopy(this.pipelineArray, 0, result.pipelineArray, 0, IPipelineManager.MAX_PIPELINES);
+            System.arraycopy(this.pipelineArray, 0, result.pipelineArray, 0, PipelineManager.MAX_PIPELINES);
             return result;
         }
         else
@@ -117,7 +117,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         super.reset();
         if(Acuity.isModEnabled())
         {
-            System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, IPipelineManager.MAX_PIPELINES);
+            System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, PipelineManager.MAX_PIPELINES);
             this.pipelineList.clear();
             this.uploadBuffer = null;
             this.uploadPackingList = null;
@@ -186,7 +186,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         
         // tracks current position within vertex collectors
         // necessary in transparency layer when splitting pipelines
-        int[] pipelineStarts = new int[IPipelineManager.MAX_PIPELINES];
+        int[] pipelineStarts = new int[PipelineManager.MAX_PIPELINES];
         
         final ExpandableByteBuffer buffer = BufferStore.claim();
         buffer.expand(packing.totalBytes());

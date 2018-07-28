@@ -10,12 +10,20 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import grondag.acuity.Configurator;
-import grondag.acuity.Acuity;
 import grondag.acuity.api.IPipelineFragmentShader;
 import grondag.acuity.api.IPipelineVertexShader;
 import grondag.acuity.api.IProgram;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.api.UniformUpdateFrequency;
+import grondag.acuity.api.IUniform.IUniform1f;
+import grondag.acuity.api.IUniform.IUniform1i;
+import grondag.acuity.api.IUniform.IUniform2f;
+import grondag.acuity.api.IUniform.IUniform2i;
+import grondag.acuity.api.IUniform.IUniform3f;
+import grondag.acuity.api.IUniform.IUniform3i;
+import grondag.acuity.api.IUniform.IUniform4f;
+import grondag.acuity.api.IUniform.IUniform4i;
+import grondag.acuity.Acuity;
 import grondag.acuity.core.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -41,7 +49,7 @@ public final class Program implements IProgram
     private final ObjectArrayList<Uniform<?>> renderTickUpdates = new ObjectArrayList<>();
     private final ObjectArrayList<Uniform<?>> gameTickUpdates = new ObjectArrayList<>();
     
-    public abstract class Uniform<T extends Uniform<T>>
+    public abstract class Uniform<T extends IUniform>
     {
         private final String name;
         protected boolean isUniformDirty = true;
@@ -115,7 +123,7 @@ public final class Program implements IProgram
         protected abstract void uploadInner();
     }
     
-    protected abstract class UniformFloat<T extends Uniform<T>> extends Uniform<T>
+    protected abstract class UniformFloat<T extends IUniform> extends Uniform<T>
     {
         protected final FloatBuffer uniformFloatBuffer;
         
@@ -126,13 +134,14 @@ public final class Program implements IProgram
         }
     }
     
-    public class Uniform1f extends UniformFloat<Uniform1f>
+    public class Uniform1f extends UniformFloat<IUniform1f> implements IUniform1f
     {
-        protected Uniform1f(String name, @Nullable Consumer<Uniform1f> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform1f(String name, @Nullable Consumer<IUniform1f> initializer, @Nullable UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 1);
         }
 
+        @Override
         public void set(float value)
         {
             if(this.unifID == -1) return;
@@ -150,13 +159,14 @@ public final class Program implements IProgram
         }
     }
     
-    public class Uniform2f extends UniformFloat<Uniform2f>
+    public class Uniform2f extends UniformFloat<IUniform2f> implements IUniform2f
     {
-        protected Uniform2f(String name, @Nullable Consumer<Uniform2f> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform2f(String name, @Nullable Consumer<IUniform2f> initializer, @Nullable UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 2);
         }
 
+        @Override
         public void set(float v0, float v1)
         {
             if(this.unifID == -1) return;
@@ -179,13 +189,14 @@ public final class Program implements IProgram
         }
     }
     
-    public class Uniform3f extends UniformFloat<Uniform3f>
+    public class Uniform3f extends UniformFloat<IUniform3f> implements IUniform3f
     {
-        protected Uniform3f(String name, @Nullable Consumer<Uniform3f> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform3f(String name, @Nullable Consumer<IUniform3f> initializer, @Nullable UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 3);
         }
 
+        @Override
         public void set(float v0, float v1, float v2)
         {
             if(this.unifID == -1) return;
@@ -213,13 +224,14 @@ public final class Program implements IProgram
        }
     }
     
-    public class Uniform4f extends UniformFloat<Uniform4f>
+    public class Uniform4f extends UniformFloat<IUniform4f> implements IUniform4f
     {
-        protected Uniform4f(String name, @Nullable Consumer<Uniform4f> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform4f(String name, @Nullable Consumer<IUniform4f> initializer, @Nullable UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 4);
         }
 
+        @Override
         public void set(float v0, float v1, float v2, float v3)
         {
             if(this.unifID == -1) return;
@@ -252,7 +264,7 @@ public final class Program implements IProgram
         }
     }
     
-    private <T extends Uniform<T>> T addUniform(T toAdd)
+    private <T extends Uniform<?>> T addUniform(T toAdd)
     {
         if(this.isFinal)
             throw new UnsupportedOperationException(I18n.translateToLocal("misc.warn_uniform_program_immutable_exception"));
@@ -266,30 +278,30 @@ public final class Program implements IProgram
     }
     
     @Override
-    public Uniform1f uniform1f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform1f> initializer)
+    public IUniform1f uniform1f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1f> initializer)
     {
         return addUniform(new Uniform1f(name, initializer, frequency));
     }
     
     @Override
-    public Uniform2f uniform2f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform2f> initializer)
+    public IUniform2f uniform2f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2f> initializer)
     {
         return addUniform(new Uniform2f(name, initializer, frequency));
     }
     
     @Override
-    public Uniform3f uniform3f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform3f> initializer)
+    public IUniform3f uniform3f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3f> initializer)
     {
         return addUniform(new Uniform3f(name, initializer, frequency));
     }
     
     @Override
-    public Uniform4f uniform4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform4f> initializer)
+    public IUniform4f uniform4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4f> initializer)
     {
         return addUniform(new Uniform4f(name, initializer, frequency));
     }
     
-    protected abstract class UniformInt<T extends Uniform<T>> extends Uniform<T>
+    protected abstract class UniformInt<T extends IUniform> extends Uniform<T>
     {
         protected final IntBuffer uniformIntBuffer;
         
@@ -300,13 +312,14 @@ public final class Program implements IProgram
         }
     }
     
-    public class Uniform1i extends UniformInt<Uniform1i>
+    public class Uniform1i extends UniformInt<IUniform1i> implements IUniform1i
     {
-        protected Uniform1i(String name, @Nullable Consumer<Uniform1i> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform1i(String name, @Nullable Consumer<IUniform1i> initializer, @Nullable UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 1);
         }
 
+        @Override
         public void set(int value)
         {
             if(this.unifID == -1) return;
@@ -324,13 +337,14 @@ public final class Program implements IProgram
         }
     }
     
-    public class Uniform2i extends UniformInt<Uniform2i>
+    public class Uniform2i extends UniformInt<IUniform2i> implements IUniform2i
     {
-        protected Uniform2i(String name, @Nullable Consumer<Uniform2i> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform2i(String name, @Nullable Consumer<IUniform2i> initializer, @Nullable UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 2);
         }
 
+        @Override
         public void set(int v0, int v1)
         {
             if(this.unifID == -1) return;
@@ -353,13 +367,14 @@ public final class Program implements IProgram
         }
     }
     
-    public class Uniform3i extends UniformInt<Uniform3i>
+    public class Uniform3i extends UniformInt<IUniform3i> implements IUniform3i
     {
-        protected Uniform3i(String name, @Nullable Consumer<Uniform3i> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform3i(String name, @Nullable Consumer<IUniform3i> initializer, @Nullable UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 3);
         }
 
+        @Override
         public void set(int v0, int v1, int v2)
         {
             if(this.unifID == -1) return;
@@ -387,13 +402,14 @@ public final class Program implements IProgram
         }
     }
     
-    public class Uniform4i extends UniformInt<Uniform4i>
+    public class Uniform4i extends UniformInt<IUniform4i> implements IUniform4i
     {
-        protected Uniform4i(String name, @Nullable Consumer<Uniform4i> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform4i(String name, @Nullable Consumer<IUniform4i> initializer, @Nullable UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 4);
         }
 
+        @Override
         public void set(int v0, int v1, int v2, int v3)
         {
             if(this.unifID == -1) return;
@@ -427,25 +443,25 @@ public final class Program implements IProgram
     }
     
     @Override
-    public Uniform1i uniform1i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform1i> initializer)
+    public IUniform1i uniform1i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1i> initializer)
     {
         return addUniform(new Uniform1i(name, initializer, frequency));
     }
     
     @Override
-    public Uniform2i uniform2i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform2i> initializer)
+    public IUniform2i uniform2i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2i> initializer)
     {
         return addUniform(new Uniform2i(name, initializer, frequency));
     }
     
     @Override
-    public Uniform3i uniform3i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform3i> initializer)
+    public IUniform3i uniform3i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3i> initializer)
     {
         return addUniform(new Uniform3i(name, initializer, frequency));
     }
     
     @Override
-    public Uniform4i uniform4i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<Uniform4i> initializer)
+    public IUniform4i uniform4i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4i> initializer)
     {
         return addUniform(new Uniform4i(name, initializer, frequency));
     }

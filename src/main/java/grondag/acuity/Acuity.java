@@ -8,8 +8,8 @@ import javax.annotation.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import grondag.acuity.api.IAcuityRuntime;
 import grondag.acuity.api.AcuityRuntime;
+import grondag.acuity.api.IAcuityRuntime;
 import grondag.acuity.core.OpenGlHelperExt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;

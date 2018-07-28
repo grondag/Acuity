@@ -1,9 +1,9 @@
 package grondag.acuity.core;
 
+import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedVertexConsumer;
 import grondag.acuity.api.IRenderPipeline;
-import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.vertex.VertexFormat;

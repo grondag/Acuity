@@ -1,10 +1,10 @@
 package grondag.acuity.api;
 
 import grondag.acuity.Acuity;
+import grondag.acuity.api.IAcuityRuntime;
 import grondag.acuity.api.IPipelineManager;
 import grondag.acuity.api.IPipelineShaderManager;
 import grondag.acuity.api.IProgramManager;
-import grondag.acuity.api.IAcuityRuntime;
 import grondag.acuity.core.PipelineHooks;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;

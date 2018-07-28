@@ -21,18 +21,12 @@ buildscript {
 
 apply plugin: 'net.minecraftforge.gradle.forge'
 apply plugin: 'maven-publish'
+apply plugin: 'java'
+apply plugin: 'maven'
 
-import org.ajoberstar.grgit.Grgit
-
-def repo = Grgit.open(project.file('.'))
-project.ext.gitHash = repo.log().find().abbreviatedId
-
-ext.buildnumber = 0
-project.buildnumber = System.getenv('BUILD_NUMBER') != null ? System.getenv('BUILD_NUMBER') : project.ext.gitHash
-
-version = "MC${minecraft_version}-${mod_version}.${buildnumber}"
-group= "grondag.render_hooks" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "render_hooks"
+version = "MC${minecraft_version}-${mod_version}"
+group= "grondag.acuity" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+archivesBaseName = "acuity"
 
 
 sourceCompatibility = 1.8
@@ -47,40 +41,45 @@ minecraft {
     version = "${minecraft_version}-${forge_version}"
     runDir = "run"
     mappings = "snapshot_20171003"
-    useDepAts = true
+    useDepAts = false
     
-    clientJvmArgs += '-Dfml.coreMods.load=grondag.render_hooks.FMLPlugin'
+    clientJvmArgs += '-Dfml.coreMods.load=grondag.acuity.FMLPlugin'
     
     replaceIn "Reference.java"
     replace "@VERSION@", project.version
 }
 
-task deobfJar(type: Jar) {
+jar.manifest {
+	attributes 'FMLAT': 'acuity_at.cfg'
+    attributes 'FMLCorePlugin': 'grondag.acuity.FMLPlugin'
+	attributes 'FMLCorePluginContainsFMLMod': 'true'
+}
+
+jar {
     from sourceSets.main.output
+    from sourceSets.api.output
+}
+    
+task deobfJar(type: Jar) {
+	from sourceSets.main.allSource
+    from sourceSets.main.output
+    from sourceSets.api.allSource
+    from sourceSets.api.output
     classifier = 'dev'
 }
 
-configurations {
-    shade
-    compile.extendsFrom shade
-}
-
-reobf {
-   
-}
-
-repositories {
-
-	
+task apiJar(type: Jar, dependsOn: 'sourceApiJava') {
+    from sourceSets.api.allSource
+    from sourceSets.api.output
+    //include 'grondag/acuity/api/**/*'
+    classifier 'api'
 }
 
 artifacts {
     archives sourceJar
     archives deobfJar
-}
-
-dependencies {
-    
+    archives apiJar
+    archives jar
 }
 
 processResources
@@ -106,29 +105,21 @@ processResources
 sourceSets {
 	main {
 	        java {
-	            include 'grondag/**'
+	            include 'grondag/**/*'
 	        }
 	        resources
 	        {
-	        	include '**'
+	        	include '**/*'
 	        }
-	    }
+    }
+	api {
+		java {
+	            include 'grondag/**'
+	        }
+	}
     test {
         java {
             exclude 'grondag/**'
-        }
-    }
-}
-jar.manifest {
-	attributes 'FMLAT': 'render_hooks_at.cfg'
-    attributes 'FMLCorePlugin': 'grondag.render_hooks.FMLPlugin'
-	attributes 'FMLCorePluginContainsFMLMod': 'true'
-}
-
-jar {
-    configurations.shade.each { dep ->
-        from(project.zipTree(dep)){
-            exclude 'META-INF', 'META-INF/**'
         }
     }
 }

@@ -4,10 +4,10 @@ import java.nio.ByteBuffer;
 
 import javax.vecmath.Vector3f;
 
+import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedVertexConsumer;
 import grondag.acuity.api.IRenderPipeline;
-import grondag.acuity.api.RenderPipeline;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.BlockRenderLayer;

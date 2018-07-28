@@ -3,6 +3,7 @@ package grondag.acuity.api;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import grondag.acuity.Configurator;
 import grondag.acuity.api.IPipelineCallback;
 import grondag.acuity.api.IPipelineManager;
 import grondag.acuity.api.IProgram;
@@ -15,16 +16,28 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public final class PipelineManager implements IPipelineManager
 {
+    /**
+     * Will always be 1, defined to clarify intent in code.
+     */
+    public static final int FIRST_CUSTOM_PIPELINE_INDEX = 1;
+
+    /**
+     * Will always be 0, defined to clarify intent in code.
+     */
+    public static final int VANILLA_MC_PIPELINE_INDEX = 0;
+
+    public static final int MAX_PIPELINES = Configurator.maxPipelines;
+    
     public static final PipelineManager INSTANCE = new PipelineManager();
     
-    private final RenderPipeline[] pipelines = new RenderPipeline[MAX_PIPELINES];
+    private final RenderPipeline[] pipelines = new RenderPipeline[PipelineManager.MAX_PIPELINES];
     
     private final RenderPipeline[] defaultPipelines = new RenderPipeline[TextureFormat.values().length];
     public final RenderPipeline waterPipeline;
     public final RenderPipeline lavaPipeline;
     
     private final Object2ObjectOpenHashMap<Key, RenderPipeline> pipelineMap = new Object2ObjectOpenHashMap<>();
-    
+
     private class Key
     {
         private final @Nonnull TextureFormat textureFormat;
@@ -102,7 +115,7 @@ public final class PipelineManager implements IPipelineManager
         Key key = new Key(textureFormat, program, callback);
         
         RenderPipeline result = this.pipelineMap.get(key);
-        if(result == null && pipelineMap.size() < MAX_PIPELINES)
+        if(result == null && pipelineMap.size() < PipelineManager.MAX_PIPELINES)
         {
             result = new RenderPipeline(textureFormat, program, callback);
             this.pipelineMap.put(key, result);
