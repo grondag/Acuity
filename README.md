@@ -1,8 +1,20 @@
 # Introduction
 
-**Exotic Matter** is the common utility library for Grondag's Minecraft Mods
+**Render Hooks** is the common utility library for Grondag's Minecraft Mods
 
+# What modders can't change
+* Lighting functions are fixed
+* Texture formats are fixed
+* Diffuse texture mapping is always via texture atlas
+* Can be secondary texture atlas for normals, specular
+* Would need to alter atlas construction to minimize area of textures that have secondary textures
 
+# What modders can change
+* Diffuse color can be modified or replaced
+* Decide if/when to apply lighting function
+* Modify results of lighting function
+* Ultimately outputs a color per pixel - can ignore standard lighting if you want, but don't try to implement a diff. lighting model
+  
 # Mod Packs and Support
 This mod is in active development and is not feature-complete nor stable.  You MAY use this mod in ModPacks but be aware that future releases may require a world reset. It is therefore not recommended for servers or worlds you intend to keep for a long time.
 
