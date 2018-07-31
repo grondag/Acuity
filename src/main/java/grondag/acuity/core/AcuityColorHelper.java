@@ -41,7 +41,9 @@ public class AcuityColorHelper
     }
     
     /**
-     * Swaps the R and B components, leaving green and alpha intact.
+     * Swaps the R and B components, leaving green and alpha intact.<br>
+     * In game code/data, colors are generally in ARGB order (left to right = high to low).<br>
+     * OpenGL wants them in ABGR order (left to right = high to low).<br>
      */
     public static int swapRedBlue(int color)
     {

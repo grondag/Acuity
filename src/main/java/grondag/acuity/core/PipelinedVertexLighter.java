@@ -128,7 +128,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorRGBA0,
+            int unlitColorARGB0,
             float u0,
             float v0
             )
@@ -136,7 +136,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.SINGLE)
             throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_vertex_texture_format_mismatch_single"));
         
-        startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorRGBA0, u0, v0);
+        startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
     }
     
     @Override
@@ -147,10 +147,10 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorRGBA0,
+            int unlitColorARGB0,
             float u0,
             float v0,
-            int unlitColorRGBA1,
+            int unlitColorARGB1,
             float u1,
             float v1
             )
@@ -158,10 +158,10 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.DOUBLE)
             throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_vertex_texture_format_mismatch_double"));
         
-        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorRGBA0, u0, v0);
+        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
         
         // SECONDARY_RGBA_4UB
-        target.add(unlitColorRGBA1);
+        target.add(AcuityColorHelper.swapRedBlue(unlitColorARGB1));
         
         // SECONDARY_TEX_2F
         target.add(u1);
@@ -176,13 +176,13 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float normX,
             float normY,
             float normZ,
-            int unlitColorRGBA0,
+            int unlitColorARGB0,
             float u0,
             float v0,
-            int unlitColorRGBA1,
+            int unlitColorARGB1,
             float u1,
             float v1,
-            int unlitColorRGBA2,
+            int unlitColorARGB2,
             float u2,
             float v2
             )
@@ -190,17 +190,17 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(this.pipeline.textureFormat != TextureFormat.TRIPLE)
             throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_vertex_texture_format_mismatch_triple"));
         
-        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorRGBA0, u0, v0);
+        VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
         
         // SECONDARY_RGBA_4UB
-        target.add(unlitColorRGBA1);
+        target.add(AcuityColorHelper.swapRedBlue(unlitColorARGB1));
         
         // SECONDARY_TEX_2F
         target.add(u1);
         target.add(v1);
         
         // TERTIARY_RGBA_4UB
-        target.add(unlitColorRGBA2);
+        target.add(AcuityColorHelper.swapRedBlue(unlitColorARGB2));
         
         // TERTIARY_TEX_2F
         target.add(u2);

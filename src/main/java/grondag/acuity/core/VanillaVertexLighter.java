@@ -117,7 +117,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                 float normX,
                 float normY,
                 float normZ,
-                int unlitColorRGBA0,
+                int unlitColorARGB0,
                 float u0,
                 float v0)
         {
@@ -180,7 +180,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             output.add(target.zOffset + pos.getZ() + posZ);
             
             // BASE_RGBA_4UB
-            output.add(unlitColorRGBA0);
+            output.add(AcuityColorHelper.swapRedBlue(unlitColorARGB0));
             
             // BASE_TEX_2F
             output.add(u0);

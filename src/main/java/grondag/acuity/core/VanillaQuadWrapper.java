@@ -151,7 +151,6 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     {
         @SuppressWarnings("null")
         final int tint = wrapped.getTintIndex();
-        // for whatever reason, vanilla seems to provide BGR colors instead of RGB
-        return tint == -1 ? 0xFFFFFFFF : (0xFF000000 | AcuityColorHelper.swapRedBlue(blockInfo.getColorMultiplier(tint))); 
+        return tint == -1 ? 0xFFFFFFFF : (0xFF000000 | blockInfo.getColorMultiplier(tint)); 
     }
 }
