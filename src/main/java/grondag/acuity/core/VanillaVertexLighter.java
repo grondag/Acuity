@@ -54,16 +54,22 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             switch (layerIndex)
             {
             case 0:
-                this.glowFlags &= 0b11111110;
-                this.glowFlags |= 0b00000001;
+                if(isEmissive)
+                    this.glowFlags |= 0b00000001;
+                else
+                    this.glowFlags &= 0b11111110;
                 break;
             case 1:
-                this.glowFlags &= 0b01111111;
-                this.glowFlags |= 0b10000000;
+                if(isEmissive)
+                    this.glowFlags |= 0b10000000;
+                else
+                    this.glowFlags &= 0b01111111;
                 break;
             case 2:
-                this.glowFlags &= 0b10000001;
-                this.glowFlags |= 0b01111110;
+                if(isEmissive)
+                    this.glowFlags |= 0b01111110;
+                else
+                    this.glowFlags &= 0b10000001;
                 break;
                 
             default:
