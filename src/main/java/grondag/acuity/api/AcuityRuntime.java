@@ -1,5 +1,8 @@
 package grondag.acuity.api;
 
+import java.util.ArrayList;
+import java.util.function.Consumer;
+
 import grondag.acuity.Acuity;
 import grondag.acuity.api.IAcuityRuntime;
 import grondag.acuity.api.IPipelineManager;
@@ -16,6 +19,8 @@ public final class AcuityRuntime implements IAcuityRuntime
 {
     public static final AcuityRuntime INSTANCE = new AcuityRuntime();
 
+    private ArrayList<IAcuityListener> listeners = new ArrayList<>();
+    
     private AcuityRuntime() {};
     
     
@@ -49,5 +54,16 @@ public final class AcuityRuntime implements IAcuityRuntime
         ProgramManager.INSTANCE.forceReload();
         PipelineManager.INSTANCE.forceReload();
         PipelineHooks.forceReload();
+    }
+
+    @Override
+    public void registerListener(IAcuityListener listener)
+    {
+        this.listeners.add(listener);
+    }
+    
+    public void forEachListener(Consumer<IAcuityListener> c)
+    {
+        this.listeners.forEach(c);
     }
 }

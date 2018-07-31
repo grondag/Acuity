@@ -18,4 +18,9 @@ public interface IAcuityRuntime
      * if user has disabled Acuity in configuration.
      */
     boolean isAcuityEnabled();
+    
+    /**
+     * Use if you need callbacks for status changes.
+     */
+    void registerListener(IAcuityListener lister);
 }

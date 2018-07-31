@@ -35,6 +35,9 @@ public class EventHandler
                 // this results in change of vbo to/from  displaylists
                 Minecraft.getMinecraft().renderGlobal.loadRenderers();
                 
+                final boolean isEnabled = Acuity.isModEnabled();
+                AcuityRuntime.INSTANCE.forEachListener(c -> c.onAcuityStatusChange(isEnabled));
+                
                 // Don't think this is needed because different interface for pipelined models
                 // Minecraft.getMinecraft().refreshResources();
             }

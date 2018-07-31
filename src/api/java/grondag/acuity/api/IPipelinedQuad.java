@@ -1,6 +1,8 @@
 package grondag.acuity.api;
 
 
+import javax.annotation.Nullable;
+
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
@@ -9,7 +11,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public interface IPipelinedQuad
 {
-    public IRenderPipeline getPipeline();
+    public @Nullable IRenderPipeline getPipeline();
 
     /**
      * Quad must call {@link IPipelinedVertexConsumer#acceptVertex(IPipelinedVertex)} with

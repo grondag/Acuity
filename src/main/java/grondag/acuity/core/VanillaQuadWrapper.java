@@ -34,7 +34,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     }
     
     @Override
-    public IRenderPipeline getPipeline()
+    public @Nullable IRenderPipeline getPipeline()
     {
         return SIMPLE;
     }

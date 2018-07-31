@@ -143,9 +143,6 @@ public interface IPipelinedVertexConsumer
      * As noted above, future lighting models that do not rely on vertex-level lightmaps will <em>ignore</em> block 
      * lightmaps entirely. For emissive rendering, use quad-level glow.<p>
      * 
-     * Note that setting quad-level glow to any non-zero value will override the vertex block lightmap entirely,
-     * causing it to always be full white brightness (in lighting models that use vertex lightmaps.)
-     * 
      */
     public void setBlockLightMap(int blockLightRBGF);
     

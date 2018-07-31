@@ -65,6 +65,7 @@ public final class RenderPipeline implements IRenderPipeline
         return this.vertexFormat;
     }
     
+    @Override
     public int getIndex()
     {
         return this.index;
@@ -79,6 +80,12 @@ public final class RenderPipeline implements IRenderPipeline
     public void postDraw()
     {
         this.callback.postDraw();
+    }
+
+    @Override
+    public TextureFormat textureFormat()
+    {
+        return this.textureFormat;
     }
    
 }

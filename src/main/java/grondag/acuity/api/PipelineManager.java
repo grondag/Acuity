@@ -35,6 +35,7 @@ public final class PipelineManager implements IPipelineManager
     private final RenderPipeline[] defaultPipelines = new RenderPipeline[TextureFormat.values().length];
     public final RenderPipeline waterPipeline;
     public final RenderPipeline lavaPipeline;
+    public final RenderPipeline defaultSinglePipeline;
     
     private final Object2ObjectOpenHashMap<Key, RenderPipeline> pipelineMap = new Object2ObjectOpenHashMap<>();
 
@@ -98,6 +99,7 @@ public final class PipelineManager implements IPipelineManager
         }
         this.waterPipeline = this.getOrCreatePipeline(TextureFormat.SINGLE, ProgramManager.INSTANCE.getWaterProgram(), null);
         this.lavaPipeline = this.getOrCreatePipeline(TextureFormat.SINGLE, ProgramManager.INSTANCE.getLavaProgram(), null);
+        this.defaultSinglePipeline = defaultPipelines[0];
     }
     
     public void forceReload()
@@ -146,5 +148,11 @@ public final class PipelineManager implements IPipelineManager
     public final IRenderPipeline getLavaPipeline()
     {
         return this.lavaPipeline;
+    }
+
+    @Override
+    public IRenderPipeline getPipelineByIndex(int index)
+    {
+        return this.pipelines[index];
     }
 }

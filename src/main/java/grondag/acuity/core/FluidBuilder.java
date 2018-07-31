@@ -2,6 +2,7 @@ package grondag.acuity.core;
 
 import java.nio.ByteBuffer;
 
+import javax.annotation.Nullable;
 import javax.vecmath.Vector3f;
 
 import grondag.acuity.api.RenderPipeline;
@@ -273,7 +274,7 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
     }
 
     @Override
-    public IRenderPipeline getPipeline()
+    public @Nullable IRenderPipeline getPipeline()
     {
         return this.pipeline;
     }

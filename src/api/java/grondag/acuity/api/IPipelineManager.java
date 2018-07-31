@@ -26,5 +26,7 @@ public interface IPipelineManager
     IRenderPipeline getWaterPipeline();
 
     IRenderPipeline getLavaPipeline();
+
+    IRenderPipeline getPipelineByIndex(int index);
     
 }
