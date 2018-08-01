@@ -16,6 +16,7 @@ Those solutions are oriented towards players and don't offer much control or ext
 * Don'create more shaders than you need - while the mod tries to be efficient, more pipelines mean more, smaller draw calls to the GPU, limiting performance
 * Modders have no control over vertex formats. The mod will select a vertex format for you based on the number of texture layers you need (1 to 3). This is necessary to support enhanced lighting models and limit the number of GL state changes. (But you could put whatever data you want into the extra color/UV attributes of the multi-layer formats...)
 * Modders should rely on the provided lighting functions so that future enhanced lighting models "just work" with your block - unless your block really is meant to look different and thus doesn't need standard lighting.
+* Avoid excessive variation when rendering transparency. Ideally, use the single-layer vertex format and the default pipeline or only one or two custom pipelines. You *can* have multiple vertex formats and pipelines in the transparency layer, and the mod will automatically sort quads across formats and pipelines and then interleave draw calls based on the correct ordering. But it will mean more GL state changes and could thus impact peformance. (It should still be more efficient than TESRs because it can still render from a static VBO.)
 
 # Current Limitations 
 * No enhanced lighting model is available - this will wait for MC 1.13 and LWJGL 3 support.
