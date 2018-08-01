@@ -9,13 +9,29 @@ uniform vec3 u_fogAttributes;
 
 //varying vec3 v_light;
 varying float v_fogDistance;
-varying vec4 v_color;
-varying vec2 v_texcoord;
+varying vec4 v_color_0;
+varying vec2 v_texcoord_0;
+varying vec4 v_color_1;
+varying vec2 v_texcoord_1;
+varying vec4 v_color_2;
+varying vec2 v_texcoord_2;
 
-vec4 diffuseColor()
+vec4 diffuseColor_0()
 {
-	vec4 texColor = texture2D(u_textures, v_texcoord);
-	return texColor * v_color;
+	vec4 texColor = texture2D(u_textures, v_texcoord_0);
+	return texColor * v_color_0;
+}
+
+vec4 diffuseColor_1()
+{
+	vec4 texColor = texture2D(u_textures, v_texcoord_1);
+	return texColor * v_color_1;
+}
+
+vec4 diffuseColor_2()
+{
+	vec4 texColor = texture2D(u_textures, v_texcoord_2);
+	return texColor * v_color_2;
 }
 
 /**

@@ -9,13 +9,21 @@ uniform vec3 u_fogAttributes;
 
 attribute vec4 in_color_0;
 attribute vec2 in_uv_0;
+attribute vec4 in_color_1;
+attribute vec2 in_uv_1;
+attribute vec4 in_color_2;
+attribute vec2 in_uv_2;
 attribute vec4 in_normal_ao;
 attribute vec4 in_lightmaps;
 
 //varying vec3 v_light;
 varying float v_fogDistance;
-varying vec4 v_color;
-varying vec2 v_texcoord;
+varying vec4 v_color_0;
+varying vec2 v_texcoord_0;
+varying vec4 v_color_1;
+varying vec2 v_texcoord_1;
+varying vec4 v_color_2;
+varying vec2 v_texcoord_2;
 
 void setupVertex()
 {
@@ -30,10 +38,18 @@ void setupVertex()
     vec4 lightColor = texture2D(u_lightmap, lightCoord);
     float ao = in_normal_ao.w / 255.0;
     float diffuse = in_lightmaps.b / 255.0;
-    float glow = fract(in_lightmaps.a * 0.5) * 2.0;
-    vec3 shade = max(lightColor.rgb * ao * diffuse, vec3(glow));
 
-    v_color = vec4(in_color_0.rgb * shade, in_color_0.a);
+    vec3 light = lightColor.rgb * ao * diffuse;
 
-    v_texcoord = in_uv_0;
+    vec3 shade = fract(in_lightmaps.a * 0.5) == 0.5 ? vec3(1.0, 1.0, 1.0) : light;
+    v_color_0 = vec4(in_color_0.rgb * shade, in_color_0.a);
+    v_texcoord_0 = in_uv_0;
+
+    shade = in_lightmaps.a > 127.0 ? vec3(1.0, 1.0, 1.0) : light;
+    v_color_1 = vec4(in_color_1.rgb * shade, in_color_1.a);
+    v_texcoord_1 = in_uv_1;
+
+    shade = shade = fract(in_lightmaps.a * 0.25) >= 0.5 ? vec3(1.0, 1.0, 1.0) : light;
+    v_color_2 = vec4(in_color_2.rgb * shade, in_color_2.a);
+    v_texcoord_2 = in_uv_2;
 }
