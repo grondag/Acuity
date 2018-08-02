@@ -103,7 +103,7 @@ abstract class AbstractPipelineShader
     
     public static String getShaderSource(String fileName)
     {
-        InputStream in = ProgramManager.class.getResourceAsStream(fileName);
+        InputStream in = PipelineManager.class.getResourceAsStream(fileName);
         
         if(in == null)
             return "";

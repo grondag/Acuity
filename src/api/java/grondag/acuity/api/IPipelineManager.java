@@ -12,10 +12,7 @@ public interface IPipelineManager
      * Will return null if pipeline limit would be exceeded.
      */
     @Nullable
-    IRenderPipeline getOrCreatePipeline(
-            TextureFormat textureFormat, 
-            IProgram program, 
-            @Nullable IPipelineCallback callback);  
+    IRenderPipeline createPipeline(TextureFormat textureFormat, String vertexShader, String fragmentShader);  
     
     /**
      * Use when you want standard rendering.
@@ -27,5 +24,10 @@ public interface IPipelineManager
     IRenderPipeline getLavaPipeline();
 
     IRenderPipeline getPipelineByIndex(int index);
+
+    /**
+     * Use if you somehow need to know what world time is being sent to shader uniforms.
+     */
+    float worldTime();
     
 }

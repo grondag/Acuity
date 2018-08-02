@@ -10,9 +10,6 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import grondag.acuity.Configurator;
-import grondag.acuity.api.IPipelineFragmentShader;
-import grondag.acuity.api.IPipelineVertexShader;
-import grondag.acuity.api.IProgram;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.api.UniformUpdateFrequency;
 import grondag.acuity.api.IUniform.IUniform1f;
@@ -32,7 +29,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public final class Program implements IProgram
+public abstract class Program implements IRenderPipeline
 {
     private int progID = -1;
     private boolean needsLoad = true;
@@ -465,11 +462,17 @@ public final class Program implements IProgram
         return addUniform(new Uniform4i(name, initializer, frequency));
     }
     
-    Program(IPipelineVertexShader vertexShader, IPipelineFragmentShader fragmentShader, TextureFormat textureFormat)
+    Program(PipelineVertexShader vertexShader, PipelineFragmentShader fragmentShader, TextureFormat textureFormat)
     {
-        this.vertexShader = (PipelineVertexShader) vertexShader;
-        this.fragmentShader = (PipelineFragmentShader) fragmentShader;
+        this.vertexShader = vertexShader;
+        this.fragmentShader = fragmentShader;
         this.textureFormat = textureFormat;
+    }
+    
+    @Override
+    public TextureFormat textureFormat()
+    {
+        return this.textureFormat;
     }
     
     /**
@@ -481,7 +484,7 @@ public final class Program implements IProgram
     }
     
     @Override
-    public IProgram finish()
+    public IRenderPipeline finish()
     {
         this.isFinal = true;
         return this;

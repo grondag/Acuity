@@ -1,15 +1,21 @@
 package grondag.acuity.api;
 
-import javax.annotation.Nonnull;
+import java.util.regex.Pattern;
+
 import javax.annotation.Nullable;
 
+import org.lwjgl.opengl.GL13;
+
 import grondag.acuity.Configurator;
-import grondag.acuity.api.IPipelineCallback;
-import grondag.acuity.api.IPipelineManager;
-import grondag.acuity.api.IProgram;
-import grondag.acuity.api.IRenderPipeline;
-import grondag.acuity.api.TextureFormat;
-import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.EntityRenderer;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.entity.Entity;
+import net.minecraft.util.math.Vec3d;
+import net.minecraftforge.client.model.animation.Animation;
+import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
+import net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -32,60 +38,15 @@ public final class PipelineManager implements IPipelineManager
     
     private final RenderPipeline[] pipelines = new RenderPipeline[PipelineManager.MAX_PIPELINES];
     
+    private int pipelineCount = 0;
+    
     private final RenderPipeline[] defaultPipelines = new RenderPipeline[TextureFormat.values().length];
     public final RenderPipeline waterPipeline;
     public final RenderPipeline lavaPipeline;
     public final RenderPipeline defaultSinglePipeline;
     
-    private final Object2ObjectOpenHashMap<Key, RenderPipeline> pipelineMap = new Object2ObjectOpenHashMap<>();
-
-    private class Key
-    {
-        private final TextureFormat textureFormat;
-        private final IProgram program;
-        private final @Nullable IPipelineCallback callback;
-        
-        final int hash;
-        
-        private Key(
-                TextureFormat textureFormat, 
-                IProgram program, 
-                @Nullable IPipelineCallback callback)
-        {
-            this.textureFormat = textureFormat;
-            this.program = program;
-            this.callback = callback;
-            
-            int hash = textureFormat.hashCode();
-            hash ^= program.hashCode();
-            if(callback != null)
-                hash ^= callback.hashCode();
-            
-            this.hash = hash;
-        }
-
-        @Override
-        public int hashCode()
-        {
-            return this.hash;
-        }
-
-        @Override
-        public boolean equals(@Nullable Object obj)
-        {
-            if(obj == this) return true;
-            if(obj == null) return false;
-            if(obj instanceof Key)
-            {
-                Key other = (Key)obj;
-                
-                return this.textureFormat == other.textureFormat
-                        && this.program == other.program
-                        && this.callback == other.callback;
-            }
-            return false;
-        }
-    }
+    private float worldTime;
+    private float partialTicks;
     
     @SuppressWarnings("null")
     private PipelineManager()
@@ -95,34 +56,55 @@ public final class PipelineManager implements IPipelineManager
         // add default pipelines
         for(TextureFormat textureFormat : TextureFormat.values())
         {
-            defaultPipelines[textureFormat.ordinal()] = this.getOrCreatePipeline(textureFormat, ProgramManager.INSTANCE.getDefaultProgram(textureFormat), null);
+            defaultPipelines[textureFormat.ordinal()] = (RenderPipeline) this.createPipeline(
+                    textureFormat, 
+                    PipelineShaderManager.INSTANCE.getDefaultVertexShader(textureFormat),
+                    PipelineShaderManager.INSTANCE.getDefaultFragmentShader(textureFormat)).finish();
         }
-        this.waterPipeline = this.getOrCreatePipeline(TextureFormat.SINGLE, ProgramManager.INSTANCE.getWaterProgram(), null);
-        this.lavaPipeline = this.getOrCreatePipeline(TextureFormat.SINGLE, ProgramManager.INSTANCE.getLavaProgram(), null);
+        this.waterPipeline = this.createPipeline(TextureFormat.SINGLE, "/assets/acuity/shader/water.vert", "/assets/acuity/shader/water.frag");
+        this.lavaPipeline = this.createPipeline(TextureFormat.SINGLE, "/assets/acuity/shader/lava.vert", "/assets/acuity/shader/lava.frag");
         this.defaultSinglePipeline = defaultPipelines[0];
     }
     
     public void forceReload()
     {
-        this.pipelineMap.values().forEach(p -> p.refreshVertexFormats());
+        for(int i = 0; i < this.pipelineCount; i++)
+        {
+            this.pipelines[i].refreshVertexFormats();
+        }
     }
+    
     
     @Nullable
     @Override
-    public synchronized final RenderPipeline getOrCreatePipeline(
-            @Nonnull TextureFormat textureFormat, 
-            @Nonnull IProgram program, 
-            @Nullable IPipelineCallback callback)
+    public final RenderPipeline createPipeline(
+            TextureFormat textureFormat, 
+            String vertexShader, 
+            String fragmentShader)
     {
-        Key key = new Key(textureFormat, program, callback);
         
-        RenderPipeline result = this.pipelineMap.get(key);
-        if(result == null && pipelineMap.size() < PipelineManager.MAX_PIPELINES)
-        {
-            result = new RenderPipeline(textureFormat, program, callback);
-            this.pipelineMap.put(key, result);
-            this.pipelines[result.getIndex()] = result;
-        }
+        if(this.pipelineCount >= PipelineManager.MAX_PIPELINES)
+            return null;
+        
+        return createPipeline(
+                textureFormat, 
+                PipelineShaderManager.INSTANCE.getOrCreateVertexShader(vertexShader, textureFormat), 
+                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader(fragmentShader, textureFormat));
+    }
+    
+    @Nullable
+    protected synchronized final RenderPipeline createPipeline(
+            TextureFormat textureFormat, 
+            PipelineVertexShader vertexShader, 
+            PipelineFragmentShader fragmentShader)
+    {
+        
+        if(this.pipelineCount >= PipelineManager.MAX_PIPELINES)
+            return null;
+        RenderPipeline result = new RenderPipeline(this.pipelineCount++, vertexShader, fragmentShader, textureFormat);
+        this.pipelines[result.getIndex()] = result;
+        
+        addStandardUniforms(result);
         
         return result;
     }
@@ -154,5 +136,78 @@ public final class PipelineManager implements IPipelineManager
     public IRenderPipeline getPipelineByIndex(int index)
     {
         return this.pipelines[index];
+    }
+    
+    private void addStandardUniforms(Program program)
+    {
+//        program.uniform1f("u_time", UniformUpdateFrequency.PER_FRAME, u -> u.set(this.worldTime));
+        
+        if(containsUniformSpec(program, "sampler2D", "u_textures"))
+            program.uniform1i("u_textures", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.defaultTexUnit - GL13.GL_TEXTURE0));
+        
+        if(containsUniformSpec(program, "sampler2D", "u_lightmap"))
+            program.uniform1i("u_lightmap", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.lightmapTexUnit - GL13.GL_TEXTURE0));
+        
+        if(containsUniformSpec(program, "vec3", "u_eye_position"))
+            program.uniform3f("u_eye_position", UniformUpdateFrequency.PER_FRAME, u -> 
+            {
+                Vec3d eyePos = Minecraft.getMinecraft().player.getPositionEyes(partialTicks);
+                u.set((float)eyePos.x, (float)eyePos.y, (float)eyePos.z);
+            });
+        
+        if(containsUniformSpec(program, "vec3", "u_fogAttributes"))
+            program.uniform3f("u_fogAttributes", UniformUpdateFrequency.PER_TICK, u -> 
+            {
+                GlStateManager.FogState fogState = GlStateManager.fogState;
+                u.set(fogState.end, fogState.end - fogState.start, 
+                        // zero signals shader to use linear fog
+                        fogState.mode == GlStateManager.FogMode.LINEAR.capabilityId ? 0f : fogState.density);
+            });
+        
+        if(containsUniformSpec(program, "vec3", "u_fogColor"))
+            program.uniform3f("u_fogColor", UniformUpdateFrequency.PER_TICK, u -> 
+            {
+                EntityRenderer er = Minecraft.getMinecraft().entityRenderer;
+                u.set(er.fogColorRed, er.fogColorGreen, er.fogColorBlue);
+            });
+    }
+    
+    private static boolean containsUniformSpec(Program program, String type, String name)
+    {
+        String regex = "(?m)^uniform\\s+" + type + "\\s+" + name + "\\s*;";
+        Pattern pattern = Pattern.compile(regex);
+        return pattern.matcher(program.vertexShader.getSource()).find() 
+                || pattern.matcher(program.fragmentShader.getSource()).find(); 
+    }
+    
+    @SuppressWarnings("null")
+    public void onRenderTick(RenderTickEvent event)
+    {
+        for(int i = 0; i < this.pipelineCount; i++)
+        {
+            this.pipelines[i].onRenderTick();
+        }
+
+        Entity entity = Minecraft.getMinecraft().getRenderViewEntity();
+        if(entity == null) return;
+
+        final float partialTicks = event.renderTickTime;
+        this.partialTicks = partialTicks;
+        if(entity.world != null)
+            worldTime = Animation.getWorldTime(entity.world, partialTicks);
+    }
+
+    public void onGameTick(ClientTickEvent event)
+    {
+        for(int i = 0; i < this.pipelineCount; i++)
+        {
+            pipelines[i].onGameTick();
+        }
+    }
+    
+    @Override
+    public float worldTime()
+    {
+        return this.worldTime;
     }
 }

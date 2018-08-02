@@ -2,8 +2,8 @@ package grondag.acuity;
 
 import org.lwjgl.input.Keyboard;
 
-import grondag.acuity.api.ProgramManager;
 import grondag.acuity.api.AcuityRuntime;
+import grondag.acuity.api.PipelineManager;
 import grondag.acuity.core.LightingModel;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.config.Config;
@@ -50,14 +50,14 @@ public class EventHandler
     public static void onRenderTick(TickEvent.RenderTickEvent event)
     {
         if(event.phase == Phase.START) 
-            ProgramManager.INSTANCE.onRenderTick(event);
+            PipelineManager.INSTANCE.onRenderTick(event);
     }
     
     @SubscribeEvent
     public static void onClientTick(ClientTickEvent event) 
     {
         if(event.phase == Phase.START) 
-            ProgramManager.INSTANCE.onGameTick(event);
+            PipelineManager.INSTANCE.onGameTick(event);
     }
     
     @SubscribeEvent

@@ -19,7 +19,7 @@ import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GLContext;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.ProgramManager;
+import grondag.acuity.api.PipelineManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
@@ -95,7 +95,7 @@ public class OpenGlHelperExt
     
     public static @Nullable ByteBuffer readFileAsString(String filename) throws Exception
     {
-        InputStream in = ProgramManager.class.getResourceAsStream(filename);
+        InputStream in = PipelineManager.class.getResourceAsStream(filename);
     
         if(in == null)
             return null;

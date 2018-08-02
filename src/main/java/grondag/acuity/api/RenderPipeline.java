@@ -1,48 +1,24 @@
 package grondag.acuity.api;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-
 import grondag.acuity.Configurator;
-import grondag.acuity.api.IPipelineCallback;
-import grondag.acuity.api.IProgram;
-import grondag.acuity.api.IRenderPipeline;
-import grondag.acuity.api.TextureFormat;
 import grondag.acuity.core.PipelineVertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public final class RenderPipeline implements IRenderPipeline
+public final class RenderPipeline extends Program implements IRenderPipeline
 {
-    private static int nextIndex = 0;
-    
-    private static final IPipelineCallback DUMMY_CALLBACK = new IPipelineCallback()
-    {
-        @Override
-        public final void preDraw() {}
-
-        @Override
-        public final void postDraw(){}
-    };
-    
-    private final int index = nextIndex++;
-    public final TextureFormat textureFormat;
-    public final IPipelineCallback callback;
-    public final Program program;
+    private final int index;
     
     private PipelineVertexFormat pipelineVertexFormat;
     private VertexFormat vertexFormat;
     
     @SuppressWarnings("null")
-    RenderPipeline(@Nonnull TextureFormat textureFormat, 
-            IProgram program,
-            @Nullable IPipelineCallback callback)
+    RenderPipeline(int index, PipelineVertexShader vertexShader, PipelineFragmentShader fragmentShader, TextureFormat textureFormat)
     {
-        this.textureFormat = textureFormat;
-        this.program = (Program)program;
-        this.callback = callback == null ? DUMMY_CALLBACK : callback;
+        super(vertexShader, fragmentShader, textureFormat);
+        this.index = index;
         this.refreshVertexFormats();
     }
     
@@ -70,22 +46,4 @@ public final class RenderPipeline implements IRenderPipeline
     {
         return this.index;
     }
-
-    public void preDraw()
-    {
-        this.callback.preDraw();
-        this.program.activate();
-    }
-    
-    public void postDraw()
-    {
-        this.callback.postDraw();
-    }
-
-    @Override
-    public TextureFormat textureFormat()
-    {
-        return this.textureFormat;
-    }
-   
 }

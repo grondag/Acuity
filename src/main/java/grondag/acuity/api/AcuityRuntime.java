@@ -4,10 +4,6 @@ import java.util.ArrayList;
 import java.util.function.Consumer;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.IAcuityRuntime;
-import grondag.acuity.api.IPipelineManager;
-import grondag.acuity.api.IPipelineShaderManager;
-import grondag.acuity.api.IProgramManager;
 import grondag.acuity.core.PipelineHooks;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
@@ -34,24 +30,11 @@ public final class AcuityRuntime implements IAcuityRuntime
     {
         return Acuity.isModEnabled();
     }
-
-    @Override
-    public final IPipelineShaderManager getShaderManager()
-    {
-        return PipelineShaderManager.INSTANCE;
-    }
-    
-    @Override
-    public final IProgramManager getProgramManager()
-    {
-        return ProgramManager.INSTANCE;
-    }
     
     public void forceReload()
     {
         Acuity.INSTANCE.getLog().info(I18n.translateToLocal("misc.info_reloading"));
         PipelineShaderManager.INSTANCE.forceReload();
-        ProgramManager.INSTANCE.forceReload();
         PipelineManager.INSTANCE.forceReload();
         PipelineHooks.forceReload();
     }

@@ -55,9 +55,8 @@ public class CompoundVertexBuffer extends VertexBuffer
                 
             }
             
-            pipeline.preDraw();
+            pipeline.activate();
             GlStateManager.glDrawArrays(GL11.GL_QUADS, vertexOffset, vertexCount);
-            pipeline.postDraw();     
             
             vertexOffset += vertexCount;
             bufferOffset += vertexCount * lastFormat.stride;

@@ -7,13 +7,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public interface IAcuityRuntime
 {
     /**
-     * Get this to register your pipelines and access the vanilla pipeline.
+     * Get this to register your pipelines and access the built-in pipelines.
      */
     IPipelineManager getPipelineManager();
-    
-    IPipelineShaderManager getShaderManager();
-    
-    IProgramManager getProgramManager();
     
     /**
      * Will be false if any part of ASM modifications failed or

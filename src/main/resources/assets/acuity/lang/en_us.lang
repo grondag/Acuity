@@ -10,7 +10,6 @@ misc.info_reloading=Acuity Rendering API is reloading
 misc.debug_missing_uniform=Unable to find uniform %s in shaders %s, %s. This is normal if the uniform isn't used in the shader.
 misc.warn_uniform_program_immutable_exception=Cannot add uniform to finished program.
 misc.error_program_link_failure=Unable to create linked shader due to unexpected error.
-misc.error_mismatched_vertex_formats=Detected program with mismatched vertex formats in vertex and fragment shader.  Vertex shader format will be used but program probably won't work correctly. Shaders are %s and %s.
 misc.error_wrapped_buffer_unsupported=Unsupported operation for wrapped buffer.
 misc.warn_slow_block_info=Unable to access BlockInfo parent fields via reflection. Will use slow initialization of world state during model lighting.
 misc.warn_slow_gl_call=Unable to obtain a direct call path to %s due to reflection error. Render performance may be reduced when Acuity is enabled.

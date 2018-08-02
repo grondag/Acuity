@@ -1,24 +1,19 @@
 package grondag.acuity.api;
 
-import javax.annotation.Nonnull;
-
-import grondag.acuity.api.IPipelineFragmentShader;
-import grondag.acuity.api.IPipelineShaderManager;
-import grondag.acuity.api.IPipelineVertexShader;
 import grondag.acuity.api.TextureFormat;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-final class PipelineShaderManager implements IPipelineShaderManager
+final class PipelineShaderManager
 {
     final static PipelineShaderManager INSTANCE = new PipelineShaderManager();
     private Object2ObjectOpenHashMap<String, PipelineVertexShader> vertexShaders = new Object2ObjectOpenHashMap<>();
     private Object2ObjectOpenHashMap<String, PipelineFragmentShader> fragmentShaders = new Object2ObjectOpenHashMap<>();
 
-    private final IPipelineVertexShader[] defaultVertex = new IPipelineVertexShader[TextureFormat.values().length];
-    private final IPipelineFragmentShader[] defaultFragment = new IPipelineFragmentShader[TextureFormat.values().length];;
+    private final PipelineVertexShader[] defaultVertex = new PipelineVertexShader[TextureFormat.values().length];
+    private final PipelineFragmentShader[] defaultFragment = new PipelineFragmentShader[TextureFormat.values().length];;
     
     String vertexLibrarySource;
     String fragmentLibrarySource;
@@ -43,8 +38,7 @@ final class PipelineShaderManager implements IPipelineShaderManager
         this.fragmentLibrarySource = AbstractPipelineShader.getShaderSource("/assets/acuity/shader/fragment_lib.glsl") + commonSource;
     }
     
-    @Override
-    public IPipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName, @Nonnull TextureFormat textureFormat)
+    public PipelineVertexShader getOrCreateVertexShader(String shaderFileName, TextureFormat textureFormat)
     {
         synchronized(vertexShaders)
         {
@@ -58,8 +52,7 @@ final class PipelineShaderManager implements IPipelineShaderManager
         }
     }
 
-    @Override
-    public IPipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName, @Nonnull TextureFormat textureFormat)
+    public PipelineFragmentShader getOrCreateFragmentShader(String shaderFileName, TextureFormat textureFormat)
     {
         synchronized(fragmentShaders)
         {
@@ -73,14 +66,14 @@ final class PipelineShaderManager implements IPipelineShaderManager
         }
     }
 
-    @Override
-    public IPipelineVertexShader getDefaultVertexShader(TextureFormat textureFormat)
+    
+    public PipelineVertexShader getDefaultVertexShader(TextureFormat textureFormat)
     {
         return this.defaultVertex[textureFormat.ordinal()];
     }
 
-    @Override
-    public IPipelineFragmentShader getDefaultFragmentShader(TextureFormat textureFormat)
+    
+    public PipelineFragmentShader getDefaultFragmentShader(TextureFormat textureFormat)
     {
         return this.defaultFragment[textureFormat.ordinal()];
     }

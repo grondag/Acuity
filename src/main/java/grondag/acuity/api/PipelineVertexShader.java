@@ -5,7 +5,7 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public final class PipelineVertexShader  extends AbstractPipelineShader implements IPipelineVertexShader
+public final class PipelineVertexShader  extends AbstractPipelineShader
 {
     PipelineVertexShader(String fileName, TextureFormat textureFormat)
     {
