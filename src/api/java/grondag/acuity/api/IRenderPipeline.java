@@ -18,27 +18,36 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 /**
  * Type-safe reference to a rendering pipeline.
  */
-@SideOnly(Side.CLIENT)
 public interface IRenderPipeline
 {
+    @SideOnly(Side.CLIENT)
     int getIndex();
     
+    @SideOnly(Side.CLIENT)
     TextureFormat textureFormat();
     
+    @SideOnly(Side.CLIENT)
     IUniform1f uniform1f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1f> initializer);
 
+    @SideOnly(Side.CLIENT)
     IUniform2f uniform2f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2f> initializer);
 
+    @SideOnly(Side.CLIENT)
     IUniform3f uniform3f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3f> initializer);
 
+    @SideOnly(Side.CLIENT)
     IUniform4f uniform4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4f> initializer);
 
+    @SideOnly(Side.CLIENT)
     IUniform1i uniform1i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1i> initializer);
 
+    @SideOnly(Side.CLIENT)
     IUniform2i uniform2i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2i> initializer);
 
+    @SideOnly(Side.CLIENT)
     IUniform3i uniform3i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3i> initializer);
 
+    @SideOnly(Side.CLIENT)
     IUniform4i uniform4i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4i> initializer);
 
     /**
@@ -47,5 +56,6 @@ public interface IRenderPipeline
      * 
      * Note that all built-in pipelines are finished - you cannot add uniforms to them.
      */
+    @SideOnly(Side.CLIENT)
     IRenderPipeline finish();
 }
