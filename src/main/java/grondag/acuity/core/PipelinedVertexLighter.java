@@ -17,7 +17,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 /**
  * A heavily-modified version of Forge vertex lighter that supports multiple render paths in same quad stream.
  */
-@SuppressWarnings("deprecation")
 @SideOnly(Side.CLIENT)
 public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 {

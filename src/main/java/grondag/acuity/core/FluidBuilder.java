@@ -26,7 +26,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * Could get fancier, but expect fluid rendering to change drastically in 1.13.
  * 
  */
-@SuppressWarnings("deprecation")
 @SideOnly(Side.CLIENT)
 public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
 {

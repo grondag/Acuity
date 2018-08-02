@@ -13,7 +13,6 @@ import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SuppressWarnings("deprecation")
 @SideOnly(Side.CLIENT)
 public final class AcuityRuntime implements IAcuityRuntime
 {
@@ -42,6 +41,7 @@ public final class AcuityRuntime implements IAcuityRuntime
         return PipelineShaderManager.INSTANCE;
     }
     
+    @Override
     public final IProgramManager getProgramManager()
     {
         return ProgramManager.INSTANCE;

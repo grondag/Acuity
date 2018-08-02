@@ -1,7 +1,5 @@
 package grondag.acuity.api;
 
-import javax.annotation.Nonnull;
-
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -12,7 +10,7 @@ public interface IPipelineShaderManager
     
     IPipelineFragmentShader getDefaultFragmentShader(TextureFormat textureFormat);
     
-    IPipelineVertexShader getOrCreateVertexShader(@Nonnull String shaderFileName, TextureFormat textureFormat);
+    IPipelineVertexShader getOrCreateVertexShader(String shaderFileName, TextureFormat textureFormat);
     
-    IPipelineFragmentShader getOrCreateFragmentShader(@Nonnull String shaderFileName, TextureFormat textureFormat);
+    IPipelineFragmentShader getOrCreateFragmentShader(String shaderFileName, TextureFormat textureFormat);
 }

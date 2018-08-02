@@ -39,7 +39,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         return SIMPLE;
     }
 
-    @SuppressWarnings({ "deprecation", "null" })
+    @SuppressWarnings({"null" })
     @Override
     public void produceVertices(IPipelinedVertexConsumer vertexLighter)
     {

@@ -12,7 +12,7 @@ import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SuppressWarnings({ "null", "deprecation" })
+@SuppressWarnings({ "null"})
 @SideOnly(Side.CLIENT)
 public class LazyBlockInfo extends BlockInfo
 {

@@ -1,6 +1,5 @@
 package grondag.acuity.api;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
 import net.minecraftforge.fml.relauncher.Side;
@@ -15,7 +14,7 @@ public interface IPipelineManager
     @Nullable
     IRenderPipeline getOrCreatePipeline(
             TextureFormat textureFormat, 
-            @Nonnull IProgram program, 
+            IProgram program, 
             @Nullable IPipelineCallback callback);  
     
     /**

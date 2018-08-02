@@ -6,22 +6,18 @@ import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.ByteBuffer;
 
-import javax.annotation.Nonnull;
-
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import com.google.common.io.CharStreams;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.TextureFormat;
 import grondag.acuity.core.OpenGlHelperExt;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SuppressWarnings("deprecation")
 @SideOnly(Side.CLIENT)
 abstract class AbstractPipelineShader
 {
@@ -34,7 +30,7 @@ abstract class AbstractPipelineShader
     private boolean needsLoad = true;
     private boolean isErrored = false;
     
-    AbstractPipelineShader(@Nonnull String fileName, int shaderType, @Nonnull TextureFormat textureFormat)
+    AbstractPipelineShader(String fileName, int shaderType, TextureFormat textureFormat)
     {
         this.fileName = fileName;
         this.shaderType = shaderType;

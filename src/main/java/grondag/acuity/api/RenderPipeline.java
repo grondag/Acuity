@@ -28,9 +28,9 @@ public final class RenderPipeline implements IRenderPipeline
     };
     
     private final int index = nextIndex++;
-    public final @Nonnull TextureFormat textureFormat;
-    public final @Nonnull IPipelineCallback callback;
-    public final @Nonnull Program program;
+    public final TextureFormat textureFormat;
+    public final IPipelineCallback callback;
+    public final Program program;
     
     private PipelineVertexFormat pipelineVertexFormat;
     private VertexFormat vertexFormat;

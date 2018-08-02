@@ -53,7 +53,9 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     private class CompoundState extends State
     {
+        @SuppressWarnings("hiding")
         private ObjectArrayList<RenderPipeline> pipelineList;
+        @SuppressWarnings("hiding")
         private VertexCollector[] pipelineArray = new VertexCollector[PipelineManager.MAX_PIPELINES];
         
         @SuppressWarnings("null")

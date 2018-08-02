@@ -13,6 +13,8 @@ public interface IAcuityRuntime
     
     IPipelineShaderManager getShaderManager();
     
+    IProgramManager getProgramManager();
+    
     /**
      * Will be false if any part of ASM modifications failed or
      * if user has disabled Acuity in configuration.

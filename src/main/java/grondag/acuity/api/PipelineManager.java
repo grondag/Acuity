@@ -41,15 +41,15 @@ public final class PipelineManager implements IPipelineManager
 
     private class Key
     {
-        private final @Nonnull TextureFormat textureFormat;
-        private final @Nonnull IProgram program;
+        private final TextureFormat textureFormat;
+        private final IProgram program;
         private final @Nullable IPipelineCallback callback;
         
         final int hash;
         
         private Key(
-                @Nonnull TextureFormat textureFormat, 
-                @Nonnull IProgram program, 
+                TextureFormat textureFormat, 
+                IProgram program, 
                 @Nullable IPipelineCallback callback)
         {
             this.textureFormat = textureFormat;

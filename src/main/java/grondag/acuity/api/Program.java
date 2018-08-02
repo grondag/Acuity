@@ -31,7 +31,6 @@ import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SuppressWarnings("deprecation")
 @SideOnly(Side.CLIENT)
 public final class Program implements IProgram
 {
@@ -82,7 +81,7 @@ public final class Program implements IProgram
             }
         }
         
-        @SuppressWarnings({ "unchecked", "null" })
+        @SuppressWarnings({ "unchecked"})
         protected void initialize()
         {
             if(this.needsInitialization && this.initializer != null)
