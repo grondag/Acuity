@@ -1,6 +1,6 @@
 #version 120
 
-//uniform float u_time;
+uniform float u_time;
 uniform sampler2D u_textures;
 uniform sampler2D u_lightmap;
 uniform vec3 u_eye_position;

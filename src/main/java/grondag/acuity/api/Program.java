@@ -478,7 +478,7 @@ public abstract class Program implements IRenderPipeline
     /**
      * Call after render / resource refresh to force shader reload.
      */
-    public final void forceReload()
+    public void forceReload()
     {
         this.needsLoad = true;
     }

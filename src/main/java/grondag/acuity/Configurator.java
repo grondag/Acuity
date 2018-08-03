@@ -1,12 +1,16 @@
 package grondag.acuity;
 
+import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.core.LightingModel;
+import net.minecraft.client.Minecraft;
 import net.minecraftforge.common.config.Config;
 import net.minecraftforge.common.config.Config.Comment;
 import net.minecraftforge.common.config.Config.LangKey;
 import net.minecraftforge.common.config.Config.RangeInt;
 import net.minecraftforge.common.config.Config.RequiresMcRestart;
 import net.minecraftforge.common.config.Config.Type;
+import net.minecraftforge.common.config.ConfigManager;
+import net.minecraftforge.fml.client.event.ConfigChangedEvent.PostConfigChangedEvent;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -28,12 +32,37 @@ public class Configurator
     @Comment({"Changing will reload all renderers and models.",
         " Has no effect if mod is disabled because of ASM failures. ",
         " Primary use is for testing. Note that VBOs will be enabled",
-        " if Acuity is enabked, regardless of Minecraft configuration."})
+        " if Acuity is enabled, regardless of Minecraft configuration."})
     public static boolean enabled = true;
     
     @LangKey("config.lighting_model")
     @Comment({"Lighting model used for rendering. (Currently only one is available.)",
         " Changing will reload all renderers and models.",
         " Has no effect if Acuity is disabled because of ASM failures."})
-   public static LightingModel lightingModel = LightingModel.CLASSIC;
+    public static LightingModel lightingModel = LightingModel.CLASSIC;
+
+    public static void handleChange(PostConfigChangedEvent event)
+    {
+        LightingModel oldModel = lightingModel;
+        boolean oldEnabled = enabled;
+        
+        ConfigManager.sync(Acuity.MODID, Config.Type.INSTANCE);
+        if(oldEnabled != Configurator.enabled)
+        {
+            // important to reload renderers immediately in case 
+            // this results in change of vbo to/from  displaylists
+            Minecraft.getMinecraft().renderGlobal.loadRenderers();
+            
+            final boolean isEnabled = Acuity.isModEnabled();
+            AcuityRuntime.INSTANCE.forEachListener(c -> c.onAcuityStatusChange(isEnabled));
+            
+            // Don't think this is needed because different interface for pipelined models
+            // Minecraft.getMinecraft().refreshResources();
+        }
+        else if (oldModel != Configurator.lightingModel)
+        {
+            AcuityRuntime.INSTANCE.forceReload();
+        }
+        
+    }
 }

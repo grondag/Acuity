@@ -22,6 +22,13 @@ public final class RenderPipeline extends Program implements IRenderPipeline
         this.refreshVertexFormats();
     }
     
+    @Override
+    public void forceReload()
+    {
+        super.forceReload();
+        this.refreshVertexFormats();
+    }
+    
     public void refreshVertexFormats()
     {
         this.pipelineVertexFormat = Configurator.lightingModel.vertexFormat(this.textureFormat);

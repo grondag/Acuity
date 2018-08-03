@@ -70,7 +70,7 @@ public final class PipelineManager implements IPipelineManager
     {
         for(int i = 0; i < this.pipelineCount; i++)
         {
-            this.pipelines[i].refreshVertexFormats();
+            this.pipelines[i].forceReload();
         }
     }
     
@@ -140,7 +140,7 @@ public final class PipelineManager implements IPipelineManager
     
     private void addStandardUniforms(Program program)
     {
-//        program.uniform1f("u_time", UniformUpdateFrequency.PER_FRAME, u -> u.set(this.worldTime));
+        program.uniform1f("u_time", UniformUpdateFrequency.PER_FRAME, u -> u.set(this.worldTime));
         
         if(containsUniformSpec(program, "sampler2D", "u_textures"))
             program.uniform1i("u_textures", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.defaultTexUnit - GL13.GL_TEXTURE0));

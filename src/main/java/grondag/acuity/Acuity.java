@@ -48,25 +48,7 @@ public class Acuity
 	    return glCapabilitiesMet && ASMTransformer.allPatchesSuccessful() && Configurator.enabled;
 	}
 	
-	@SideOnly(Side.CLIENT)
-	private static boolean lastEnabledSetting = isModEnabled();
-	
 	private static boolean glCapabilitiesMet = false;
-	/**
-	 * For use by config event handler.
-	 */
-	@SideOnly(Side.CLIENT)
-	public static boolean didEnabledStatusChange()
-	{
-	    final boolean current = isModEnabled();
-	    if(current != lastEnabledSetting)
-	    {
-	        lastEnabledSetting = current;
-	        return true;
-	    }
-	    else 
-	        return false;
-	}
 	
     @Nullable
     private static Logger log;
