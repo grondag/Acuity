@@ -208,7 +208,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     
     protected static final float LIGHTMAP_TO_255 = 34815.47f;
     protected static final float LIGHTMAP_TO_127 = LIGHTMAP_TO_255 * 127f / 255f;
-//    private static final float LIGHTMAP_TO_15 = 34815.47f * 15f / 255f;
     
     protected abstract VertexCollector startVertex(
             float posX,

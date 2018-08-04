@@ -52,16 +52,21 @@ public class CompoundVertexBuffer extends VertexBuffer
         @Override
         public void accept(RenderPipeline pipeline, int vertexCount)
         {
+            pipeline.activate();
             if(pipeline.piplineVertexFormat() != lastFormat)
             {
                 vertexOffset = 0;
                 lastFormat = pipeline.piplineVertexFormat();
-                GlStateManager.glVertexPointer(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), pipeline.piplineVertexFormat().stride, bufferOffset);
+                final int stride = lastFormat.stride;
+                GlStateManager.glVertexPointer(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
+                GlStateManager.glColorPointer(4, 5121, stride, bufferOffset + 12);
+                GlStateManager.glTexCoordPointer(2, 5126, stride, bufferOffset + 16);
+                OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
+                GlStateManager.glTexCoordPointer(2, 5122, stride, bufferOffset + 24);
+                OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
                 pipeline.piplineVertexFormat().setupAttributes(bufferOffset);
-                
             }
             
-            pipeline.activate();
             GlStateManager.glDrawArrays(GL11.GL_QUADS, vertexOffset, vertexCount);
             
             vertexOffset += vertexCount;

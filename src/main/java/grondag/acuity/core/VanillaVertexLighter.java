@@ -14,6 +14,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
     private class ChildLighter extends PipelinedVertexLighter
     {
         private boolean areAllLayersEmissive = false;
+        private float combinedShade = 1f;
         
         protected ChildLighter(IRenderPipeline pipeline)
         {
@@ -109,6 +110,33 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                    + ((blockLightRGBF >> 16) & 0xFF) * 0.0722f));
         }
 
+        /**
+         * Compresses alpha value to high bits of alpha component
+         * and sets 1 bit of alpha to emissive indicator.
+         * If not glowing, multiplies rgb by current shade value.
+         * Swaps red and blue.
+         */
+        private int encodeColor(boolean glowing, int rawColor)
+        {
+            int blue = rawColor & 0xFF;
+            int green = (rawColor >> 8) & 0xFF;
+            int red = (rawColor >> 16) & 0xFF;
+            int alpha = (rawColor >> 24) & 0xFF;
+            alpha = Math.round(alpha / 255f * 127f);
+            
+            if(glowing)
+                alpha |= 128;
+            else
+            {
+                final float combinedShade = this.combinedShade;
+                red = Math.round(red * combinedShade);
+                green = Math.round(green * combinedShade);
+                blue = Math.round(blue * combinedShade);
+            }
+            
+            return (alpha << 24) | (blue << 16) | (green << 8) | red;
+        }
+        
         @Override
         protected VertexCollector startVertex(
                 float posX,
@@ -174,30 +202,32 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                 skyLight = Math.max(skyLight, this.skyLightMap);
             }
             
+            this.combinedShade = (float)shade * ao / 0xFFFF;
+            
             // POSITION_3F
             output.add(target.xOffset + pos.getX() + posX);
             output.add(target.yOffset + pos.getY() + posY);
             output.add(target.zOffset + pos.getZ() + posZ);
             
             // BASE_RGBA_4UB
-            output.add(AcuityColorHelper.swapRedBlue(unlitColorARGB0));
+            output.add(encodeColor((this.glowFlags & 1) == 1, unlitColorARGB0));
             
             // BASE_TEX_2F
             output.add(u0);
             output.add(v0);
             
             // NORMAL_3UB
-            int normAo = Math.round(normX * 127 + 127);
-            normAo |= (Math.round(normY * 127 + 127) << 8);
-            normAo |= (Math.round(normZ * 127 + 127) << 16);
-            // AO 1UB
-            normAo |= (ao << 24);
+//            int normAo = Math.round(normX * 127 + 127);
+//            normAo |= (Math.round(normY * 127 + 127) << 8);
+//            normAo |= (Math.round(normZ * 127 + 127) << 16);
+//            // AO 1UB
+//            normAo |= (ao << 24);
+//            output.add(normAo);
             
-            output.add(normAo);
-            
-            //LIGHTMAP_AND_GLOWS_4UB
-            output.add(blockLight | (skyLight << 8) | (shade << 16) | (this.glowFlags << 24));
-            
+            //LIGHTMAP
+            skyLight = skyLight / 17;
+            blockLight = blockLight / 17;
+            output.add((skyLight << 20) | (blockLight << 4));
             return output;
         }
     }

@@ -1,4 +1,4 @@
-package grondag.acuity.api;
+package grondag.acuity.core;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -10,6 +10,8 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import grondag.acuity.Configurator;
+import grondag.acuity.api.IRenderPipeline;
+import grondag.acuity.api.IUniform;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.api.UniformUpdateFrequency;
 import grondag.acuity.api.IUniform.IUniform1f;
@@ -21,7 +23,6 @@ import grondag.acuity.api.IUniform.IUniform3i;
 import grondag.acuity.api.IUniform.IUniform4f;
 import grondag.acuity.api.IUniform.IUniform4i;
 import grondag.acuity.Acuity;
-import grondag.acuity.core.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.text.translation.I18n;
@@ -462,7 +463,7 @@ public abstract class Program implements IRenderPipeline
         return addUniform(new Uniform4i(name, initializer, frequency));
     }
     
-    Program(PipelineVertexShader vertexShader, PipelineFragmentShader fragmentShader, TextureFormat textureFormat)
+    protected Program(PipelineVertexShader vertexShader, PipelineFragmentShader fragmentShader, TextureFormat textureFormat)
     {
         this.vertexShader = vertexShader;
         this.fragmentShader = fragmentShader;

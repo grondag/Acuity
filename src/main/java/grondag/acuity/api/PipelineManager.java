@@ -7,6 +7,10 @@ import javax.annotation.Nullable;
 import org.lwjgl.opengl.GL13;
 
 import grondag.acuity.Configurator;
+import grondag.acuity.core.PipelineFragmentShader;
+import grondag.acuity.core.PipelineShaderManager;
+import grondag.acuity.core.PipelineVertexShader;
+import grondag.acuity.core.Program;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;

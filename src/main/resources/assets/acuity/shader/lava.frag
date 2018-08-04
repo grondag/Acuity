@@ -2,6 +2,6 @@
 
 void main()
 {
-    gl_FragColor = fog(diffuseColor_0());
+    gl_FragColor = fog(diffuseColor());
 }
 

@@ -12,11 +12,14 @@ public class PipelineVertextFormatElement extends VertexFormatElement
     // openGL implementation on my dev laptop *really* wants to get vertex positions via standard (GL 2.1) binding
     // slows to a crawl otherwise
     public static final PipelineVertextFormatElement POSITION_3F = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.POSITION, 3, null);
+    public static final PipelineVertextFormatElement BASE_RGBA_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.COLOR, 4, null);
+    public static final PipelineVertextFormatElement BASE_TEX_2F = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.UV, 2, null);
+    public static final PipelineVertextFormatElement LIGHTMAPS_2S = new PipelineVertextFormatElement(1, VertexFormatElement.EnumType.SHORT, VertexFormatElement.EnumUsage.UV, 2, null, false);
     
-    public static final PipelineVertextFormatElement BASE_RGBA_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_color_0");
-    public static final PipelineVertextFormatElement BASE_TEX_2F = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_uv_0");
+    //FIXME: index in for generic attributes misaligned now due to mismatched usage in vanilla vs extended formats 
+    // (doesn't currently matter)
     public static final PipelineVertextFormatElement NORMAL_AO_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_normal_ao", false);
-    
+
     /**
      * Format varies by model.  <p>
      * 

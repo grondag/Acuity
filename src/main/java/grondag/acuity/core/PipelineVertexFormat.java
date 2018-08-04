@@ -3,6 +3,7 @@ package grondag.acuity.core;
 import static grondag.acuity.core.PipelineVertextFormatElement.BASE_RGBA_4UB;
 import static grondag.acuity.core.PipelineVertextFormatElement.BASE_TEX_2F;
 import static grondag.acuity.core.PipelineVertextFormatElement.LIGHTMAPS_4UB;
+import static grondag.acuity.core.PipelineVertextFormatElement.LIGHTMAPS_2S;
 import static grondag.acuity.core.PipelineVertextFormatElement.NORMAL_AO_4UB;
 import static grondag.acuity.core.PipelineVertextFormatElement.POSITION_3F;
 import static grondag.acuity.core.PipelineVertextFormatElement.SECONDARY_RGBA_4UB;
@@ -23,8 +24,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_AO_4UB)
-            .addElement(LIGHTMAPS_4UB)),
+            .addElement(LIGHTMAPS_2S)),
     
     /**
      * Adds one extra color and texture coordinate.
@@ -34,8 +34,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_AO_4UB)
-            .addElement(LIGHTMAPS_4UB)
+            .addElement(LIGHTMAPS_2S)
             .addElement(SECONDARY_RGBA_4UB)
             .addElement(SECONDARY_TEX_2F)),
     
@@ -47,8 +46,7 @@ public enum PipelineVertexFormat
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_AO_4UB)
-            .addElement(LIGHTMAPS_4UB)
+            .addElement(LIGHTMAPS_2S)
             .addElement(SECONDARY_RGBA_4UB)
             .addElement(SECONDARY_TEX_2F)
             .addElement(TERTIARY_RGBA_4UB)

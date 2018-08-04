@@ -1,7 +1,10 @@
 package grondag.acuity.api;
 
 import grondag.acuity.Configurator;
+import grondag.acuity.core.PipelineFragmentShader;
 import grondag.acuity.core.PipelineVertexFormat;
+import grondag.acuity.core.PipelineVertexShader;
+import grondag.acuity.core.Program;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;

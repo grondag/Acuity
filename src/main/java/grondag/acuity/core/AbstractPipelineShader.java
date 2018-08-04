@@ -1,4 +1,4 @@
-package grondag.acuity.api;
+package grondag.acuity.core;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,7 +12,8 @@ import org.lwjgl.opengl.GL11;
 import com.google.common.io.CharStreams;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.core.OpenGlHelperExt;
+import grondag.acuity.api.PipelineManager;
+import grondag.acuity.api.TextureFormat;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
@@ -98,7 +99,11 @@ abstract class AbstractPipelineShader
     
     public String getSource()
     {
-        return getShaderSource(this.fileName);
+        String result = getShaderSource(this.fileName);
+        final int layerCount = this.textureFormat.layerCount();
+        if(layerCount > 1)
+            result = result.replaceAll("#define LAYER_COUNT 1", String.format("#define LAYER_COUNT %d", layerCount));
+        return result;
     }
     
     public static String getShaderSource(String fileName)

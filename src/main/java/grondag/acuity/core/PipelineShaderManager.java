@@ -1,4 +1,4 @@
-package grondag.acuity.api;
+package grondag.acuity.core;
 
 import grondag.acuity.api.TextureFormat;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
@@ -6,9 +6,9 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-final class PipelineShaderManager
+public final class PipelineShaderManager
 {
-    final static PipelineShaderManager INSTANCE = new PipelineShaderManager();
+    public final static PipelineShaderManager INSTANCE = new PipelineShaderManager();
     private Object2ObjectOpenHashMap<String, PipelineVertexShader> vertexShaders = new Object2ObjectOpenHashMap<>();
     private Object2ObjectOpenHashMap<String, PipelineFragmentShader> fragmentShaders = new Object2ObjectOpenHashMap<>();
 
@@ -21,12 +21,12 @@ final class PipelineShaderManager
     @SuppressWarnings("null")
     PipelineShaderManager()
     {
-        this.defaultVertex[TextureFormat.SINGLE.ordinal()] = this.getOrCreateVertexShader("/assets/acuity/shader/default_single.vert", TextureFormat.SINGLE);
-        this.defaultVertex[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateVertexShader("/assets/acuity/shader/default_double.vert", TextureFormat.DOUBLE);
-        this.defaultVertex[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateVertexShader("/assets/acuity/shader/default_triple.vert", TextureFormat.TRIPLE);
-        this.defaultFragment[TextureFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/acuity/shader/default_single.frag", TextureFormat.SINGLE);
-        this.defaultFragment[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/acuity/shader/default_double.frag", TextureFormat.DOUBLE);
-        this.defaultFragment[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateFragmentShader("/assets/acuity/shader/default_triple.frag", TextureFormat.TRIPLE);
+        this.defaultVertex[TextureFormat.SINGLE.ordinal()] = this.getOrCreateVertexShader("/assets/acuity/shader/default.vert", TextureFormat.SINGLE);
+        this.defaultVertex[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateVertexShader("/assets/acuity/shader/default.vert", TextureFormat.DOUBLE);
+        this.defaultVertex[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateVertexShader("/assets/acuity/shader/default.vert", TextureFormat.TRIPLE);
+        this.defaultFragment[TextureFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/acuity/shader/default.frag", TextureFormat.SINGLE);
+        this.defaultFragment[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/acuity/shader/default.frag", TextureFormat.DOUBLE);
+        this.defaultFragment[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateFragmentShader("/assets/acuity/shader/default.frag", TextureFormat.TRIPLE);
     
         this.loadLibrarySources();
     }

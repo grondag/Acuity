@@ -1,5 +1,6 @@
-package grondag.acuity.api;
+package grondag.acuity.core;
 
+import grondag.acuity.api.TextureFormat;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;

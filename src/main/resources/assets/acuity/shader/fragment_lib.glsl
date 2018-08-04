@@ -1,5 +1,7 @@
 #version 120
 
+#define LAYER_COUNT 1
+
 uniform float u_time;
 uniform sampler2D u_textures;
 uniform sampler2D u_lightmap;
@@ -9,17 +11,40 @@ uniform vec3 u_fogAttributes;
 
 //varying vec3 v_light;
 varying float v_fogDistance;
+
 varying vec4 v_color_0;
 varying vec2 v_texcoord_0;
+
+#if LAYER_COUNT > 1
+varying vec4 v_color_1;
+varying vec2 v_texcoord_1;
+#endif
+
+#if LAYER_COUNT > 2
+varying vec4 v_color_2;
+varying vec2 v_texcoord_2;
+#endif
+
 varying vec4 v_color_1;
 varying vec2 v_texcoord_1;
 varying vec4 v_color_2;
 varying vec2 v_texcoord_2;
 
-vec4 diffuseColor_0()
+vec4 diffuseColor()
 {
-	vec4 texColor = texture2D(u_textures, v_texcoord_0);
-	return texColor * v_color_0;
+	vec4 a = texture2D(u_textures, v_texcoord_0) * v_color_0;
+
+#if LAYER_COUNT > 1
+	vec4 b = texture2D(u_textures, v_texcoord_1) * v_color_1;
+	a = mix(a, b, b.a);
+#endif
+
+#if LAYER_COUNT > 2
+	vec4 c = texture2D(u_textures, v_texcoord_2) * v_color_2;
+	a = mix(a, c, c.a);
+#endif
+
+	return a;
 }
 
 vec4 diffuseColor_1()
