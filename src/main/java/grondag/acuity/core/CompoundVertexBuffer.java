@@ -29,6 +29,12 @@ public class CompoundVertexBuffer extends VertexBuffer
     
     private @Nullable VertexPackingList vertexPackingList;
     
+    public int drawCount()
+    {
+        final VertexPackingList vertexPackingList = this.vertexPackingList;
+        return vertexPackingList == null ? 0 : vertexPackingList.size();
+    }
+    
     private class VertexPackingConsumer implements IVertexPackingConsumer
     {
         int bufferOffset = 0;

@@ -41,8 +41,8 @@ public final class PipelineManager implements IPipelineManager
     private int pipelineCount = 0;
     
     private final RenderPipeline[] defaultPipelines = new RenderPipeline[TextureFormat.values().length];
-    public final RenderPipeline waterPipeline;
-    public final RenderPipeline lavaPipeline;
+    private final RenderPipeline waterPipeline;
+    private final RenderPipeline lavaPipeline;
     public final RenderPipeline defaultSinglePipeline;
     
     private float worldTime;
@@ -121,15 +121,15 @@ public final class PipelineManager implements IPipelineManager
     }
     
     @Override
-    public final IRenderPipeline getWaterPipeline()
+    public final RenderPipeline getWaterPipeline()
     {
-        return this.waterPipeline;
+        return Configurator.fancyFluids ? this.waterPipeline : this.defaultSinglePipeline;
     }
     
     @Override
-    public final IRenderPipeline getLavaPipeline()
+    public final RenderPipeline getLavaPipeline()
     {
-        return this.lavaPipeline;
+        return Configurator.fancyFluids ? this.lavaPipeline : this.defaultSinglePipeline;
     }
 
     @Override

@@ -35,6 +35,11 @@ public class Configurator
         " if Acuity is enabled, regardless of Minecraft configuration."})
     public static boolean enabled = true;
     
+    @LangKey("config.acuity_fancy_fluids")
+    @Comment({"Enable fancy water and lava rendering.",
+        " This feature is currently work in progress and has no visible effect if enabled."})
+    public static boolean fancyFluids = false;
+    
     @LangKey("config.lighting_model")
     @Comment({"Lighting model used for rendering. (Currently only one is available.)",
         " Changing will reload all renderers and models.",
@@ -44,6 +49,7 @@ public class Configurator
     public static void handleChange(PostConfigChangedEvent event)
     {
         LightingModel oldModel = lightingModel;
+        boolean oldFancyFluids = fancyFluids;
         boolean oldEnabled = enabled;
         
         ConfigManager.sync(Acuity.MODID, Config.Type.INSTANCE);
@@ -59,9 +65,12 @@ public class Configurator
             // Don't think this is needed because different interface for pipelined models
             // Minecraft.getMinecraft().refreshResources();
         }
-        else if (oldModel != Configurator.lightingModel)
+        else if (oldModel != Configurator.lightingModel || oldFancyFluids != fancyFluids)
         {
             AcuityRuntime.INSTANCE.forceReload();
+            
+            // refresh appearances
+            Minecraft.getMinecraft().renderGlobal.loadRenderers();
         }
         
     }

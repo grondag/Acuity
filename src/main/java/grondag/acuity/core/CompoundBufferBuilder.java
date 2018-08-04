@@ -14,6 +14,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -51,6 +52,8 @@ public class CompoundBufferBuilder extends BufferBuilder
      */
     @Nullable VertexPackingList uploadPackingList = null;
     
+    private final @Nullable BlockRenderLayer layer;
+    
     private class CompoundState extends State
     {
         @SuppressWarnings("hiding")
@@ -67,7 +70,19 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     public CompoundBufferBuilder(int bufferSizeIn)
     {
+        this(bufferSizeIn, null);
+    }
+    
+    public CompoundBufferBuilder(int bufferSizeIn, @Nullable BlockRenderLayer layer)
+    {
         super(limitBufferSize(bufferSizeIn));
+        this.layer = layer;
+    }
+    
+    @Nullable
+    public BlockRenderLayer getRenderLayer()
+    {
+        return layer;
     }
     
     // the RegionRenderCacheBuilder instantiates this with pretty large sizes

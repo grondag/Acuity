@@ -91,7 +91,7 @@ public class PipelineHooks
             RenderPipeline target;
             if(blockStateIn.getMaterial() == Material.LAVA)
             {
-                target = PipelineManager.INSTANCE.lavaPipeline;
+                target = PipelineManager.INSTANCE.getLavaPipeline();
             }
             else
             {
@@ -100,7 +100,7 @@ public class PipelineHooks
                     Acuity.INSTANCE.getLog().warn(I18n.translateToLocal("misc.warn_unknown_fluid_render"));
                     didWarnUnhandledFluid = true;
                 }
-                target = PipelineManager.INSTANCE.waterPipeline;
+                target = PipelineManager.INSTANCE.getWaterPipeline();
             }
             final CompoundVertexLighter lighter = lighters.get();
             lighter.prepare((CompoundBufferBuilder)bufferBuilderIn, MinecraftForgeClient.getRenderLayer(), blockAccess, blockStateIn, blockPosIn, false);

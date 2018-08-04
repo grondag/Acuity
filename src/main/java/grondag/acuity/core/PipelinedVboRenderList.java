@@ -14,15 +14,25 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class PipelinedVboRenderList extends VboRenderList
 {
-//    private long totalNanos;
-//    private int runCount;
+    private long totalNanos;
+    private int runCount;
+    private int chunkCount;
+    private int drawCount;
+    
+    private long start;
     
     @Override
     public void renderChunkLayer(BlockRenderLayer layer)
     {
-//        long start = System.nanoTime();
+        if(Acuity.DEBUG)
+        {
+            start = System.nanoTime();
+            chunkCount += this.renderChunks.size();
+        }
+        
         if(Acuity.isModEnabled())
         {
+            
             if (!this.renderChunks.isEmpty() && this.initialized)
             {
                 // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
@@ -47,6 +57,10 @@ public class PipelinedVboRenderList extends VboRenderList
                 for (RenderChunk renderchunk : this.renderChunks)
                 {
                     CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(layer.ordinal());
+                    
+                    if(Acuity.DEBUG)
+                        drawCount += vertexbuffer.drawCount();
+                    
                     GlStateManager.pushMatrix();
                     this.preRenderChunk(renderchunk);
                     renderchunk.multModelviewMatrix();
@@ -62,14 +76,26 @@ public class PipelinedVboRenderList extends VboRenderList
             }
         }
         else
+        {
+            if(Acuity.DEBUG)
+                drawCount += this.renderChunks.size();
+            
             super.renderChunkLayer(layer);
+        }
         
-//        totalNanos += (System.nanoTime() - start);
-//        if(++runCount >= 600)
-//        {
-//            Acuity.INSTANCE.getLog().info("Milliseconds per renderChunkLayer: " + totalNanos / runCount / 1000000f);
-//            totalNanos = 0;
-//            runCount = 0;
-//        }
+        if(Acuity.DEBUG)
+        {
+            totalNanos += (System.nanoTime() - start);
+            if(++runCount >= 600)
+            {
+                double ms = totalNanos / 1000000.0;
+                Acuity.INSTANCE.getLog().info(String.format("PipelinedVboRenderList %d calls / %d chunks / %d draws", runCount, chunkCount, drawCount));
+                Acuity.INSTANCE.getLog().info(String.format("PipelinedVboRenderList %f / %f / %f ms each", ms / runCount, ms / chunkCount, ms / drawCount));
+                totalNanos = 0;
+                runCount = 0;
+                chunkCount = 0;
+                drawCount = 0;
+            }
+        }
     }
 }
