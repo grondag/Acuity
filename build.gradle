@@ -48,7 +48,7 @@ apply plugin: 'java'
 apply plugin: 'maven'
 
 version = "mc${minecraft_version}-${mod_version}.${gitVersionName}-${release_type}"
-group= "grondag.acuity" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
+group= "grondag" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "acuity"
 
 
