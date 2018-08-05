@@ -1,13 +1,8 @@
 package grondag.acuity.api;
 
-import java.nio.FloatBuffer;
-
 import javax.annotation.Nullable;
 
-import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
-import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Configurator;
 import grondag.acuity.core.PipelineFragmentShader;
@@ -55,21 +50,22 @@ public final class PipelineManager implements IPipelineManager
     private float worldTime;
     private float partialTicks;
     
-    /**
-     * Used to retrieve project matrix from GLState. Avoids re-instantiating each frame.
-     */
-    protected final FloatBuffer projectionMatrixBuffer = BufferUtils.createFloatBuffer(16);
-    
-    /**
-     * Current projection matrix. Refreshed from GL state each frame after camera setup
-     * in {@link #beforeRenderChunks()}. Unfortunately not immutable so use caution.
-     */
-    public final Matrix4f projMatrix = new Matrix4f();
-    
-    /**
-     * See {@link #onRenderTick(RenderTickEvent)}
-     */
-    private boolean didUpdatePipelinesThisFrame = false;
+ // FAIL: unfortunately using explicit uniforms is slower
+//    /**
+//     * Used to retrieve project matrix from GLState. Avoids re-instantiating each frame.
+//     */
+//    protected final FloatBuffer projectionMatrixBuffer = BufferUtils.createFloatBuffer(16);
+//    
+//    /**
+//     * Current projection matrix. Refreshed from GL state each frame after camera setup
+//     * in {@link #beforeRenderChunks()}. Unfortunately not immutable so use caution.
+//     */
+//    public final Matrix4f projMatrix = new Matrix4f();
+//    
+//    /**
+//     * See {@link #onRenderTick(RenderTickEvent)}
+//     */
+//    private boolean didUpdatePipelinesThisFrame = false;
     
     @SuppressWarnings("null")
     private PipelineManager()
@@ -194,13 +190,14 @@ public final class PipelineManager implements IPipelineManager
                 u.set(er.fogColorRed, er.fogColorGreen, er.fogColorBlue);
             });
         
-        if(Program.containsUniformSpec(program, "mat4", "u_projection"))
-            program.uniformMatrix4f("u_projection", UniformUpdateFrequency.PER_FRAME, u -> 
-            {
-                u.set(projMatrix);
-            });
-        
-        program.setupModelViewUniforms();
+     // FAIL: unfortunately using explicit uniforms is slower
+//        if(Program.containsUniformSpec(program, "mat4", "u_projection"))
+//            program.uniformMatrix4f("u_projection", UniformUpdateFrequency.PER_FRAME, u -> 
+//            {
+//                u.set(projMatrix);
+//            });
+//        
+//        program.setupModelViewUniforms();
     }
             
     /**
@@ -213,7 +210,8 @@ public final class PipelineManager implements IPipelineManager
     @SuppressWarnings("null")
     public void onRenderTick(RenderTickEvent event)
     {
-        didUpdatePipelinesThisFrame = false;
+     // FAIL: unfortunately using explicit uniforms is slower
+//        didUpdatePipelinesThisFrame = false;
 
         Entity entity = Minecraft.getMinecraft().getRenderViewEntity();
         if(entity == null) return;
@@ -222,30 +220,36 @@ public final class PipelineManager implements IPipelineManager
         this.partialTicks = partialTicks;
         if(entity.world != null)
             worldTime = Animation.getWorldTime(entity.world, partialTicks);
-    }
-    
-    /**
-     * Called by our chunk render list before each round of chunk renders.
-     * Can be called multiple times per frame but we only update once per frame.
-     * Necessary because Forge doesn't provide a hook that happens after camera setup
-     * but before block rendering.
-     */
-    public void beforeRenderChunks()
-    {
-        if(didUpdatePipelinesThisFrame)
-            return;
-        
-        didUpdatePipelinesThisFrame = true;
-        
-        projectionMatrixBuffer.position(0);
-        GlStateManager.getFloat(GL11.GL_PROJECTION_MATRIX, projectionMatrixBuffer);
-        projMatrix.loadTranspose(projectionMatrixBuffer);
         
         for(int i = 0; i < this.pipelineCount; i++)
         {
             this.pipelines[i].onRenderTick();
         }
     }
+    
+ // FAIL: unfortunately using explicit uniforms is slower
+//    /**
+//     * Called by our chunk render list before each round of chunk renders.
+//     * Can be called multiple times per frame but we only update once per frame.
+//     * Necessary because Forge doesn't provide a hook that happens after camera setup
+//     * but before block rendering.
+//     */
+//    public void beforeRenderChunks()
+//    {
+//        if(didUpdatePipelinesThisFrame)
+//            return;
+//        
+//        didUpdatePipelinesThisFrame = true;
+//        
+//        projectionMatrixBuffer.position(0);
+//        GlStateManager.getFloat(GL11.GL_PROJECTION_MATRIX, projectionMatrixBuffer);
+//        projMatrix.loadTranspose(projectionMatrixBuffer);
+//        
+//        for(int i = 0; i < this.pipelineCount; i++)
+//        {
+//            this.pipelines[i].onRenderTick();
+//        }
+//    }
 
     public void onGameTick(ClientTickEvent event)
     {

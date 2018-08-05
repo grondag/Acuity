@@ -6,7 +6,6 @@ import javax.annotation.Nullable;
 
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
-import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.VertexPackingList.IVertexPackingConsumer;
@@ -96,17 +95,32 @@ public class CompoundVertexBuffer extends VertexBuffer
     {
         super.deleteGlBuffers();
     }
-
+    
     /**
-     * Renders all uploaded vbos using the given model view matrix.
+     * Renders all uploaded vbos relying on OpenGl fixed function state.
      */
-    public void renderChunk(Matrix4f modelViewMatrix)
+    public void renderChunk()
     {
         final VertexPackingList packing = this.vertexPackingList;
         if(packing == null || packing.size() == 0) return;
         
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         vertexPackingConsumer.reset();
-        packing.forEach((RenderPipeline pipeline, int vertexCount) -> vertexPackingConsumer.accept(pipeline.updateModelViewMatrix(modelViewMatrix), vertexCount));
+        
+        packing.forEach(vertexPackingConsumer);
     }
+
+//    /**
+//     * Remnant of a failed experiment
+//     * Renders all uploaded vbos using the given model view matrix.
+//     */
+//    public void renderChunk(Matrix4f modelViewMatrix)
+//    {
+//        final VertexPackingList packing = this.vertexPackingList;
+//        if(packing == null || packing.size() == 0) return;
+//        
+//        OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+//        vertexPackingConsumer.reset();
+//        packing.forEach((RenderPipeline pipeline, int vertexCount) -> vertexPackingConsumer.accept(pipeline.updateModelViewMatrix(modelViewMatrix), vertexCount));
+//    }
 }

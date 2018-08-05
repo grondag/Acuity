@@ -1,7 +1,5 @@
 package grondag.acuity.api;
 
-import org.lwjgl.util.vector.Matrix4f;
-
 import grondag.acuity.Configurator;
 import grondag.acuity.core.PipelineFragmentShader;
 import grondag.acuity.core.PipelineVertexFormat;
@@ -45,23 +43,24 @@ public final class RenderPipeline extends Program implements IRenderPipeline
         return this.pipelineVertexFormat;
     }
     
-    /**
-     * Will update modelView and modelViewProjection matrix uniforms if they were created via {@link #setupModelViewUniforms()}.
-     * Otherwise has no effect.  Should be called after it is known the projection matrix will be current.<p>
-     * 
-     * Returns self as convenience.
-     */
-    @SuppressWarnings("null")
-    public RenderPipeline updateModelViewMatrix(Matrix4f modelViewMatrix)
-    {
-        if(this.modelViewUniform != null);
-            this.modelViewUniform.set(modelViewMatrix);
-            
-        if(this.modelViewProjectionUniform != null);
-            this.modelViewProjectionUniform.set(Matrix4f.mul(modelViewMatrix, PipelineManager.INSTANCE.projMatrix, null));
-            
-        return this;
-    }
+    // FAIL: unfortunately using explicit uniforms is slower
+//    /**
+//     * Will update modelView and modelViewProjection matrix uniforms if they were created via {@link #setupModelViewUniforms()}.
+//     * Otherwise has no effect.  Should be called after it is known the projection matrix will be current.<p>
+//     * 
+//     * Returns self as convenience.
+//     */
+//    @SuppressWarnings("null")
+//    public RenderPipeline updateModelViewMatrix(Matrix4f modelViewMatrix)
+//    {
+//        if(this.modelViewUniform != null);
+//            this.modelViewUniform.set(modelViewMatrix);
+//            
+//        if(this.modelViewProjectionUniform != null);
+//            this.modelViewProjectionUniform.set(Matrix4f.mul(modelViewMatrix, PipelineManager.INSTANCE.projMatrix, null));
+//            
+//        return this;
+//    }
     
     /**
      * Avoids a pointer chase, more concise code.

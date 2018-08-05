@@ -48,6 +48,8 @@ vec4 shadeVertex(vec4 lightColor, vec4 vertexColor)
 
 void setupVertex()
 {
+//    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+//    vec4 viewCoord = gl_ModelViewMatrix * gl_Vertex;
     gl_Position = u_modelViewProjection * gl_Vertex;
     vec4 viewCoord = u_modelView * gl_Vertex;
     gl_ClipVertex = gl_Position;
