@@ -47,18 +47,6 @@ vec4 diffuseColor()
 	return a;
 }
 
-vec4 diffuseColor_1()
-{
-	vec4 texColor = texture2D(u_textures, v_texcoord_1);
-	return texColor * v_color_1;
-}
-
-vec4 diffuseColor_2()
-{
-	vec4 texColor = texture2D(u_textures, v_texcoord_2);
-	return texColor * v_color_2;
-}
-
 /**
  * Linear fog.  Is really an inverse factor - 0 means full fog.
  */

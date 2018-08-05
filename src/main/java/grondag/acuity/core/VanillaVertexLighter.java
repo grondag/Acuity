@@ -111,8 +111,8 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         }
 
         /**
-         * Compresses alpha value to high bits of alpha component
-         * and sets 1 bit of alpha to emissive indicator.
+         * Compresses alpha value to low bits of alpha component
+         * and sets high bit of alpha to emissive indicator.
          * If not glowing, multiplies rgb by current shade value.
          * Swaps red and blue.
          */

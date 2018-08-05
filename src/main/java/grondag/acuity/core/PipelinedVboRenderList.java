@@ -68,11 +68,12 @@ public class PipelinedVboRenderList extends VboRenderList
         if(Acuity.DEBUG)
         {
             totalNanos += (System.nanoTime() - start);
-            if(++runCount >= 600)
+            if(++runCount >= 2000)
             {
                 double ms = totalNanos / 1000000.0;
-                Acuity.INSTANCE.getLog().info(String.format("PipelinedVboRenderList %d calls / %d chunks / %d draws", runCount, chunkCount, drawCount));
-                Acuity.INSTANCE.getLog().info(String.format("PipelinedVboRenderList %f / %f / %f ms each", ms / runCount, ms / chunkCount, ms / drawCount));
+                String msg = Acuity.isModEnabled() ? "ENABLED" : "Disabled";
+                Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %d calls / %d chunks / %d draws (Acuity API %s)", runCount, chunkCount, drawCount, msg));
+                Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %f / %f / %f ms each", ms / runCount, ms / chunkCount, ms / drawCount));
                 totalNanos = 0;
                 runCount = 0;
                 chunkCount = 0;

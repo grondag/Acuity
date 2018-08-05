@@ -45,7 +45,7 @@ vec4 shadeVertex(vec4 lightColor, vec4 vertexColor)
 
 void setupVertex()
 {
-    gl_Position = ftransform(); // gl_ModelViewProjectionMatrix * gl_Vertex;
+    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
     vec4 viewCoord = gl_ModelViewMatrix * gl_Vertex;
     v_fogDistance = length(viewCoord.xyz);
 
