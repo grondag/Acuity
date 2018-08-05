@@ -8,17 +8,11 @@ uniform sampler2D u_lightmap;
 uniform vec3 u_eye_position;
 uniform vec3 u_fogColor;
 uniform vec3 u_fogAttributes;
-uniform mat4 u_modelView;
-uniform mat4 u_projection;
-uniform mat4 u_modelViewProjection;
 
 //attribute vec4 in_normal_ao;
 //attribute vec4 in_lightmaps;
 
 //varying vec3 v_light;
-varying float v_fogDistance;
-varying vec4 v_color_0;
-varying vec2 v_texcoord_0;
 
 #if LAYER_COUNT > 1
 attribute vec4 in_color_1;
@@ -48,21 +42,19 @@ vec4 shadeVertex(vec4 lightColor, vec4 vertexColor)
 
 void setupVertex()
 {
-//    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-//    vec4 viewCoord = gl_ModelViewMatrix * gl_Vertex;
-    gl_Position = u_modelViewProjection * gl_Vertex;
-    vec4 viewCoord = u_modelView * gl_Vertex;
+    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+    vec4 viewCoord = gl_ModelViewMatrix * gl_Vertex;
     gl_ClipVertex = gl_Position;
-    v_fogDistance = length(viewCoord.xyz);
-
-    v_texcoord_0 = gl_MultiTexCoord0.st;
+    gl_FogFragCoord = length(viewCoord.xyz);
+    gl_TexCoord[0] = gl_MultiTexCoord0;
+    gl_TexCoord[1] = gl_MultiTexCoord1;
 
     // the lightmap texture matrix is scaled to 1/256 and then offset + 8
     // it is also clamped to repeat and has linear min/mag
     vec4 lightColor = texture2D(u_lightmap, vec2((gl_MultiTexCoord1.x + 8.0) / 255.0, (gl_MultiTexCoord1.y + 8.0) / 255.0));
     lightColor = vec4(lightColor.rgb, 1.0);
 
-    v_color_0 = shadeVertex(lightColor, gl_Color);
+    gl_FrontColor = shadeVertex(lightColor, gl_Color);
 
 #if LAYER_COUNT > 1
     v_color_1 = shadeVertex(lightColor, in_color_1); //vec4(in_color_1.rgb * shade, in_color_1.a);

@@ -8,15 +8,8 @@ uniform sampler2D u_lightmap;
 uniform vec3 u_eye_position;
 uniform vec3 u_fogColor;
 uniform vec3 u_fogAttributes;
-uniform mat4 u_modelView;
-uniform mat4 u_projection;
-uniform mat4 u_modelViewProjection;
 
 //varying vec3 v_light;
-varying float v_fogDistance;
-
-varying vec4 v_color_0;
-varying vec2 v_texcoord_0;
 
 #if LAYER_COUNT > 1
 varying vec4 v_color_1;
@@ -35,7 +28,8 @@ varying vec2 v_texcoord_2;
 
 vec4 diffuseColor()
 {
-	vec4 a = texture2D(u_textures, v_texcoord_0) * v_color_0;
+	vec4 texCoord0 = gl_TexCoord[0];
+	vec4 a = texture2D(u_textures, texCoord0.st) * gl_Color;
 
 #if LAYER_COUNT > 1
 	vec4 b = texture2D(u_textures, v_texcoord_1) * v_color_1;
@@ -55,7 +49,7 @@ vec4 diffuseColor()
  */
 float linearFogFactor()
 {
-	float fogFactor = (u_fogAttributes.x - v_fogDistance)/u_fogAttributes.y;
+	float fogFactor = (u_fogAttributes.x - gl_FogFragCoord)/u_fogAttributes.y;
 	return clamp( fogFactor, 0.0, 1.0 );
 }
 
@@ -64,7 +58,7 @@ float linearFogFactor()
  */
 float expFogFactor()
 {
-    float fogFactor = 1.0 / exp(v_fogDistance * u_fogAttributes.z);
+    float fogFactor = 1.0 / exp(gl_FogFragCoord * u_fogAttributes.z);
     return clamp( fogFactor, 0.0, 1.0 );
 }
 
