@@ -8,9 +8,6 @@ uniform sampler2D u_lightmap;
 uniform vec3 u_eye_position;
 uniform vec3 u_fogColor;
 uniform vec3 u_fogAttributes;
-uniform mat4 u_modelView;
-uniform mat4 u_projection;
-uniform mat4 u_modelViewProjection;
 
 //varying vec3 v_light;
 varying float v_fogDistance;
