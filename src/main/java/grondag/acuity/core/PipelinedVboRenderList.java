@@ -1,5 +1,9 @@
 package grondag.acuity.core;
 
+import java.nio.FloatBuffer;
+
+import org.lwjgl.BufferUtils;
+
 import grondag.acuity.Acuity;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -16,8 +20,10 @@ public class PipelinedVboRenderList extends VboRenderList
     private int runCount;
     private int chunkCount;
     private int drawCount;
-    
     private long start;
+    
+    
+    protected final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
     
     @Override
     public void renderChunkLayer(BlockRenderLayer layer)
@@ -30,9 +36,23 @@ public class PipelinedVboRenderList extends VboRenderList
         
         if(Acuity.isModEnabled())
         {
+            // FAIL: unfortunately using explicit uniforms is slower
+            // Forge doesn't give us a hook in the render loop that comes
+            // after camera transform is set up - so call out event handler
+            // here as a workaround. Our event handler will only act 1x/frame.
+//            PipelineManager.INSTANCE.beforeRenderChunks();
             
             if (!this.renderChunks.isEmpty() && this.initialized)
             {
+             // FAIL: unfortunately using explicit uniforms is slower
+//                modelViewMatrixBuffer.position(0);
+//                GlStateManager.getFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrixBuffer);
+//                Matrix4f mvMatrix = new Matrix4f();
+//                mvMatrix.loadTranspose(modelViewMatrixBuffer);
+//                
+//                Matrix4f xlatMatrix = new Matrix4f();
+//                xlatMatrix.setIdentity();
+                
                 // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
                 // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
                 
@@ -43,10 +63,26 @@ public class PipelinedVboRenderList extends VboRenderList
                     if(Acuity.DEBUG)
                         drawCount += vertexbuffer.drawCount();
                     
+                 // FAIL: unfortunately using explicit uniforms is slower
+//                    BlockPos blockpos = renderchunk.getPosition();
+//                    // note row-major order in the matrix library we are using
+//                    xlatMatrix.m03 = (float)((double)blockpos.getX() - this.viewEntityX);
+//                    xlatMatrix.m13 = (float)((double)blockpos.getY() - this.viewEntityY);
+//                    xlatMatrix.m23 = (float)((double)blockpos.getZ() - this.viewEntityZ);
+//                    
+//                    Matrix4f mvPos = Matrix4f.mul(xlatMatrix, mvMatrix, null);
+//                    Matrix4f mvChunk = new Matrix4f();
+//                    mvChunk.loadTranspose(renderchunk.modelviewMatrix);
+//                    // RenderChunk.multModelviewMatrix() may crash due to buffer overrun without this
+//                    renderchunk.modelviewMatrix.position(0);
+//                    Matrix4f mvm = Matrix4f.mul(mvChunk, mvPos, null);
+                    
                     GlStateManager.pushMatrix();
                     this.preRenderChunk(renderchunk);
                     renderchunk.multModelviewMatrix();
+ 
                     vertexbuffer.renderChunk();
+//                    vertexbuffer.renderChunk(mvm);
                     GlStateManager.popMatrix();
                 }
                 

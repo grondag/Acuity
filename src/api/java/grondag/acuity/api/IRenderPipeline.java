@@ -12,6 +12,7 @@ import grondag.acuity.api.IUniform.IUniform3f;
 import grondag.acuity.api.IUniform.IUniform3i;
 import grondag.acuity.api.IUniform.IUniform4f;
 import grondag.acuity.api.IUniform.IUniform4i;
+import grondag.acuity.api.IUniform.IUniformMatrix4f;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -58,4 +59,7 @@ public interface IRenderPipeline
      */
     @SideOnly(Side.CLIENT)
     IRenderPipeline finish();
+
+    @SideOnly(Side.CLIENT)
+    IUniformMatrix4f uniformMatrix4f(String name, UniformUpdateFrequency frequency, Consumer<IUniformMatrix4f> initializer);
 }

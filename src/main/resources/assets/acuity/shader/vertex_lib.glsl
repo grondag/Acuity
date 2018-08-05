@@ -8,6 +8,9 @@ uniform sampler2D u_lightmap;
 uniform vec3 u_eye_position;
 uniform vec3 u_fogColor;
 uniform vec3 u_fogAttributes;
+uniform mat4 u_modelView;
+uniform mat4 u_projection;
+uniform mat4 u_modelViewProjection;
 
 //attribute vec4 in_normal_ao;
 //attribute vec4 in_lightmaps;
@@ -45,8 +48,11 @@ vec4 shadeVertex(vec4 lightColor, vec4 vertexColor)
 
 void setupVertex()
 {
-    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-    vec4 viewCoord = gl_ModelViewMatrix * gl_Vertex;
+//    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+//    vec4 viewCoord = gl_ModelViewMatrix * gl_Vertex;
+    gl_Position = u_modelViewProjection * gl_Vertex;
+    vec4 viewCoord = u_modelView * gl_Vertex;
+    gl_ClipVertex = gl_Position;
     v_fogDistance = length(viewCoord.xyz);
 
     v_texcoord_0 = gl_MultiTexCoord0.st;

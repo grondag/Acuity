@@ -1,7 +1,5 @@
 package grondag.acuity.api;
 
-import java.util.regex.Pattern;
-
 import javax.annotation.Nullable;
 
 import org.lwjgl.opengl.GL13;
@@ -51,6 +49,23 @@ public final class PipelineManager implements IPipelineManager
     
     private float worldTime;
     private float partialTicks;
+    
+ // FAIL: unfortunately using explicit uniforms is slower
+//    /**
+//     * Used to retrieve project matrix from GLState. Avoids re-instantiating each frame.
+//     */
+//    protected final FloatBuffer projectionMatrixBuffer = BufferUtils.createFloatBuffer(16);
+//    
+//    /**
+//     * Current projection matrix. Refreshed from GL state each frame after camera setup
+//     * in {@link #beforeRenderChunks()}. Unfortunately not immutable so use caution.
+//     */
+//    public final Matrix4f projMatrix = new Matrix4f();
+//    
+//    /**
+//     * See {@link #onRenderTick(RenderTickEvent)}
+//     */
+//    private boolean didUpdatePipelinesThisFrame = false;
     
     @SuppressWarnings("null")
     private PipelineManager()
@@ -146,20 +161,20 @@ public final class PipelineManager implements IPipelineManager
     {
         program.uniform1f("u_time", UniformUpdateFrequency.PER_FRAME, u -> u.set(this.worldTime));
         
-        if(containsUniformSpec(program, "sampler2D", "u_textures"))
+        if(Program.containsUniformSpec(program, "sampler2D", "u_textures"))
             program.uniform1i("u_textures", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.defaultTexUnit - GL13.GL_TEXTURE0));
         
-        if(containsUniformSpec(program, "sampler2D", "u_lightmap"))
+        if(Program.containsUniformSpec(program, "sampler2D", "u_lightmap"))
             program.uniform1i("u_lightmap", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.lightmapTexUnit - GL13.GL_TEXTURE0));
         
-        if(containsUniformSpec(program, "vec3", "u_eye_position"))
+        if(Program.containsUniformSpec(program, "vec3", "u_eye_position"))
             program.uniform3f("u_eye_position", UniformUpdateFrequency.PER_FRAME, u -> 
             {
                 Vec3d eyePos = Minecraft.getMinecraft().player.getPositionEyes(partialTicks);
                 u.set((float)eyePos.x, (float)eyePos.y, (float)eyePos.z);
             });
         
-        if(containsUniformSpec(program, "vec3", "u_fogAttributes"))
+        if(Program.containsUniformSpec(program, "vec3", "u_fogAttributes"))
             program.uniform3f("u_fogAttributes", UniformUpdateFrequency.PER_TICK, u -> 
             {
                 GlStateManager.FogState fogState = GlStateManager.fogState;
@@ -168,29 +183,35 @@ public final class PipelineManager implements IPipelineManager
                         fogState.mode == GlStateManager.FogMode.LINEAR.capabilityId ? 0f : fogState.density);
             });
         
-        if(containsUniformSpec(program, "vec3", "u_fogColor"))
+        if(Program.containsUniformSpec(program, "vec3", "u_fogColor"))
             program.uniform3f("u_fogColor", UniformUpdateFrequency.PER_TICK, u -> 
             {
                 EntityRenderer er = Minecraft.getMinecraft().entityRenderer;
                 u.set(er.fogColorRed, er.fogColorGreen, er.fogColorBlue);
             });
+        
+     // FAIL: unfortunately using explicit uniforms is slower
+//        if(Program.containsUniformSpec(program, "mat4", "u_projection"))
+//            program.uniformMatrix4f("u_projection", UniformUpdateFrequency.PER_FRAME, u -> 
+//            {
+//                u.set(projMatrix);
+//            });
+//        
+//        program.setupModelViewUniforms();
     }
-    
-    private static boolean containsUniformSpec(Program program, String type, String name)
-    {
-        String regex = "(?m)^uniform\\s+" + type + "\\s+" + name + "\\s*;";
-        Pattern pattern = Pattern.compile(regex);
-        return pattern.matcher(program.vertexShader.getSource()).find() 
-                || pattern.matcher(program.fragmentShader.getSource()).find(); 
-    }
-    
+            
+    /**
+     * Called at start of each frame but does not update pipelines immediately
+     * because camera has not yet been set up and we need the projection matrix.
+     * So, captures state it can and sets a flag that will used to update
+     * pipelines before any chunks are rendered.   Our render list will call
+     * us right before it render chunks.
+     */
     @SuppressWarnings("null")
     public void onRenderTick(RenderTickEvent event)
     {
-        for(int i = 0; i < this.pipelineCount; i++)
-        {
-            this.pipelines[i].onRenderTick();
-        }
+     // FAIL: unfortunately using explicit uniforms is slower
+//        didUpdatePipelinesThisFrame = false;
 
         Entity entity = Minecraft.getMinecraft().getRenderViewEntity();
         if(entity == null) return;
@@ -199,7 +220,36 @@ public final class PipelineManager implements IPipelineManager
         this.partialTicks = partialTicks;
         if(entity.world != null)
             worldTime = Animation.getWorldTime(entity.world, partialTicks);
+        
+        for(int i = 0; i < this.pipelineCount; i++)
+        {
+            this.pipelines[i].onRenderTick();
+        }
     }
+    
+ // FAIL: unfortunately using explicit uniforms is slower
+//    /**
+//     * Called by our chunk render list before each round of chunk renders.
+//     * Can be called multiple times per frame but we only update once per frame.
+//     * Necessary because Forge doesn't provide a hook that happens after camera setup
+//     * but before block rendering.
+//     */
+//    public void beforeRenderChunks()
+//    {
+//        if(didUpdatePipelinesThisFrame)
+//            return;
+//        
+//        didUpdatePipelinesThisFrame = true;
+//        
+//        projectionMatrixBuffer.position(0);
+//        GlStateManager.getFloat(GL11.GL_PROJECTION_MATRIX, projectionMatrixBuffer);
+//        projMatrix.loadTranspose(projectionMatrixBuffer);
+//        
+//        for(int i = 0; i < this.pipelineCount; i++)
+//        {
+//            this.pipelines[i].onRenderTick();
+//        }
+//    }
 
     public void onGameTick(ClientTickEvent event)
     {

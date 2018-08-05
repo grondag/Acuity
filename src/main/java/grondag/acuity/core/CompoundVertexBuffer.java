@@ -35,7 +35,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         return vertexPackingList == null ? 0 : vertexPackingList.size();
     }
     
-    private class VertexPackingConsumer implements IVertexPackingConsumer
+    private class VertexPackingRenderer implements IVertexPackingConsumer
     {
         int bufferOffset = 0;
         int vertexOffset = 0;
@@ -74,7 +74,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         }
     }
     
-    private final VertexPackingConsumer vertexPackingConsumer = new VertexPackingConsumer();
+    private final VertexPackingRenderer vertexPackingConsumer = new VertexPackingRenderer();
     
     public CompoundVertexBuffer(VertexFormat vertexFormatIn)
     {
@@ -95,9 +95,9 @@ public class CompoundVertexBuffer extends VertexBuffer
     {
         super.deleteGlBuffers();
     }
-
+    
     /**
-     * Renders all uploaded vbos.
+     * Renders all uploaded vbos relying on OpenGl fixed function state.
      */
     public void renderChunk()
     {
@@ -106,6 +106,21 @@ public class CompoundVertexBuffer extends VertexBuffer
         
         OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         vertexPackingConsumer.reset();
+        
         packing.forEach(vertexPackingConsumer);
     }
+
+//    /**
+//     * Remnant of a failed experiment
+//     * Renders all uploaded vbos using the given model view matrix.
+//     */
+//    public void renderChunk(Matrix4f modelViewMatrix)
+//    {
+//        final VertexPackingList packing = this.vertexPackingList;
+//        if(packing == null || packing.size() == 0) return;
+//        
+//        OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+//        vertexPackingConsumer.reset();
+//        packing.forEach((RenderPipeline pipeline, int vertexCount) -> vertexPackingConsumer.accept(pipeline.updateModelViewMatrix(modelViewMatrix), vertexCount));
+//    }
 }

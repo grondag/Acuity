@@ -3,17 +3,18 @@ package grondag.acuity.core;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.function.Consumer;
+import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.util.vector.Matrix4f;
 
+import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
 import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.IUniform;
-import grondag.acuity.api.TextureFormat;
-import grondag.acuity.api.UniformUpdateFrequency;
 import grondag.acuity.api.IUniform.IUniform1f;
 import grondag.acuity.api.IUniform.IUniform1i;
 import grondag.acuity.api.IUniform.IUniform2f;
@@ -22,7 +23,9 @@ import grondag.acuity.api.IUniform.IUniform3f;
 import grondag.acuity.api.IUniform.IUniform3i;
 import grondag.acuity.api.IUniform.IUniform4f;
 import grondag.acuity.api.IUniform.IUniform4i;
-import grondag.acuity.Acuity;
+import grondag.acuity.api.IUniform.IUniformMatrix4f;
+import grondag.acuity.api.TextureFormat;
+import grondag.acuity.api.UniformUpdateFrequency;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.text.translation.I18n;
@@ -509,6 +512,77 @@ public abstract class Program implements IRenderPipeline
         }
     }
     
+    public class UniformMatrix4f extends Uniform<IUniformMatrix4f> implements IUniformMatrix4f
+    {
+        protected final FloatBuffer uniformFloatBuffer;
+        
+        protected UniformMatrix4f(String name, @Nullable Consumer<IUniformMatrix4f> initializer, @Nullable UniformUpdateFrequency frequency)
+        {
+            super(name, initializer, frequency);
+            this.uniformFloatBuffer = BufferUtils.createFloatBuffer(16);
+        }
+
+        @Override
+        public void set(Matrix4f matrix)
+        {
+            this.set(matrix.m00, matrix.m01, matrix.m02, matrix.m03, matrix.m10, matrix.m11, matrix.m12, matrix.m13, matrix.m20, matrix.m21, matrix.m22, matrix.m23, matrix.m30, matrix.m31, matrix.m32, matrix.m33);
+        }
+        
+        @Override
+        public void set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33)
+        {
+            if(this.unifID == -1) return;
+            if(!(   this.uniformFloatBuffer.get(0) == m00
+                 && this.uniformFloatBuffer.get(1) == m01
+                 && this.uniformFloatBuffer.get(2) == m02
+                 && this.uniformFloatBuffer.get(3) == m03
+                 && this.uniformFloatBuffer.get(4) == m10
+                 && this.uniformFloatBuffer.get(5) == m11
+                 && this.uniformFloatBuffer.get(6) == m12
+                 && this.uniformFloatBuffer.get(7) == m13
+                 && this.uniformFloatBuffer.get(8) == m20
+                 && this.uniformFloatBuffer.get(9) == m21
+                 && this.uniformFloatBuffer.get(10) == m22
+                 && this.uniformFloatBuffer.get(11) == m23
+                 && this.uniformFloatBuffer.get(12) == m30
+                 && this.uniformFloatBuffer.get(13) == m31
+                 && this.uniformFloatBuffer.get(14) == m32
+                 && this.uniformFloatBuffer.get(15) == m33))
+            {
+                this.uniformFloatBuffer.put(0, m00);
+                this.uniformFloatBuffer.put(1, m01);
+                this.uniformFloatBuffer.put(2, m02);
+                this.uniformFloatBuffer.put(3, m03);
+                this.uniformFloatBuffer.put(4, m10);
+                this.uniformFloatBuffer.put(5, m11);
+                this.uniformFloatBuffer.put(6, m12);
+                this.uniformFloatBuffer.put(7, m13);
+                this.uniformFloatBuffer.put(8, m20);
+                this.uniformFloatBuffer.put(9, m21);
+                this.uniformFloatBuffer.put(10, m22);
+                this.uniformFloatBuffer.put(11, m23);
+                this.uniformFloatBuffer.put(12, m30);
+                this.uniformFloatBuffer.put(13, m31);
+                this.uniformFloatBuffer.put(14, m32);
+                this.uniformFloatBuffer.put(15, m33);
+                this.uniformFloatBuffer.position(0);
+                this.setDirty();
+            }
+        }
+        
+        @Override
+        protected void uploadInner()
+        {
+            OpenGlHelper.glUniformMatrix4(this.unifID, true, this.uniformFloatBuffer);
+        }
+    }
+    
+    @Override
+    public UniformMatrix4f uniformMatrix4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniformMatrix4f> initializer)
+    {
+        return addUniform(new UniformMatrix4f(name, initializer, frequency));
+    }
+    
     /**
      * NB: Not necessary to call if going to activate a different shader.
      */
@@ -588,5 +662,35 @@ public abstract class Program implements IRenderPipeline
     public void onGameTick()
     {
         this.gameTickUpdates.forEach(u -> u.markForInitialization());
+    }
+    
+    // FAIL: unfortunately using explicit uniforms is slower
+//    protected @Nullable UniformMatrix4f modelViewUniform;
+//    protected @Nullable UniformMatrix4f modelViewProjectionUniform;
+//    public void setupModelViewUniforms()
+//    {
+//        if(containsUniformSpec(this, "mat4", "u_modelView"))
+//        {
+//            this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.ON_LOAD, u -> 
+//            {
+//                // NOOP - will be set as needed
+//            });
+//        }
+//
+//        if(containsUniformSpec(this, "mat4", "u_modelViewProjection"))
+//        {
+//            this.modelViewProjectionUniform = this.uniformMatrix4f("u_modelViewProjection", UniformUpdateFrequency.ON_LOAD, u -> 
+//            {
+//                // NOOP - will be set as needed
+//            });
+//        }
+//    }
+    
+    public static boolean containsUniformSpec(Program program, String type, String name)
+    {
+        String regex = "(?m)^uniform\\s+" + type + "\\s+" + name + "\\s*;";
+        Pattern pattern = Pattern.compile(regex);
+        return pattern.matcher(program.vertexShader.getSource()).find() 
+                || pattern.matcher(program.fragmentShader.getSource()).find(); 
     }
 }
