@@ -3,6 +3,8 @@ misc.fail_no_vbo=Acuity Rendering API will be disabled because hardware does not
 misc.fail_no_shaders=Acuity Rendering API will be disabled because hardware does not support shaders.
 misc.fail_opengl_version=Acuity Rendering API will be disabled because hardware does not support OpenGL version 2.1.
 misc.hardware_ok=Acuity Rendering API can run on this hardware. VBOs, shaders and OpenGL 2.1 are all supported.
+misc.vao_on=Vertex Array Objects (VAO) are enabled and will be used to improve performance.
+misc.vao_off=Vertex Array Objects (VAO) are unavailable.
 misc.fail_imc=Error in inter-mod communication request for Acuity Rendering API runtime.
 
 misc.fail_create_shader=Unable to create shader %s due to unexpected error %s

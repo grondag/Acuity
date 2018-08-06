@@ -5,18 +5,22 @@ import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 
 import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
 import org.lwjgl.BufferChecks;
 import org.lwjgl.BufferUtils;
+import org.lwjgl.MemoryUtil;
+import org.lwjgl.opengl.APPLEVertexArrayObject;
 import org.lwjgl.opengl.ARBVertexBufferObject;
 import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
+import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GLContext;
 
 import grondag.acuity.Acuity;
@@ -63,11 +67,97 @@ public class OpenGlHelperExt
     @SuppressWarnings("null")
     static private Method nglUseProgram = null;
     
+    static private boolean vaoEnabled = false;
+    public static boolean isVaoEnabled()
+    {
+        return vaoEnabled;
+    }
+    
+    static private long glBindVertexArrayFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglBindVertexArray = null;
+    
+    static private long glGenVertexArraysFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglGenVertexArrays = null;
+    
+    static private long glDeleteVertexArraysFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglDeleteVertexArrays = null;
+    
     /**
      *  call after known that GL context is initialized
      */
     public static void initialize()
     {
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            if(caps.OpenGL30)
+            {
+                Field pointer = ContextCapabilities.class.getDeclaredField("glBindVertexArray");
+                pointer.setAccessible(true);
+                glBindVertexArrayFunctionPointer = pointer.getLong(caps);
+                BufferChecks.checkFunctionAddress(glBindVertexArrayFunctionPointer);
+                nglBindVertexArray = GL30.class.getDeclaredMethod("nglBindVertexArray", int.class, long.class);
+                nglBindVertexArray.setAccessible(true);
+                
+                pointer = ContextCapabilities.class.getDeclaredField("glGenVertexArrays");
+                pointer.setAccessible(true);
+                glGenVertexArraysFunctionPointer = pointer.getLong(caps);
+                BufferChecks.checkFunctionAddress(glGenVertexArraysFunctionPointer);
+                nglGenVertexArrays = GL30.class.getDeclaredMethod("nglGenVertexArrays", int.class, long.class, long.class);
+                nglGenVertexArrays.setAccessible(true);
+                
+                pointer = ContextCapabilities.class.getDeclaredField("glDeleteVertexArrays");
+                pointer.setAccessible(true);
+                glDeleteVertexArraysFunctionPointer = pointer.getLong(caps);
+                BufferChecks.checkFunctionAddress(glDeleteVertexArraysFunctionPointer);
+                nglDeleteVertexArrays = GL30.class.getDeclaredMethod("nglDeleteVertexArrays", int.class, long.class, long.class);
+                nglDeleteVertexArrays.setAccessible(true);
+                
+                vaoEnabled = true;
+            }
+            else if(caps.GL_APPLE_vertex_array_object)
+            {
+                Field pointer = ContextCapabilities.class.getDeclaredField("glBindVertexArrayAPPLE");
+                pointer.setAccessible(true);
+                glBindVertexArrayFunctionPointer = pointer.getLong(caps);
+                BufferChecks.checkFunctionAddress(glBindVertexArrayFunctionPointer);
+                nglBindVertexArray = APPLEVertexArrayObject.class.getDeclaredMethod("nglBindVertexArrayAPPLE", int.class, long.class);
+                nglBindVertexArray.setAccessible(true);
+                
+                pointer = ContextCapabilities.class.getDeclaredField("glGenVertexArraysAPPLE");
+                pointer.setAccessible(true);
+                glGenVertexArraysFunctionPointer = pointer.getLong(caps);
+                BufferChecks.checkFunctionAddress(glGenVertexArraysFunctionPointer);
+                nglGenVertexArrays = APPLEVertexArrayObject.class.getDeclaredMethod("nglGenVertexArraysAPPLE", int.class, long.class, long.class);
+                nglGenVertexArrays.setAccessible(true);
+                
+                pointer = ContextCapabilities.class.getDeclaredField("glDeleteVertexArraysAPPLE");
+                pointer.setAccessible(true);
+                glDeleteVertexArraysFunctionPointer = pointer.getLong(caps);
+                BufferChecks.checkFunctionAddress(glDeleteVertexArraysFunctionPointer);
+                nglDeleteVertexArrays = APPLEVertexArrayObject.class.getDeclaredMethod("nglDeleteVertexArraysAPPLE", int.class, long.class, long.class);
+                nglDeleteVertexArrays.setAccessible(true);
+                
+                vaoEnabled = true;
+            }
+            else
+            {
+                vaoEnabled = false;  // for clarity - was already false
+                return;
+            }
+        }
+        catch(Exception e)
+        {
+            vaoEnabled = false;
+            glBindVertexArrayFunctionPointer = -1;
+            glDeleteVertexArraysFunctionPointer = -1;
+            glGenVertexArraysFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
+        }
+        
         try
         {
             ContextCapabilities caps = GLContext.getCapabilities();
@@ -195,6 +285,45 @@ public class OpenGlHelperExt
         {
             glUseProgramFunctionPointer = -1;
             Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUseProgram"), e);
+        }
+    }
+    
+    public static void glGenVertexArrays(IntBuffer arrays)
+    {
+        if(vaoEnabled) try
+        {
+            nglGenVertexArrays.invoke(null, arrays.remaining(), MemoryUtil.getAddress(arrays), glGenVertexArraysFunctionPointer);
+        }
+        catch(Exception e)
+        {
+            vaoEnabled = false;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
+        }
+    }
+    
+    public static void glBindVertexArray(int array)
+    {
+        if(vaoEnabled) try
+        {
+            nglBindVertexArray.invoke(null, array, glBindVertexArrayFunctionPointer);
+        }
+        catch(Exception e)
+        {
+            vaoEnabled = false;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
+        }
+    }
+    
+    public static void glDeleteVertexArrays(IntBuffer arrays)
+    {
+        if(vaoEnabled) try
+        {
+            nglDeleteVertexArrays.invoke(null, arrays.remaining(), MemoryUtil.getAddress(arrays), glDeleteVertexArraysFunctionPointer);
+        }
+        catch(Exception e)
+        {
+            vaoEnabled = false;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
         }
     }
     

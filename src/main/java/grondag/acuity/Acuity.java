@@ -119,6 +119,7 @@ public class Acuity
 	{
         // try to get faster access to GL calls
         OpenGlHelperExt.initialize();
+        getLog().info(I18n.translateToLocal(OpenGlHelperExt.isVaoEnabled() ? "misc.vao_on" : "misc.vao_off"));
         
         IResourceManager rm = Minecraft.getMinecraft().getResourceManager();
         if(rm instanceof IReloadableResourceManager)
