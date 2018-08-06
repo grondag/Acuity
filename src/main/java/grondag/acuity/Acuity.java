@@ -41,6 +41,8 @@ public class Acuity
 	
 	public static final boolean DEBUG;
 	
+	private static final boolean DEBUG_OVERRIDE = false;
+	
 	static
 	{
 	    boolean debug = false;
@@ -52,7 +54,7 @@ public class Acuity
 	            break;
 	        }
 	    }
-	    DEBUG = debug;
+	    DEBUG = debug && DEBUG_OVERRIDE;
 	}
 	
 	@Instance

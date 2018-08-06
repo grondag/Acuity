@@ -87,8 +87,8 @@ public class PipelinedVboRenderList extends VboRenderList
                 }
                 
                 OpenGlHelperExt.enableAttributes(0);
-                OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, 0);
-                OpenGlHelper.glUseProgram(0);
+                OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
+                OpenGlHelperExt.glUseProgramFast(0);
                 GlStateManager.resetColor();
                 this.renderChunks.clear();
             }

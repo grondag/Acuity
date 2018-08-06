@@ -28,41 +28,24 @@ varying vec4 v_color_2;
 varying vec2 v_texcoord_2;
 #endif
 
-vec4 shadeVertex(vec4 lightColor, vec4 vertexColor)
-{
-	float glow = vertexColor.a >= 0.5 ? 1.0 : 0;
-
-	const float SCALE_127_TO_255 = 2.00787401574803;
-	float aOut = (vertexColor.a - glow * 128.0) * SCALE_127_TO_255;
-	vec4 colorOut = vec4(vertexColor.rgb, aOut);
-	return glow == 0.0
-			? lightColor * colorOut
-			: colorOut;
-}
-
 void setupVertex()
 {
     gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
     vec4 viewCoord = gl_ModelViewMatrix * gl_Vertex;
-    gl_ClipVertex = gl_Position;
-    gl_FogFragCoord = length(viewCoord.xyz);
+    gl_ClipVertex = viewCoord;
+    gl_FogFragCoord = viewCoord.z; //length(viewCoord.xyz);
     gl_TexCoord[0] = gl_MultiTexCoord0;
     gl_TexCoord[1] = gl_MultiTexCoord1;
 
-    // the lightmap texture matrix is scaled to 1/256 and then offset + 8
-    // it is also clamped to repeat and has linear min/mag
-    vec4 lightColor = texture2D(u_lightmap, vec2((gl_MultiTexCoord1.x + 8.0) / 255.0, (gl_MultiTexCoord1.y + 8.0) / 255.0));
-    lightColor = vec4(lightColor.rgb, 1.0);
-
-    gl_FrontColor = shadeVertex(lightColor, gl_Color);
+    gl_FrontColor = gl_Color;
 
 #if LAYER_COUNT > 1
-    v_color_1 = shadeVertex(lightColor, in_color_1); //vec4(in_color_1.rgb * shade, in_color_1.a);
+    v_color_1 = in_color_1; //vec4(in_color_1.rgb * shade, in_color_1.a);
     v_texcoord_1 = in_uv_1;
 #endif
 
 #if LAYER_COUNT > 2
-    v_color_2 = shadeVertex(lightColor, in_color_2); //vec4(in_color_2.rgb * shade, in_color_2.a);
+    v_color_2 = in_color_2; //vec4(in_color_2.rgb * shade, in_color_2.a);
     v_texcoord_2 = in_uv_2;
 #endif
 }

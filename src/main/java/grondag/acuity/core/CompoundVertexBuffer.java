@@ -9,7 +9,6 @@ import org.lwjgl.opengl.GL15;
 
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.VertexPackingList.IVertexPackingConsumer;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -58,16 +57,16 @@ public class CompoundVertexBuffer extends VertexBuffer
                 vertexOffset = 0;
                 lastFormat = pipeline.piplineVertexFormat();
                 final int stride = lastFormat.stride;
-                GlStateManager.glVertexPointer(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
-                GlStateManager.glColorPointer(4, 5121, stride, bufferOffset + 12);
-                GlStateManager.glTexCoordPointer(2, 5126, stride, bufferOffset + 16);
-                OpenGlHelper.setClientActiveTexture(OpenGlHelper.lightmapTexUnit);
-                GlStateManager.glTexCoordPointer(2, 5122, stride, bufferOffset + 24);
-                OpenGlHelper.setClientActiveTexture(OpenGlHelper.defaultTexUnit);
+                OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
+                OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
+                OpenGlHelperExt.glTexCoordPointerFast(2, 5126, stride, bufferOffset + 16);
+                OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
+                OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
+                OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
                 pipeline.piplineVertexFormat().setupAttributes(bufferOffset);
             }
             
-            GlStateManager.glDrawArrays(GL11.GL_QUADS, vertexOffset, vertexCount);
+            OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, vertexOffset, vertexCount);
             
             vertexOffset += vertexCount;
             bufferOffset += vertexCount * lastFormat.stride;
@@ -85,9 +84,9 @@ public class CompoundVertexBuffer extends VertexBuffer
     {
         this.vertexPackingList = packing;
         buffer.position(0);
-        OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         OpenGlHelper.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
-        OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, 0);
+        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
     }
     
     @Override
@@ -104,7 +103,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         final VertexPackingList packing = this.vertexPackingList;
         if(packing == null || packing.size() == 0) return;
         
-        OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         vertexPackingConsumer.reset();
         
         packing.forEach(vertexPackingConsumer);

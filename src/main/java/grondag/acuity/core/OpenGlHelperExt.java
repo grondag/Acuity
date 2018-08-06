@@ -14,12 +14,14 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.ARBVertexBufferObject;
 import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GLContext;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.PipelineManager;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
@@ -32,6 +34,34 @@ public class OpenGlHelperExt
     static private long glVertexAttribPointerFunctionPointer = -1;
     @SuppressWarnings("null")
     static private Method nglVertexAttribPointerBO = null;
+    
+    static private long glTexCoordPointerFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglTexCoordPointerBO = null;
+    
+    static private long glVertexPointerFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglVertexPointerBO = null;
+
+    static private long glColorPointerFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglColorPointerBO = null;
+    
+    static private long glClientActiveTextureFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglClientActiveTexturePointer = null;
+    
+    static private long glDrawArraysFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglDrawArrays = null;
+    
+    static private long glBindBufferFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglBindBuffer = null;
+    
+    static private long glUseProgramFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private Method nglUseProgram = null;
     
     /**
      *  call after known that GL context is initialized
@@ -53,6 +83,118 @@ public class OpenGlHelperExt
         {
             glVertexAttribPointerFunctionPointer = -1;
             Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glVertexAttribPointer"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glTexCoordPointer");
+            pointer.setAccessible(true);
+            glTexCoordPointerFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glTexCoordPointerFunctionPointer);
+            nglTexCoordPointerBO = GL11.class.getDeclaredMethod("nglTexCoordPointerBO", int.class, int.class, int.class, long.class, long.class);
+            nglTexCoordPointerBO.setAccessible(true);
+        }
+        catch(Exception e)
+        {
+            glTexCoordPointerFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glVertexAttribPointer"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glVertexPointer");
+            pointer.setAccessible(true);
+            glVertexPointerFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glVertexPointerFunctionPointer);
+            nglVertexPointerBO = GL11.class.getDeclaredMethod("nglVertexPointerBO", int.class, int.class, int.class, long.class, long.class);
+            nglVertexPointerBO.setAccessible(true);
+        }
+        catch(Exception e)
+        {
+            glVertexPointerFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glVertexPointer"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glColorPointer");
+            pointer.setAccessible(true);
+            glColorPointerFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glColorPointerFunctionPointer);
+            nglColorPointerBO = GL11.class.getDeclaredMethod("nglColorPointerBO", int.class, int.class, int.class, long.class, long.class);
+            nglColorPointerBO.setAccessible(true);
+        }
+        catch(Exception e)
+        {
+            glColorPointerFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glColorPointer"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glClientActiveTexture");
+            pointer.setAccessible(true);
+            glClientActiveTextureFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glClientActiveTextureFunctionPointer);
+            nglClientActiveTexturePointer = GL13.class.getDeclaredMethod("nglClientActiveTexture", int.class, long.class);
+            nglClientActiveTexturePointer.setAccessible(true);
+        }
+        catch(Exception e)
+        {
+            glClientActiveTextureFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glClientActiveTexture"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glDrawArrays");
+            pointer.setAccessible(true);
+            glDrawArraysFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glDrawArraysFunctionPointer);
+            nglDrawArrays = GL11.class.getDeclaredMethod("nglDrawArrays", int.class, int.class, int.class, long.class);
+            nglDrawArrays.setAccessible(true);
+        }
+        catch(Exception e)
+        {
+            glDrawArraysFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glDrawArrays"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glBindBuffer");
+            pointer.setAccessible(true);
+            glBindBufferFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glBindBufferFunctionPointer);
+            nglBindBuffer = GL15.class.getDeclaredMethod("nglBindBuffer", int.class, int.class, long.class);
+            nglBindBuffer.setAccessible(true);
+        }
+        catch(Exception e)
+        {
+            glBindBufferFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glBindBuffer"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glUseProgram");
+            pointer.setAccessible(true);
+            glUseProgramFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glUseProgramFunctionPointer);
+            nglUseProgram = GL20.class.getDeclaredMethod("nglUseProgram", int.class, long.class);
+            nglUseProgram.setAccessible(true);
+        }
+        catch(Exception e)
+        {
+            glUseProgramFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUseProgram"), e);
         }
     }
     
@@ -177,5 +319,131 @@ public class OpenGlHelperExt
                 GL20.glVertexAttribPointer(index, size, type, normalized, stride, buffer_buffer_offset);
             }
     }
+    
+    /**
+     * Tries to circumvent the sanity checks LWJGL does because they significantly harm performance.
+     * VBO will always been enabled when this is called and the function pointer checks are done 1X at init.
+     */
+    public static void glTexCoordPointerFast(int size, int type, int stride, long buffer_buffer_offset)
+    {
+        if(glTexCoordPointerFunctionPointer == -1)
+            GL11.glTexCoordPointer(size, type, stride, buffer_buffer_offset);
+        else
+            try
+            {
+                nglTexCoordPointerBO.invoke(null, size, type, stride, buffer_buffer_offset, glTexCoordPointerFunctionPointer);
+            }
+            catch (Exception e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glTexCoordPointer"), e);
+                glTexCoordPointerFunctionPointer = -1;
+                GL11.glTexCoordPointer(size, type, stride, buffer_buffer_offset);
+            }
+    }
 
+    /**
+     * Tries to circumvent the sanity checks LWJGL does because they significantly harm performance.
+     * VBO will always been enabled when this is called and the function pointer checks are done 1X at init.
+     */
+    public static void glVertexPointerFast(int size, int type, int stride, long buffer_buffer_offset)
+    {
+        if(glVertexPointerFunctionPointer == -1)
+            GL11.glVertexPointer(size, type, stride, buffer_buffer_offset);
+        else
+            try
+            {
+                nglVertexPointerBO.invoke(null, size, type, stride, buffer_buffer_offset, glVertexPointerFunctionPointer);
+            }
+            catch (Exception e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glVertexPointer"), e);
+                glVertexPointerFunctionPointer = -1;
+                GL11.glVertexPointer(size, type, stride, buffer_buffer_offset);
+            }
+    }
+    
+    public static void glColorPointerFast(int size, int type, int stride, int pointer_buffer_offset)
+    {
+        if(glColorPointerFunctionPointer == -1)
+            GL11.glColorPointer(size, type, stride, pointer_buffer_offset);
+        else
+            try
+            {
+                nglColorPointerBO.invoke(null, size, type, stride, pointer_buffer_offset, glColorPointerFunctionPointer);
+            }
+            catch (Exception e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glColorPointer"), e);
+                glColorPointerFunctionPointer = -1;
+                GL11.glColorPointer(size, type, stride, pointer_buffer_offset);
+            }
+    }
+
+    public static void setClientActiveTextureFast(int textureId)
+    {
+        if(glClientActiveTextureFunctionPointer == -1)
+            OpenGlHelper.setClientActiveTexture(textureId);
+        else
+            try
+            {
+                nglClientActiveTexturePointer.invoke(null, textureId, glClientActiveTextureFunctionPointer);
+            }
+            catch (Exception e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glClientActiveTexture"), e);
+                glClientActiveTextureFunctionPointer = -1;
+                OpenGlHelper.setClientActiveTexture(textureId);
+            }
+    }
+    
+    public static void glDrawArraysFast(int mode, int first, int count)
+    {
+        if(glDrawArraysFunctionPointer == -1)
+            GlStateManager.glDrawArrays(mode, first, count);
+        else
+            try
+            {
+                nglDrawArrays.invoke(null, mode, first, count, glDrawArraysFunctionPointer);
+            }
+            catch (Exception e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glDrawArrays"), e);
+                glDrawArraysFunctionPointer = -1;
+                GlStateManager.glDrawArrays(mode, first, count);
+            }
+    }
+    
+    public static void glBindBufferFast(int target, int buffer)
+    {
+        if(glBindBufferFunctionPointer == -1)
+            OpenGlHelper.glBindBuffer(target, buffer);
+        else
+            try
+            {
+                nglBindBuffer.invoke(null, target, buffer, glBindBufferFunctionPointer);
+            }
+            catch (Exception e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glBindBuffer"), e);
+                glBindBufferFunctionPointer = -1;
+                OpenGlHelper.glBindBuffer(target, buffer);
+            }
+    }
+    
+    public static void glUseProgramFast(int programId)
+    {
+        if(glUseProgramFunctionPointer == -1)
+            OpenGlHelper.glUseProgram(programId);
+        else
+            try
+            {
+                nglUseProgram.invoke(null, programId, glUseProgramFunctionPointer);
+            }
+            catch (Exception e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUseProgram"), e);
+                glUseProgramFunctionPointer = -1;
+                OpenGlHelper.glUseProgram(programId);
+            }
+    }
 }

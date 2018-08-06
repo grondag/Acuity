@@ -39,13 +39,14 @@ public abstract class Program implements IRenderPipeline
     private boolean needsLoad = true;
     private boolean isErrored = false;
     private boolean isFinal = false;
-    protected boolean hasDirtyUniform = false;
+//    protected boolean hasDirtyUniform = false;
     
     public final PipelineVertexShader vertexShader;
     public final PipelineFragmentShader fragmentShader;
     public final TextureFormat textureFormat;
     
     private final ObjectArrayList<Uniform<?>> uniforms = new ObjectArrayList<>();
+    protected final ObjectArrayList<Uniform<?>> dirtyUniforms = new ObjectArrayList<>();
     private final ObjectArrayList<Uniform<?>> renderTickUpdates = new ObjectArrayList<>();
     private final ObjectArrayList<Uniform<?>> gameTickUpdates = new ObjectArrayList<>();
     
@@ -69,8 +70,11 @@ public abstract class Program implements IRenderPipeline
         
         protected void setDirty()
         {
-            this.isUniformDirty = true;
-            hasDirtyUniform = true;
+            if(!this.isUniformDirty)
+            {
+                this.isUniformDirty = true;
+                dirtyUniforms.add(this);
+            }
         }
         
         protected void markForInitialization()
@@ -78,7 +82,7 @@ public abstract class Program implements IRenderPipeline
             if(this.initializer != null)
             {
                 this.needsInitialization = true;
-                hasDirtyUniform = true;
+                dirtyUniforms.add(this);
             }
         }
         
@@ -503,12 +507,12 @@ public abstract class Program implements IRenderPipeline
         if(progID <= 0 || this.isErrored)
             return;
         
-        OpenGlHelper.glUseProgram(progID);
+        OpenGlHelperExt.glUseProgramFast(progID);
         
-        if(this.hasDirtyUniform)
+        if(!this.dirtyUniforms.isEmpty())
         {
-            this.hasDirtyUniform = false;
-            this.uniforms.forEach(u -> u.upload());
+            this.dirtyUniforms.forEach(u -> u.upload());
+            this.dirtyUniforms.clear();
         }
     }
     
@@ -616,7 +620,6 @@ public abstract class Program implements IRenderPipeline
         if(!this.isErrored)
         {
             this.uniforms.forEach(u -> u.load(progID));
-            this.hasDirtyUniform = true;
         }
         
     }
