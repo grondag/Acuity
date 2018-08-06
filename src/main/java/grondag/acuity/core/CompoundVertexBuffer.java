@@ -56,20 +56,25 @@ public class CompoundVertexBuffer extends VertexBuffer
             {
                 vertexOffset = 0;
                 lastFormat = pipeline.piplineVertexFormat();
-                final int stride = lastFormat.stride;
-                OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
-                OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
-                OpenGlHelperExt.glTexCoordPointerFast(2, 5126, stride, bufferOffset + 16);
-                OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
-                OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
-                OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
-                pipeline.piplineVertexFormat().setupAttributes(bufferOffset);
+                setupAttributes(lastFormat, bufferOffset);
             }
             
             OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, vertexOffset, vertexCount);
             
             vertexOffset += vertexCount;
             bufferOffset += vertexCount * lastFormat.stride;
+        }
+        
+        private void setupAttributes(PipelineVertexFormat format, int bufferOffset)
+        {
+            final int stride = format.stride;
+            OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
+            OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
+            OpenGlHelperExt.glTexCoordPointerFast(2, 5126, stride, bufferOffset + 16);
+            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
+            OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
+            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
+            format.setupAttributes(bufferOffset);
         }
     }
     
