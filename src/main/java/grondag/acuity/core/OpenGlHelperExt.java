@@ -2,6 +2,8 @@ package grondag.acuity.core;
 
 import java.io.BufferedInputStream;
 import java.io.InputStream;
+import java.lang.invoke.MethodHandle;
+import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
@@ -24,6 +26,7 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GLContext;
 
 import grondag.acuity.Acuity;
+import grondag.acuity.Configurator;
 import grondag.acuity.api.PipelineManager;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -37,59 +40,61 @@ public class OpenGlHelperExt
     
     static private long glVertexAttribPointerFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglVertexAttribPointerBO = null;
+    static private MethodHandle nglVertexAttribPointerBO = null;
     
     static private long glTexCoordPointerFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglTexCoordPointerBO = null;
+    static private MethodHandle nglTexCoordPointerBO = null;
     
     static private long glVertexPointerFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglVertexPointerBO = null;
+    static private MethodHandle nglVertexPointerBO = null;
 
     static private long glColorPointerFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglColorPointerBO = null;
+    static private MethodHandle nglColorPointerBO = null;
     
     static private long glClientActiveTextureFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglClientActiveTexturePointer = null;
+    static private MethodHandle nglClientActiveTexturePointer = null;
     
     static private long glDrawArraysFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglDrawArrays = null;
+    static private MethodHandle nglDrawArrays = null;
     
     static private long glBindBufferFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglBindBuffer = null;
+    static private MethodHandle nglBindBuffer = null;
     
     static private long glUseProgramFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglUseProgram = null;
+    static private MethodHandle nglUseProgram = null;
     
     static private boolean vaoEnabled = false;
     public static boolean isVaoEnabled()
     {
-        return vaoEnabled;
+        return vaoEnabled && Configurator.enable_vao;
     }
     
     static private long glBindVertexArrayFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglBindVertexArray = null;
+    static private MethodHandle nglBindVertexArray = null;
     
     static private long glGenVertexArraysFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglGenVertexArrays = null;
+    static private MethodHandle nglGenVertexArrays = null;
     
     static private long glDeleteVertexArraysFunctionPointer = -1;
     @SuppressWarnings("null")
-    static private Method nglDeleteVertexArrays = null;
+    static private MethodHandle nglDeleteVertexArrays = null;
     
     /**
      *  call after known that GL context is initialized
      */
     public static void initialize()
     {
+        final MethodHandles.Lookup lookup = MethodHandles.lookup();
+
         try
         {
             ContextCapabilities caps = GLContext.getCapabilities();
@@ -99,22 +104,25 @@ public class OpenGlHelperExt
                 pointer.setAccessible(true);
                 glBindVertexArrayFunctionPointer = pointer.getLong(caps);
                 BufferChecks.checkFunctionAddress(glBindVertexArrayFunctionPointer);
-                nglBindVertexArray = GL30.class.getDeclaredMethod("nglBindVertexArray", int.class, long.class);
+                Method nglBindVertexArray = GL30.class.getDeclaredMethod("nglBindVertexArray", int.class, long.class);
                 nglBindVertexArray.setAccessible(true);
+                OpenGlHelperExt.nglBindVertexArray = lookup.unreflect(nglBindVertexArray);
                 
                 pointer = ContextCapabilities.class.getDeclaredField("glGenVertexArrays");
                 pointer.setAccessible(true);
                 glGenVertexArraysFunctionPointer = pointer.getLong(caps);
                 BufferChecks.checkFunctionAddress(glGenVertexArraysFunctionPointer);
-                nglGenVertexArrays = GL30.class.getDeclaredMethod("nglGenVertexArrays", int.class, long.class, long.class);
+                Method nglGenVertexArrays = GL30.class.getDeclaredMethod("nglGenVertexArrays", int.class, long.class, long.class);
                 nglGenVertexArrays.setAccessible(true);
+                OpenGlHelperExt.nglGenVertexArrays = lookup.unreflect(nglGenVertexArrays);
                 
                 pointer = ContextCapabilities.class.getDeclaredField("glDeleteVertexArrays");
                 pointer.setAccessible(true);
                 glDeleteVertexArraysFunctionPointer = pointer.getLong(caps);
                 BufferChecks.checkFunctionAddress(glDeleteVertexArraysFunctionPointer);
-                nglDeleteVertexArrays = GL30.class.getDeclaredMethod("nglDeleteVertexArrays", int.class, long.class, long.class);
+                Method nglDeleteVertexArrays = GL30.class.getDeclaredMethod("nglDeleteVertexArrays", int.class, long.class, long.class);
                 nglDeleteVertexArrays.setAccessible(true);
+                OpenGlHelperExt.nglDeleteVertexArrays = lookup.unreflect(nglDeleteVertexArrays);
                 
                 vaoEnabled = true;
             }
@@ -124,22 +132,25 @@ public class OpenGlHelperExt
                 pointer.setAccessible(true);
                 glBindVertexArrayFunctionPointer = pointer.getLong(caps);
                 BufferChecks.checkFunctionAddress(glBindVertexArrayFunctionPointer);
-                nglBindVertexArray = APPLEVertexArrayObject.class.getDeclaredMethod("nglBindVertexArrayAPPLE", int.class, long.class);
+                Method nglBindVertexArray = APPLEVertexArrayObject.class.getDeclaredMethod("nglBindVertexArrayAPPLE", int.class, long.class);
                 nglBindVertexArray.setAccessible(true);
+                OpenGlHelperExt.nglBindVertexArray = lookup.unreflect(nglBindVertexArray);
                 
                 pointer = ContextCapabilities.class.getDeclaredField("glGenVertexArraysAPPLE");
                 pointer.setAccessible(true);
                 glGenVertexArraysFunctionPointer = pointer.getLong(caps);
                 BufferChecks.checkFunctionAddress(glGenVertexArraysFunctionPointer);
-                nglGenVertexArrays = APPLEVertexArrayObject.class.getDeclaredMethod("nglGenVertexArraysAPPLE", int.class, long.class, long.class);
+                Method nglGenVertexArrays = APPLEVertexArrayObject.class.getDeclaredMethod("nglGenVertexArraysAPPLE", int.class, long.class, long.class);
                 nglGenVertexArrays.setAccessible(true);
+                OpenGlHelperExt.nglGenVertexArrays = lookup.unreflect(nglGenVertexArrays);
                 
                 pointer = ContextCapabilities.class.getDeclaredField("glDeleteVertexArraysAPPLE");
                 pointer.setAccessible(true);
                 glDeleteVertexArraysFunctionPointer = pointer.getLong(caps);
                 BufferChecks.checkFunctionAddress(glDeleteVertexArraysFunctionPointer);
-                nglDeleteVertexArrays = APPLEVertexArrayObject.class.getDeclaredMethod("nglDeleteVertexArraysAPPLE", int.class, long.class, long.class);
+                Method nglDeleteVertexArrays = APPLEVertexArrayObject.class.getDeclaredMethod("nglDeleteVertexArraysAPPLE", int.class, long.class, long.class);
                 nglDeleteVertexArrays.setAccessible(true);
+                OpenGlHelperExt.nglDeleteVertexArrays = lookup.unreflect(nglDeleteVertexArrays);
                 
                 vaoEnabled = true;
             }
@@ -165,9 +176,9 @@ public class OpenGlHelperExt
             pointer.setAccessible(true);
             glVertexAttribPointerFunctionPointer = pointer.getLong(caps);
             BufferChecks.checkFunctionAddress(glVertexAttribPointerFunctionPointer);
-            
-            nglVertexAttribPointerBO = GL20.class.getDeclaredMethod("nglVertexAttribPointerBO", int.class, int.class, int.class, boolean.class, int.class, long.class, long.class);
+            Method nglVertexAttribPointerBO = GL20.class.getDeclaredMethod("nglVertexAttribPointerBO", int.class, int.class, int.class, boolean.class, int.class, long.class, long.class);
             nglVertexAttribPointerBO.setAccessible(true);
+            OpenGlHelperExt.nglVertexAttribPointerBO = lookup.unreflect(nglVertexAttribPointerBO);
         }
         catch(Exception e)
         {
@@ -182,8 +193,9 @@ public class OpenGlHelperExt
             pointer.setAccessible(true);
             glTexCoordPointerFunctionPointer = pointer.getLong(caps);
             BufferChecks.checkFunctionAddress(glTexCoordPointerFunctionPointer);
-            nglTexCoordPointerBO = GL11.class.getDeclaredMethod("nglTexCoordPointerBO", int.class, int.class, int.class, long.class, long.class);
+            Method nglTexCoordPointerBO = GL11.class.getDeclaredMethod("nglTexCoordPointerBO", int.class, int.class, int.class, long.class, long.class);
             nglTexCoordPointerBO.setAccessible(true);
+            OpenGlHelperExt.nglTexCoordPointerBO = lookup.unreflect(nglTexCoordPointerBO);
         }
         catch(Exception e)
         {
@@ -198,8 +210,9 @@ public class OpenGlHelperExt
             pointer.setAccessible(true);
             glVertexPointerFunctionPointer = pointer.getLong(caps);
             BufferChecks.checkFunctionAddress(glVertexPointerFunctionPointer);
-            nglVertexPointerBO = GL11.class.getDeclaredMethod("nglVertexPointerBO", int.class, int.class, int.class, long.class, long.class);
+            Method nglVertexPointerBO = GL11.class.getDeclaredMethod("nglVertexPointerBO", int.class, int.class, int.class, long.class, long.class);
             nglVertexPointerBO.setAccessible(true);
+            OpenGlHelperExt.nglVertexPointerBO = lookup.unreflect(nglVertexPointerBO);
         }
         catch(Exception e)
         {
@@ -214,8 +227,9 @@ public class OpenGlHelperExt
             pointer.setAccessible(true);
             glColorPointerFunctionPointer = pointer.getLong(caps);
             BufferChecks.checkFunctionAddress(glColorPointerFunctionPointer);
-            nglColorPointerBO = GL11.class.getDeclaredMethod("nglColorPointerBO", int.class, int.class, int.class, long.class, long.class);
+            Method nglColorPointerBO = GL11.class.getDeclaredMethod("nglColorPointerBO", int.class, int.class, int.class, long.class, long.class);
             nglColorPointerBO.setAccessible(true);
+            OpenGlHelperExt.nglColorPointerBO = lookup.unreflect(nglColorPointerBO);
         }
         catch(Exception e)
         {
@@ -230,8 +244,9 @@ public class OpenGlHelperExt
             pointer.setAccessible(true);
             glClientActiveTextureFunctionPointer = pointer.getLong(caps);
             BufferChecks.checkFunctionAddress(glClientActiveTextureFunctionPointer);
-            nglClientActiveTexturePointer = GL13.class.getDeclaredMethod("nglClientActiveTexture", int.class, long.class);
+            Method nglClientActiveTexturePointer = GL13.class.getDeclaredMethod("nglClientActiveTexture", int.class, long.class);
             nglClientActiveTexturePointer.setAccessible(true);
+            OpenGlHelperExt.nglClientActiveTexturePointer = lookup.unreflect(nglClientActiveTexturePointer);
         }
         catch(Exception e)
         {
@@ -246,8 +261,9 @@ public class OpenGlHelperExt
             pointer.setAccessible(true);
             glDrawArraysFunctionPointer = pointer.getLong(caps);
             BufferChecks.checkFunctionAddress(glDrawArraysFunctionPointer);
-            nglDrawArrays = GL11.class.getDeclaredMethod("nglDrawArrays", int.class, int.class, int.class, long.class);
+            Method nglDrawArrays = GL11.class.getDeclaredMethod("nglDrawArrays", int.class, int.class, int.class, long.class);
             nglDrawArrays.setAccessible(true);
+            OpenGlHelperExt.nglDrawArrays = lookup.unreflect(nglDrawArrays);
         }
         catch(Exception e)
         {
@@ -262,8 +278,9 @@ public class OpenGlHelperExt
             pointer.setAccessible(true);
             glBindBufferFunctionPointer = pointer.getLong(caps);
             BufferChecks.checkFunctionAddress(glBindBufferFunctionPointer);
-            nglBindBuffer = GL15.class.getDeclaredMethod("nglBindBuffer", int.class, int.class, long.class);
+            Method nglBindBuffer = GL15.class.getDeclaredMethod("nglBindBuffer", int.class, int.class, long.class);
             nglBindBuffer.setAccessible(true);
+            OpenGlHelperExt.nglBindBuffer = lookup.unreflect(nglBindBuffer);
         }
         catch(Exception e)
         {
@@ -278,8 +295,9 @@ public class OpenGlHelperExt
             pointer.setAccessible(true);
             glUseProgramFunctionPointer = pointer.getLong(caps);
             BufferChecks.checkFunctionAddress(glUseProgramFunctionPointer);
-            nglUseProgram = GL20.class.getDeclaredMethod("nglUseProgram", int.class, long.class);
+            Method nglUseProgram = GL20.class.getDeclaredMethod("nglUseProgram", int.class, long.class);
             nglUseProgram.setAccessible(true);
+            OpenGlHelperExt.nglUseProgram = lookup.unreflect(nglUseProgram);
         }
         catch(Exception e)
         {
@@ -292,9 +310,9 @@ public class OpenGlHelperExt
     {
         if(vaoEnabled) try
         {
-            nglGenVertexArrays.invoke(null, arrays.remaining(), MemoryUtil.getAddress(arrays), glGenVertexArraysFunctionPointer);
+            nglGenVertexArrays.invokeExact(arrays.remaining(), MemoryUtil.getAddress(arrays), glGenVertexArraysFunctionPointer);
         }
-        catch(Exception e)
+        catch(Throwable e)
         {
             vaoEnabled = false;
             Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
@@ -305,9 +323,9 @@ public class OpenGlHelperExt
     {
         if(vaoEnabled) try
         {
-            nglBindVertexArray.invoke(null, array, glBindVertexArrayFunctionPointer);
+            nglBindVertexArray.invokeExact(array, glBindVertexArrayFunctionPointer);
         }
-        catch(Exception e)
+        catch(Throwable e)
         {
             vaoEnabled = false;
             Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
@@ -318,9 +336,9 @@ public class OpenGlHelperExt
     {
         if(vaoEnabled) try
         {
-            nglDeleteVertexArrays.invoke(null, arrays.remaining(), MemoryUtil.getAddress(arrays), glDeleteVertexArraysFunctionPointer);
+            nglDeleteVertexArrays.invokeExact(arrays.remaining(), MemoryUtil.getAddress(arrays), glDeleteVertexArraysFunctionPointer);
         }
-        catch(Exception e)
+        catch(Throwable e)
         {
             vaoEnabled = false;
             Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
@@ -412,7 +430,8 @@ public class OpenGlHelperExt
     private static int attributeEnabledCount = 0;
     
     /**
-     * Using 1-based numbering for attribute slots because GL (on my machine at least) not liking slot 0
+     * Enables the given number of generic vertex attributes if not already enabled.
+     * Using 1-based numbering for attribute slots because GL (on my machine at least) not liking slot 0.
      */
     public static void enableAttributes(int enabledCount)
     {
@@ -429,6 +448,19 @@ public class OpenGlHelperExt
     }
     
     /**
+     * Like {@link #enableAttributes(int)} but enables all attributes 
+     * regardless of prior state. Tracking state for {@link #enableAttributes(int)} remains unchanged.
+     * Used to initialize VAO state
+     */
+    public static void enableAttributesVao(int enabledCount)
+    {
+        for(int i = 1; i <= enabledCount; i++)
+        {
+            GL20.glEnableVertexAttribArray(i);
+        }
+    }
+    
+    /**
      * Tries to circumvent the sanity checks LWJGL does because they significantly harm performance.
      * VBO will always been enabled when this is called and the function pointer checks are done 1X at init.
      */
@@ -439,9 +471,9 @@ public class OpenGlHelperExt
         else
             try
             {
-                nglVertexAttribPointerBO.invoke(null, index, size, type, normalized, stride, buffer_buffer_offset, glVertexAttribPointerFunctionPointer);
+                nglVertexAttribPointerBO.invokeExact(index, size, type, normalized, stride, buffer_buffer_offset, glVertexAttribPointerFunctionPointer);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glVertexAttribPointer"), e);
                 glVertexAttribPointerFunctionPointer = -1;
@@ -460,9 +492,9 @@ public class OpenGlHelperExt
         else
             try
             {
-                nglTexCoordPointerBO.invoke(null, size, type, stride, buffer_buffer_offset, glTexCoordPointerFunctionPointer);
+                nglTexCoordPointerBO.invokeExact(size, type, stride, buffer_buffer_offset, glTexCoordPointerFunctionPointer);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glTexCoordPointer"), e);
                 glTexCoordPointerFunctionPointer = -1;
@@ -481,9 +513,9 @@ public class OpenGlHelperExt
         else
             try
             {
-                nglVertexPointerBO.invoke(null, size, type, stride, buffer_buffer_offset, glVertexPointerFunctionPointer);
+                nglVertexPointerBO.invokeExact(size, type, stride, buffer_buffer_offset, glVertexPointerFunctionPointer);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glVertexPointer"), e);
                 glVertexPointerFunctionPointer = -1;
@@ -491,16 +523,16 @@ public class OpenGlHelperExt
             }
     }
     
-    public static void glColorPointerFast(int size, int type, int stride, int pointer_buffer_offset)
+    public static void glColorPointerFast(int size, int type, int stride, long pointer_buffer_offset)
     {
         if(glColorPointerFunctionPointer == -1)
             GL11.glColorPointer(size, type, stride, pointer_buffer_offset);
         else
             try
             {
-                nglColorPointerBO.invoke(null, size, type, stride, pointer_buffer_offset, glColorPointerFunctionPointer);
+                nglColorPointerBO.invokeExact(size, type, stride, pointer_buffer_offset, glColorPointerFunctionPointer);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glColorPointer"), e);
                 glColorPointerFunctionPointer = -1;
@@ -515,9 +547,9 @@ public class OpenGlHelperExt
         else
             try
             {
-                nglClientActiveTexturePointer.invoke(null, textureId, glClientActiveTextureFunctionPointer);
+                nglClientActiveTexturePointer.invokeExact(textureId, glClientActiveTextureFunctionPointer);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glClientActiveTexture"), e);
                 glClientActiveTextureFunctionPointer = -1;
@@ -532,9 +564,9 @@ public class OpenGlHelperExt
         else
             try
             {
-                nglDrawArrays.invoke(null, mode, first, count, glDrawArraysFunctionPointer);
+                nglDrawArrays.invokeExact(mode, first, count, glDrawArraysFunctionPointer);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glDrawArrays"), e);
                 glDrawArraysFunctionPointer = -1;
@@ -549,9 +581,9 @@ public class OpenGlHelperExt
         else
             try
             {
-                nglBindBuffer.invoke(null, target, buffer, glBindBufferFunctionPointer);
+                nglBindBuffer.invokeExact(target, buffer, glBindBufferFunctionPointer);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glBindBuffer"), e);
                 glBindBufferFunctionPointer = -1;
@@ -566,9 +598,9 @@ public class OpenGlHelperExt
         else
             try
             {
-                nglUseProgram.invoke(null, programId, glUseProgramFunctionPointer);
+                nglUseProgram.invokeExact(programId, glUseProgramFunctionPointer);
             }
-            catch (Exception e)
+            catch (Throwable e)
             {
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUseProgram"), e);
                 glUseProgramFunctionPointer = -1;
