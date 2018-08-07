@@ -20,7 +20,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public enum PipelineVertexFormat
 {
-    VANILLA_SINGLE(new VertexFormat()
+    VANILLA_SINGLE(0, new VertexFormat()
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
@@ -30,7 +30,7 @@ public enum PipelineVertexFormat
      * Adds one extra color and texture coordinate.
      * Use for two-layered textures.
      */
-    VANILLA_DOUBLE(new VertexFormat()
+    VANILLA_DOUBLE(1, new VertexFormat()
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
@@ -42,7 +42,7 @@ public enum PipelineVertexFormat
      * Adds two extra colors and texture coordinates.
      * Use for three-layered materials.
      */
-    VANILLA_TRIPLE(new VertexFormat()
+    VANILLA_TRIPLE(2, new VertexFormat()
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
@@ -52,14 +52,14 @@ public enum PipelineVertexFormat
             .addElement(TERTIARY_RGBA_4UB)
             .addElement(TERTIARY_TEX_2F)),
     
-    ENHANCED_SINGLE(new VertexFormat()
+    ENHANCED_SINGLE(0, new VertexFormat()
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
             .addElement(NORMAL_AO_4UB)
             .addElement(LIGHTMAPS_4UB)),
     
-    ENHANCED_DOUBLE(new VertexFormat()
+    ENHANCED_DOUBLE(1, new VertexFormat()
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
@@ -68,7 +68,7 @@ public enum PipelineVertexFormat
             .addElement(SECONDARY_RGBA_4UB)
             .addElement(SECONDARY_TEX_2F)),
     
-    ENHANCED_TRIPLE(new VertexFormat()
+    ENHANCED_TRIPLE(2, new VertexFormat()
             .addElement(POSITION_3F)
             .addElement(BASE_RGBA_4UB)
             .addElement(BASE_TEX_2F)
@@ -81,13 +81,19 @@ public enum PipelineVertexFormat
     
     public final VertexFormat vertexFormat;
     
+    /**
+     * Will be a unique, 0-based ordinal within the current lighting model.
+     */
+    public final int layerIndex;
+    
     public final int attributeCount;
     protected final int stride;
     
     private final PipelineVertextFormatElement [] elements;
     
-    private  PipelineVertexFormat(VertexFormat vertexFormat)
+    private  PipelineVertexFormat(int layerIndex, VertexFormat vertexFormat)
     {
+        this.layerIndex = layerIndex;
         this.vertexFormat = vertexFormat;
         this.stride = vertexFormat.getNextOffset();
         this.elements = vertexFormat.getElements().toArray(new PipelineVertextFormatElement[vertexFormat.getElementCount()]);
@@ -100,9 +106,21 @@ public enum PipelineVertexFormat
         this.attributeCount = count;
     }
     
-    public void setupAttributes(int bufferOffset)
+    /**
+     * Enables generic vertex attributes and binds their location.
+     */
+    public void enableAndBindAttributes(int bufferOffset)
     {
         OpenGlHelperExt.enableAttributes(this.attributeCount);
+        bindAttributeLocations(bufferOffset);
+    }
+    
+    /**
+     * Binds attribute locations without enabling them. 
+     * For use with VAOs. In other cases just call {@link #enableAndBindAttributes(int)}
+     */
+    public void bindAttributeLocations(int bufferOffset)
+    {
         int offset = 0;
         int index = 1;
         for(PipelineVertextFormatElement e : elements)
@@ -113,7 +131,7 @@ public enum PipelineVertexFormat
         }
     }
     
-    public void bindAttributes(int  programID)
+    public void bindProgramAttributes(int  programID)
     {
         int index = 1;
         for(PipelineVertextFormatElement e : elements)

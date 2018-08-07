@@ -23,5 +23,6 @@ misc.warn_unknown_fluid_render=Unknown fluid sent to vanilla fluid render handle
 #CONFIG LABELS
 config.max_pipelines=Max Rendering Pipelines
 config.acuity_enabled=Enabled
+config.acuity_enable_vao=Enable VAOs
 config.lighting_model=Lighting Model (WIP)
 config.acuity_fancy_fluids=Fancy Water and Lava (WIP)

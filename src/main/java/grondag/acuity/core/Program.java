@@ -644,7 +644,7 @@ public abstract class Program implements IRenderPipeline
         OpenGlHelper.glAttachShader(programID, vertId);
         OpenGlHelper.glAttachShader(programID, fragId);
         
-        Configurator.lightingModel.vertexFormat(this.textureFormat).bindAttributes(programID);
+        Configurator.lightingModel.vertexFormat(this.textureFormat).bindProgramAttributes(programID);
         
         OpenGlHelper.glLinkProgram(programID);
         if(OpenGlHelper.glGetProgrami(programID, OpenGlHelper.GL_LINK_STATUS) == GL11.GL_FALSE)

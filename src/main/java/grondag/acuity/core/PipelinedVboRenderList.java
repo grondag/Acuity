@@ -1,9 +1,5 @@
 package grondag.acuity.core;
 
-import java.nio.FloatBuffer;
-
-import org.lwjgl.BufferUtils;
-
 import grondag.acuity.Acuity;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -20,18 +16,29 @@ public class PipelinedVboRenderList extends VboRenderList
     private int runCount;
     private int chunkCount;
     private int drawCount;
+    private int quadCount;
     private long start;
     
     
-    protected final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
+//    protected final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
     
     @Override
     public void renderChunkLayer(BlockRenderLayer layer)
     {
         if(Acuity.DEBUG)
         {
+            
+            if (!this.renderChunks.isEmpty() && this.initialized)
+            {
+                chunkCount += this.renderChunks.size();
+                for (RenderChunk renderchunk : this.renderChunks)
+                {
+                    CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(layer.ordinal());
+                    drawCount += vertexbuffer.drawCount();
+                    quadCount += vertexbuffer.quadCount();
+                }
+            }
             start = System.nanoTime();
-            chunkCount += this.renderChunks.size();
         }
         
         if(Acuity.isModEnabled())
@@ -60,9 +67,6 @@ public class PipelinedVboRenderList extends VboRenderList
                 {
                     CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(layer.ordinal());
                     
-                    if(Acuity.DEBUG)
-                        drawCount += vertexbuffer.drawCount();
-                    
                  // FAIL: unfortunately using explicit uniforms is slower
 //                    BlockPos blockpos = renderchunk.getPosition();
 //                    // note row-major order in the matrix library we are using
@@ -86,6 +90,9 @@ public class PipelinedVboRenderList extends VboRenderList
                     GlStateManager.popMatrix();
                 }
                 
+                if(OpenGlHelperExt.isVaoEnabled())
+                    OpenGlHelperExt.glBindVertexArray(0);
+                
                 OpenGlHelperExt.enableAttributes(0);
                 OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
                 OpenGlHelperExt.glUseProgramFast(0);
@@ -95,9 +102,6 @@ public class PipelinedVboRenderList extends VboRenderList
         }
         else
         {
-            if(Acuity.DEBUG)
-                drawCount += this.renderChunks.size();
-            
             super.renderChunkLayer(layer);
         }
         
@@ -108,12 +112,13 @@ public class PipelinedVboRenderList extends VboRenderList
             {
                 double ms = totalNanos / 1000000.0;
                 String msg = Acuity.isModEnabled() ? "ENABLED" : "Disabled";
-                Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %d calls / %d chunks / %d draws (Acuity API %s)", runCount, chunkCount, drawCount, msg));
-                Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %f / %f / %f ms each", ms / runCount, ms / chunkCount, ms / drawCount));
+                Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %d calls / %d chunks / %d draws / %d quads (Acuity API %s)", runCount, chunkCount, drawCount, quadCount, msg));
+                Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %f ms / %f ms / %f ms / %f ns", ms / runCount, ms / chunkCount, ms / drawCount, (double)totalNanos / quadCount));
                 totalNanos = 0;
                 runCount = 0;
                 chunkCount = 0;
                 drawCount = 0;
+                quadCount = 0;
             }
         }
     }

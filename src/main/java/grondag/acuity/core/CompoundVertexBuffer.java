@@ -1,14 +1,20 @@
 package grondag.acuity.core;
 
 import java.nio.ByteBuffer;
+import java.nio.IntBuffer;
 
 import javax.annotation.Nullable;
 
+import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
+import grondag.acuity.Acuity;
+import grondag.acuity.Configurator;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.TextureFormat;
 import grondag.acuity.core.VertexPackingList.IVertexPackingConsumer;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -26,12 +32,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class CompoundVertexBuffer extends VertexBuffer
 {
     
-    private @Nullable VertexPackingList vertexPackingList;
+    private VertexPackingList vertexPackingList;
     
     public int drawCount()
     {
-        final VertexPackingList vertexPackingList = this.vertexPackingList;
-        return vertexPackingList == null ? 0 : vertexPackingList.size();
+        return Acuity.isModEnabled() ?  this.vertexPackingList.size() : 1;
+    }
+    
+    public int quadCount()
+    {
+        return Acuity.isModEnabled() ? this.vertexPackingList.quadCount() : this.count / 4;
     }
     
     private class VertexPackingRenderer implements IVertexPackingConsumer
@@ -39,6 +49,76 @@ public class CompoundVertexBuffer extends VertexBuffer
         int bufferOffset = 0;
         int vertexOffset = 0;
         @Nullable PipelineVertexFormat lastFormat = null;
+        
+        /**
+         * Holds VAO buffer names.  Null if VAO not available.
+         */
+        @Nullable IntBuffer vaoNames = null;
+        
+        /**
+         * Contents of {@link #vaoNames} as java array - faster access.
+         * Int buffer is retained for ease of teardown.
+         */
+        @Nullable int[] vaoBufferId = null;
+        
+        /**
+         * Bit flags to indicate if VAO for texture format is setup.
+         * Reset to 0 when buffer is uploaded.
+         */
+        int vaoBindingFlags = 0;
+        
+        private VertexPackingRenderer()
+        {
+            if(OpenGlHelperExt.isVaoEnabled()) try
+            {
+                IntBuffer vao = BufferUtils.createIntBuffer(TextureFormat.values().length);
+                OpenGlHelperExt.glGenVertexArrays(vao);
+                this.vaoNames = vao;
+                int[] vaoBufferId = new int[TextureFormat.values().length];
+                
+                OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, glBufferId);
+
+                for(TextureFormat format : TextureFormat.values())
+                {
+                    final int bufferId = vao.get(format.ordinal());
+                    vaoBufferId[format.ordinal()] = bufferId;
+                    
+                    // can set up everything except binding offsets for 2nd and 3rd pipeline
+                    OpenGlHelperExt.glBindVertexArray(bufferId);
+                    
+                    GlStateManager.glEnableClientState(32884);
+                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
+                    GlStateManager.glEnableClientState(32888);
+                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
+                    GlStateManager.glEnableClientState(32888);
+                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
+                    GlStateManager.glEnableClientState(32886);
+                    
+                    PipelineVertexFormat pvf = Configurator.lightingModel.vertexFormat(format);
+                    OpenGlHelperExt.enableAttributesVao(pvf.attributeCount);
+                    final int stride = pvf.stride; 
+                    final int bufferOffset = 0;
+                    OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
+                    OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
+                    OpenGlHelperExt.glTexCoordPointerFast(2, 5126, stride, bufferOffset + 16);
+                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
+                    OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
+                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
+                    
+                    //TODO: leave the base attributes interleaved and pack extended attributes at the end
+                    //this will mean only the extended attributes ever have to be rebound
+                    //but may complicate vertex offset tracking
+                }
+                
+                OpenGlHelperExt.glBindVertexArray(0);
+                OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
+                this.vaoBufferId = vaoBufferId;
+            }
+            catch(Exception e)
+            {
+                // noop
+            }
+        }
         
         private void reset()
         {
@@ -49,7 +129,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         
         @SuppressWarnings("null")
         @Override
-        public void accept(RenderPipeline pipeline, int vertexCount)
+        public final void accept(RenderPipeline pipeline, int vertexCount)
         {
             pipeline.activate();
             if(pipeline.piplineVertexFormat() != lastFormat)
@@ -67,6 +147,32 @@ public class CompoundVertexBuffer extends VertexBuffer
         
         private void setupAttributes(PipelineVertexFormat format, int bufferOffset)
         {
+            int[] vao = this.vaoBufferId;
+            if(vao == null)
+                setupAttributesInner(format, bufferOffset);
+            else
+            {
+                final int ordinal = format.layerIndex;
+                int vaoName = vao[ordinal];
+                OpenGlHelperExt.glBindVertexArray(vaoName);
+                // single layer format never requires rebinding b/c always starts at 0
+                if(ordinal > 0 && (this.vaoBindingFlags & (1 << ordinal)) == 0 )
+                {
+                    final int stride = format.stride;
+                    OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
+                    OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
+                    OpenGlHelperExt.glTexCoordPointerFast(2, 5126, stride, bufferOffset + 16);
+                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
+                    OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
+                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
+                    format.bindAttributeLocations(bufferOffset);
+                    this.vaoBindingFlags |= (1 << ordinal);
+                }
+            }
+        }
+        
+        private void setupAttributesInner(PipelineVertexFormat format, int bufferOffset)
+        {
             final int stride = format.stride;
             OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
             OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
@@ -74,20 +180,36 @@ public class CompoundVertexBuffer extends VertexBuffer
             OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
             OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
             OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
-            format.setupAttributes(bufferOffset);
+            format.enableAndBindAttributes(bufferOffset);
+        }
+
+        public final void deleteGlBuffers()
+        {
+            IntBuffer vao = this.vaoNames;
+            if(vao != null) try
+            {
+                vao.position(0);
+                OpenGlHelperExt.glDeleteVertexArrays(vao);
+            }
+            catch(Exception e)
+            {
+                // noop
+            }
         }
     }
     
     private final VertexPackingRenderer vertexPackingConsumer = new VertexPackingRenderer();
     
-    public CompoundVertexBuffer(VertexFormat vertexFormatIn)
+    public CompoundVertexBuffer(VertexFormat     vertexFormatIn)
     {
         super(vertexFormatIn);
+        this.vertexPackingList = new VertexPackingList();
     }
 
-    public void upload(ByteBuffer buffer, VertexPackingList packing)
+    public final void upload(ByteBuffer buffer, VertexPackingList packing)
     {
         this.vertexPackingList = packing;
+        this.vertexPackingConsumer.vaoBindingFlags = 0;
         buffer.position(0);
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         OpenGlHelper.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
@@ -98,20 +220,17 @@ public class CompoundVertexBuffer extends VertexBuffer
     public void deleteGlBuffers()
     {
         super.deleteGlBuffers();
+        this.vertexPackingConsumer.deleteGlBuffers();
     }
     
     /**
      * Renders all uploaded vbos relying on OpenGl fixed function state.
      */
-    public void renderChunk()
+    public final void renderChunk()
     {
-        final VertexPackingList packing = this.vertexPackingList;
-        if(packing == null || packing.size() == 0) return;
-        
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         vertexPackingConsumer.reset();
-        
-        packing.forEach(vertexPackingConsumer);
+        this.vertexPackingList.forEach(vertexPackingConsumer);
     }
 
 //    /**

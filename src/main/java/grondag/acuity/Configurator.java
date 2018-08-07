@@ -35,6 +35,11 @@ public class Configurator
         " if Acuity is enabled, regardless of Minecraft configuration."})
     public static boolean enabled = true;
     
+    @LangKey("config.acuity_enable_vao")
+    @Comment({"Use Vertex Array Objects if available.",
+        " VAOs generally improve performance when they are supported."})
+    public static boolean enable_vao = true;
+    
     @LangKey("config.acuity_fancy_fluids")
     @Comment({"Enable fancy water and lava rendering.",
         " This feature is currently work in progress and has no visible effect if enabled."})
@@ -44,6 +49,7 @@ public class Configurator
     @Comment({"Lighting model used for rendering. (Currently only one is available.)",
         " Changing will reload all renderers and models.",
         " Has no effect if Acuity is disabled because of ASM failures."})
+    
     public static LightingModel lightingModel = LightingModel.CLASSIC;
 
     public static void handleChange(PostConfigChangedEvent event)
@@ -51,6 +57,7 @@ public class Configurator
         LightingModel oldModel = lightingModel;
         boolean oldFancyFluids = fancyFluids;
         boolean oldEnabled = enabled;
+        boolean oldVAO = enable_vao;
         
         ConfigManager.sync(Acuity.MODID, Config.Type.INSTANCE);
         if(oldEnabled != Configurator.enabled)
@@ -65,7 +72,9 @@ public class Configurator
             // Don't think this is needed because different interface for pipelined models
             // Minecraft.getMinecraft().refreshResources();
         }
-        else if (oldModel != Configurator.lightingModel || oldFancyFluids != fancyFluids)
+        else if (oldModel != Configurator.lightingModel
+                || oldFancyFluids != fancyFluids
+                || oldVAO != enable_vao)
         {
             AcuityRuntime.INSTANCE.forceReload();
             

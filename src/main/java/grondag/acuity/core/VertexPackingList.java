@@ -27,6 +27,23 @@ public class VertexPackingList
         return this.size;
     }
     
+    /**
+     * For performance testing.
+     */
+    public int quadCount()
+    {
+        if(this.size == 0) 
+            return 0;
+        
+        int quads = 0;
+        
+        for(int i = 0; i < this.size; i++)
+        {
+            quads += this.counts[i] / 4;
+        }
+        return quads;
+    }
+    
     public int totalBytes()
     {
         return this.totalBytes;
@@ -59,9 +76,6 @@ public class VertexPackingList
     public void forEach(IVertexPackingConsumer consumer)
     {
         final int size = this.size;
-        if(size == 0) 
-            return;
-        
         for(int i = 0; i < size; i++)
         {
             consumer.accept(this.pipelines[i], this.counts[i]);
