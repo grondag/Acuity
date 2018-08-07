@@ -14,6 +14,7 @@ import net.minecraft.client.renderer.BlockFluidRenderer;
 import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
@@ -80,6 +81,16 @@ public class PipelineHooks
     }
     
     private static boolean didWarnUnhandledFluid = false;
+    
+    public static void linkBuilders(RegionRenderCacheBuilder cache)
+    {
+        for(BlockRenderLayer layer : BlockRenderLayer.values())
+        {
+            CompoundBufferBuilder builder = (CompoundBufferBuilder) cache.getWorldRendererByLayer(layer);
+            builder.setupLinks(cache, layer);
+        }
+    }
+    
     /**
      * Handles vanilla special-case rendering for lava and water.
      * Forge fluids should come as block models instead.

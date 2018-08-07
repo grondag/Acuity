@@ -102,6 +102,7 @@ public class ASMTransformer implements IClassTransformer
         Iterator<MethodNode> methods = classNode.methods.iterator();
         int newCount = 0;
         int invokeCount = 0;
+        boolean linkHookDone = false;
         
         while (methods.hasNext())
         {
@@ -134,10 +135,18 @@ public class ASMTransformer implements IClassTransformer
                             invokeCount++;
                         }
                     }
+                    else if(next.getOpcode() == RETURN)
+                    {
+                        m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
+                        m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/core/PipelineHooks", "linkBuilders", "(Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;)V", false));
+                        linkHookDone = true;
+                        // necessary so that we don't loop infinitely
+                        break;
+                    }
                 }
             }
         }
-        if(newCount != 4 || invokeCount != 4)
+        if(newCount != 4 || invokeCount != 4 || !linkHookDone)
         {
             Acuity.INSTANCE.getLog().error(msg_fail_patch_buffer_builder);
             allPatchesSuccessful = false;

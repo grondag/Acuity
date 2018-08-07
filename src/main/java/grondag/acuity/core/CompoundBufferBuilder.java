@@ -13,6 +13,7 @@ import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
+import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.fml.relauncher.Side;
@@ -52,7 +53,17 @@ public class CompoundBufferBuilder extends BufferBuilder
      */
     @Nullable VertexPackingList uploadPackingList = null;
     
-    private final @Nullable BlockRenderLayer layer;
+    /**
+     * Tells us which block layer we are buffering.
+     * Can be used with {@link #owner} to find peer buffers for other layers.
+     * Could also be handy for other purposes.
+     */
+    private @Nullable BlockRenderLayer layer;
+
+    /**
+     * Link to reference holder - use to find our peers.
+     */
+    private @Nullable  RegionRenderCacheBuilder owner;
     
     private class CompoundState extends State
     {
@@ -70,19 +81,16 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     public CompoundBufferBuilder(int bufferSizeIn)
     {
-        this(bufferSizeIn, null);
+        super(bufferSizeIn);
     }
     
-    public CompoundBufferBuilder(int bufferSizeIn, @Nullable BlockRenderLayer layer)
+    /**
+     * Called at end of RegionRenderCacheBuilder init via ASM.
+     */
+    public void setupLinks(RegionRenderCacheBuilder owner, BlockRenderLayer layer)
     {
-        super(limitBufferSize(bufferSizeIn));
         this.layer = layer;
-    }
-    
-    @Nullable
-    public BlockRenderLayer getRenderLayer()
-    {
-        return layer;
+        this.owner = owner;
     }
     
     // the RegionRenderCacheBuilder instantiates this with pretty large sizes
