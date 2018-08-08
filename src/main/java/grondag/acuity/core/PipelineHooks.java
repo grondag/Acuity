@@ -17,6 +17,7 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.crash.CrashReport;
@@ -89,6 +90,33 @@ public class PipelineHooks
             CompoundBufferBuilder builder = (CompoundBufferBuilder) cache.getWorldRendererByLayer(layer);
             builder.setupLinks(cache, layer);
         }
+    }
+    
+    /**
+     * When mod is enabled, cutout layers are packed into solid layer, but the
+     * chunk render dispatcher doesn't know this and sets flags in the compiled chunk
+     * as if the cutout buffers were populated.  We use this hook to correct that
+     * so that uploader and rendering work in subsequent operations.<p>
+     * 
+     * The rebuildChunk method in RenderChunk is hairy, so we introduce this hook
+     * indirectly via the {@link CompiledChunk#setVisibility(net.minecraft.client.renderer.chunk.SetVisibility)}
+     * method which is very simple and reliably called after the chunks are built in render chunk
+     * and nowhere else.  Our ASM hook to this method calls from there.<p>
+     */
+    public static void mergeRenderLayers(CompiledChunk compiledChunk)
+    {
+        if(Acuity.isModEnabled())
+        {
+            mergeLayerFlags(compiledChunk.layersStarted);
+            mergeLayerFlags(compiledChunk.layersUsed);
+        }
+    }
+    
+    private static void mergeLayerFlags(boolean[] layerFlags)
+    {
+        layerFlags[0]  = layerFlags[0] || layerFlags[1] || layerFlags[2];
+        layerFlags[1] = false;
+        layerFlags[2] = false;
     }
     
     /**

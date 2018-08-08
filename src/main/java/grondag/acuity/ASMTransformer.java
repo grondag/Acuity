@@ -29,6 +29,7 @@ public class ASMTransformer implements IClassTransformer
     private static final String msg_fail_patch_locate = "Unable to locate and patch %s";
     private static final String msg_fail_patch_buffer_builder = "Unable to locate four expected BufferBuilder instances in RegionRenderCacheBuilder.<init>";
     private static final String msg_fail_patch_render_chunk = "Unable to locate VertexBuffer instance in RenderChunk.<init>";
+    private static final String msg_fail_patch_compiled_chunk = "Unable to locate and patch setVisibility in CompiledChunk";
     private static final String msg_fail_patch_render_global = "Unable to locate and patch all VBORenderList instances in RenderGlobal";
     private static final String msg_fail_patch_vertex_format_element = "Unable to locate and patch isFirstOrUV() reference in VertexFormatElement.<init>";
     private static final String msg_patching_notice = "Patching %s";
@@ -198,6 +199,40 @@ public class ASMTransformer implements IClassTransformer
         if(!newWorked || !invokedWorked)
         {
             Acuity.INSTANCE.getLog().error(msg_fail_patch_render_chunk);
+            allPatchesSuccessful = false;
+        }
+    };
+    
+    private Consumer<ClassNode> patchCompiledChunk = classNode ->
+    {
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+        boolean worked = false;
+        
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            if (m.name.equals("func_178488_a") || m.name.equals("setVisibility")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    if(next.getOpcode() == RETURN)
+                    {
+                        m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
+                        m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/core/PipelineHooks", "mergeRenderLayers", "(Lnet/minecraft/client/renderer/chunk/CompiledChunk;)V", false));
+                        worked = true;
+                        break;
+                    }
+                }
+                break;
+            }
+            
+        }
+        if(!worked)
+        {
+            Acuity.INSTANCE.getLog().error(msg_fail_patch_compiled_chunk);
             allPatchesSuccessful = false;
         }
     };
@@ -439,6 +474,9 @@ public class ASMTransformer implements IClassTransformer
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.RenderChunk"))
             return patch(transformedName, basicClass, obfuscated, patchRenderChunk); 
+        
+        if (transformedName.equals("net.minecraft.client.renderer.chunk.CompiledChunk"))
+            return patch(transformedName, basicClass, obfuscated, patchCompiledChunk); 
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher"))
             return patch(transformedName, basicClass, obfuscated, patchChunkRenderDispatcher, ClassWriter.COMPUTE_FRAMES); 
