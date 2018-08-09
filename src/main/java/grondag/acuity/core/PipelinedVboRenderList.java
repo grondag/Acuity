@@ -43,6 +43,8 @@ public class PipelinedVboRenderList extends VboRenderList
         
         if(Acuity.isModEnabled())
         {
+            final boolean isSolidLayer = layer != BlockRenderLayer.TRANSLUCENT;
+            
             // FAIL: unfortunately using explicit uniforms is slower
             // Forge doesn't give us a hook in the render loop that comes
             // after camera transform is set up - so call out event handler
@@ -85,7 +87,7 @@ public class PipelinedVboRenderList extends VboRenderList
                     this.preRenderChunk(renderchunk);
                     renderchunk.multModelviewMatrix();
  
-                    vertexbuffer.renderChunk();
+                    vertexbuffer.renderChunk(isSolidLayer);
 //                    vertexbuffer.renderChunk(mvm);
                     GlStateManager.popMatrix();
                 }

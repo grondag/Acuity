@@ -8,16 +8,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public final class PipelineVertexShader  extends AbstractPipelineShader
 {
-    PipelineVertexShader(String fileName, TextureFormat textureFormat)
+    PipelineVertexShader(String fileName, TextureFormat textureFormat, boolean isSolidLayer)
     {
-        super(fileName, OpenGlHelper.GL_VERTEX_SHADER, textureFormat);
+        super(fileName, OpenGlHelper.GL_VERTEX_SHADER, textureFormat, isSolidLayer);
     }
     
     @Override
     public String getSource()
     {
-        String result = super.getSource();
-        result = result.replaceAll("#version\\s+120", "");
-        return PipelineShaderManager.INSTANCE.vertexLibrarySource + result;
+        return buildSource(PipelineShaderManager.INSTANCE.vertexLibrarySource);
     }
 }

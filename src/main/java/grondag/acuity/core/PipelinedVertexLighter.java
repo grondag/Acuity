@@ -29,7 +29,12 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     protected boolean enableDiffuse = true;
     protected boolean enableAmbientOcclusion = true;
     protected boolean usePrecomputedLightmaps = false;
+    protected boolean isCurrentQuadCutout = false;
+    protected boolean isCurrentQuadMipped = true;
     
+    protected IPipelinedQuad currentQuad;
+    
+    @SuppressWarnings("null")
     protected PipelinedVertexLighter(IRenderPipeline pipeline)
     {
         this.pipeline = (RenderPipeline) pipeline;
@@ -97,8 +102,29 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.usePrecomputedLightmaps = isPrecomputedLighting;
     }
     
-    protected void resetForNewQuad()
+    protected void resetForNewQuad(IPipelinedQuad quad)
     {
+        //TODO: keep less internal state and instead query the quad reference
+        this.currentQuad = quad;
+        switch(quad.getRenderLayer())
+        {
+        case CUTOUT:
+            isCurrentQuadCutout = true;
+            isCurrentQuadMipped = false;
+            break;
+            
+        case CUTOUT_MIPPED:
+            isCurrentQuadCutout = true;
+            isCurrentQuadMipped = true;
+            break;
+            
+        case SOLID:
+        case TRANSLUCENT:
+        default:
+            isCurrentQuadCutout = false;
+            isCurrentQuadMipped = true;
+            break;
+        }
         this.glowFlags = 0;
         this.blockLightMap = 0;
         this.skyLightMap = 0;
@@ -115,7 +141,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     public void acceptQuad(IPipelinedQuad quad)
     {
         this.reportOutput();
-        this.resetForNewQuad();
+        this.resetForNewQuad(quad);
         quad.produceVertices(this);
     }
     
@@ -159,6 +185,11 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         
         VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
         
+        addSecondaryLayer(target, unlitColorARGB1, u1, v1);
+    }
+    
+    protected void addSecondaryLayer(VertexCollector target, int unlitColorARGB1, float u1, float v1)
+    {
         // SECONDARY_RGBA_4UB
         target.add(AcuityColorHelper.swapRedBlue(unlitColorARGB1));
         
@@ -191,13 +222,14 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         
         VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
         
-        // SECONDARY_RGBA_4UB
-        target.add(AcuityColorHelper.swapRedBlue(unlitColorARGB1));
+        addSecondaryLayer(target, unlitColorARGB1, u1, v1);
         
-        // SECONDARY_TEX_2F
-        target.add(u1);
-        target.add(v1);
-        
+        addSecondaryLayer(target, unlitColorARGB2, u2, v2);
+
+    }
+    
+    protected void addTertiaryLayer(VertexCollector target, int unlitColorARGB2, float u2, float v2)
+    {
         // TERTIARY_RGBA_4UB
         target.add(AcuityColorHelper.swapRedBlue(unlitColorARGB2));
         

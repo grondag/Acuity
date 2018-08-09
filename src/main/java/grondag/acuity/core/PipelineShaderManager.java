@@ -12,72 +12,62 @@ public final class PipelineShaderManager
     private Object2ObjectOpenHashMap<String, PipelineVertexShader> vertexShaders = new Object2ObjectOpenHashMap<>();
     private Object2ObjectOpenHashMap<String, PipelineFragmentShader> fragmentShaders = new Object2ObjectOpenHashMap<>();
 
-    private final PipelineVertexShader[] defaultVertex = new PipelineVertexShader[TextureFormat.values().length];
-    private final PipelineFragmentShader[] defaultFragment = new PipelineFragmentShader[TextureFormat.values().length];;
-    
     String vertexLibrarySource;
     String fragmentLibrarySource;
+    
+    public final String DEFAULT_VERTEX_SOURCE = "/assets/acuity/shader/default.vert";
+    public final String DEFAULT_FRAGMENT_SOURCE = "/assets/acuity/shader/default.frag";
     
     @SuppressWarnings("null")
     PipelineShaderManager()
     {
-        this.defaultVertex[TextureFormat.SINGLE.ordinal()] = this.getOrCreateVertexShader("/assets/acuity/shader/default.vert", TextureFormat.SINGLE);
-        this.defaultVertex[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateVertexShader("/assets/acuity/shader/default.vert", TextureFormat.DOUBLE);
-        this.defaultVertex[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateVertexShader("/assets/acuity/shader/default.vert", TextureFormat.TRIPLE);
-        this.defaultFragment[TextureFormat.SINGLE.ordinal()] = this.getOrCreateFragmentShader("/assets/acuity/shader/default.frag", TextureFormat.SINGLE);
-        this.defaultFragment[TextureFormat.DOUBLE.ordinal()] = this.getOrCreateFragmentShader("/assets/acuity/shader/default.frag", TextureFormat.DOUBLE);
-        this.defaultFragment[TextureFormat.TRIPLE.ordinal()] = this.getOrCreateFragmentShader("/assets/acuity/shader/default.frag", TextureFormat.TRIPLE);
-    
         this.loadLibrarySources();
     }
     
     private void loadLibrarySources()
     {
         String commonSource = AbstractPipelineShader.getShaderSource("/assets/acuity/shader/common_lib.glsl");
-        this.vertexLibrarySource = AbstractPipelineShader.getShaderSource("/assets/acuity/shader/vertex_lib.glsl") + commonSource;
-        this.fragmentLibrarySource = AbstractPipelineShader.getShaderSource("/assets/acuity/shader/fragment_lib.glsl") + commonSource;
+        this.vertexLibrarySource = commonSource + AbstractPipelineShader.getShaderSource("/assets/acuity/shader/vertex_lib.glsl");
+        this.fragmentLibrarySource = commonSource + AbstractPipelineShader.getShaderSource("/assets/acuity/shader/fragment_lib.glsl");
     }
     
-    public PipelineVertexShader getOrCreateVertexShader(String shaderFileName, TextureFormat textureFormat)
+    private String shaderKey(String shaderFileName, TextureFormat textureFormat, boolean isSolidLayer)
     {
+        return String.format("%s.%s.%s", shaderFileName, textureFormat, isSolidLayer);
+    }
+    
+    public PipelineVertexShader getOrCreateVertexShader(String shaderFileName, TextureFormat textureFormat, boolean isSolidLayer)
+    {
+        final String shaderKey = shaderKey(shaderFileName, textureFormat, isSolidLayer);
+        
         synchronized(vertexShaders)
         {
-            PipelineVertexShader result = vertexShaders.get(shaderFileName);
+            PipelineVertexShader result = vertexShaders.get(shaderKey);
             if(result == null)
             {
-                result = new PipelineVertexShader(shaderFileName, textureFormat);
-                vertexShaders.put(shaderFileName, result);
+                result = new PipelineVertexShader(shaderFileName, textureFormat, isSolidLayer);
+                vertexShaders.put(shaderKey, result);
             }
             return result;
         }
     }
 
-    public PipelineFragmentShader getOrCreateFragmentShader(String shaderFileName, TextureFormat textureFormat)
+    public PipelineFragmentShader getOrCreateFragmentShader(String shaderFileName, TextureFormat textureFormat, boolean isSolidLayer)
     {
+        final String shaderKey = shaderKey(shaderFileName, textureFormat, isSolidLayer);
+        
         synchronized(fragmentShaders)
         {
-            PipelineFragmentShader result = fragmentShaders.get(shaderFileName);
+            PipelineFragmentShader result = fragmentShaders.get(shaderKey);
             if(result == null)
             {
-                result = new PipelineFragmentShader(shaderFileName, textureFormat);
-                fragmentShaders.put(shaderFileName, result);
+                result = new PipelineFragmentShader(shaderFileName, textureFormat, isSolidLayer);
+                fragmentShaders.put(shaderKey, result);
             }
             return result;
         }
     }
 
-    
-    public PipelineVertexShader getDefaultVertexShader(TextureFormat textureFormat)
-    {
-        return this.defaultVertex[textureFormat.ordinal()];
-    }
-
-    
-    public PipelineFragmentShader getDefaultFragmentShader(TextureFormat textureFormat)
-    {
-        return this.defaultFragment[textureFormat.ordinal()];
-    }
-    
     public void forceReload()
     {
         this.loadLibrarySources();

@@ -13,7 +13,6 @@ import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
-import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.IUniform;
 import grondag.acuity.api.IUniform.IUniform1f;
 import grondag.acuity.api.IUniform.IUniform1i;
@@ -33,18 +32,17 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public abstract class Program implements IRenderPipeline
+public class Program
 {
     private int progID = -1;
     private boolean needsLoad = true;
     private boolean isErrored = false;
-    private boolean isFinal = false;
-//    protected boolean hasDirtyUniform = false;
-    
+
     public final PipelineVertexShader vertexShader;
     public final PipelineFragmentShader fragmentShader;
     public final TextureFormat textureFormat;
-    
+    public final boolean isSolidLayer;
+ 
     private final ObjectArrayList<Uniform<?>> uniforms = new ObjectArrayList<>();
     protected final ObjectArrayList<Uniform<?>> dirtyUniforms = new ObjectArrayList<>();
     private final ObjectArrayList<Uniform<?>> renderTickUpdates = new ObjectArrayList<>();
@@ -270,9 +268,6 @@ public abstract class Program implements IRenderPipeline
     
     private <T extends Uniform<?>> T addUniform(T toAdd)
     {
-        if(this.isFinal)
-            throw new UnsupportedOperationException(I18n.translateToLocal("misc.warn_uniform_program_immutable_exception"));
-        
         this.uniforms.add(toAdd);
         if(toAdd.frequency == UniformUpdateFrequency.PER_FRAME)
             this.renderTickUpdates.add(toAdd);
@@ -281,25 +276,21 @@ public abstract class Program implements IRenderPipeline
         return toAdd;
     }
     
-    @Override
     public IUniform1f uniform1f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1f> initializer)
     {
         return addUniform(new Uniform1f(name, initializer, frequency));
     }
     
-    @Override
     public IUniform2f uniform2f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2f> initializer)
     {
         return addUniform(new Uniform2f(name, initializer, frequency));
     }
     
-    @Override
     public IUniform3f uniform3f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3f> initializer)
     {
         return addUniform(new Uniform3f(name, initializer, frequency));
     }
     
-    @Override
     public IUniform4f uniform4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4f> initializer)
     {
         return addUniform(new Uniform4f(name, initializer, frequency));
@@ -446,43 +437,34 @@ public abstract class Program implements IRenderPipeline
         }
     }
     
-    @Override
     public IUniform1i uniform1i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1i> initializer)
     {
         return addUniform(new Uniform1i(name, initializer, frequency));
     }
     
-    @Override
     public IUniform2i uniform2i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2i> initializer)
     {
         return addUniform(new Uniform2i(name, initializer, frequency));
     }
     
-    @Override
     public IUniform3i uniform3i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3i> initializer)
     {
         return addUniform(new Uniform3i(name, initializer, frequency));
     }
     
-    @Override
     public IUniform4i uniform4i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4i> initializer)
     {
         return addUniform(new Uniform4i(name, initializer, frequency));
     }
     
-    protected Program(PipelineVertexShader vertexShader, PipelineFragmentShader fragmentShader, TextureFormat textureFormat)
+    public Program(PipelineVertexShader vertexShader, PipelineFragmentShader fragmentShader, TextureFormat textureFormat, boolean isSolidLayer)
     {
         this.vertexShader = vertexShader;
         this.fragmentShader = fragmentShader;
         this.textureFormat = textureFormat;
+        this.isSolidLayer = isSolidLayer;
     }
-    
-    @Override
-    public TextureFormat textureFormat()
-    {
-        return this.textureFormat;
-    }
-    
+ 
     /**
      * Call after render / resource refresh to force shader reload.
      */
@@ -490,13 +472,7 @@ public abstract class Program implements IRenderPipeline
     {
         this.needsLoad = true;
     }
-    
-    @Override
-    public IRenderPipeline finish()
-    {
-        this.isFinal = true;
-        return this;
-    }
+
     
     public void activate()
     {
@@ -581,7 +557,6 @@ public abstract class Program implements IRenderPipeline
         }
     }
     
-    @Override
     public UniformMatrix4f uniformMatrix4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniformMatrix4f> initializer)
     {
         return addUniform(new UniformMatrix4f(name, initializer, frequency));
@@ -689,11 +664,11 @@ public abstract class Program implements IRenderPipeline
 //        }
 //    }
     
-    public static boolean containsUniformSpec(Program program, String type, String name)
+    public boolean containsUniformSpec(String type, String name)
     {
         String regex = "(?m)^uniform\\s+" + type + "\\s+" + name + "\\s*;";
         Pattern pattern = Pattern.compile(regex);
-        return pattern.matcher(program.vertexShader.getSource()).find() 
-                || pattern.matcher(program.fragmentShader.getSource()).find(); 
+        return pattern.matcher(this.vertexShader.getSource()).find() 
+                || pattern.matcher(this.fragmentShader.getSource()).find(); 
     }
 }

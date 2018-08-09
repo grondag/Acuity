@@ -5,10 +5,7 @@ import javax.annotation.Nullable;
 import org.lwjgl.opengl.GL13;
 
 import grondag.acuity.Configurator;
-import grondag.acuity.core.PipelineFragmentShader;
 import grondag.acuity.core.PipelineShaderManager;
-import grondag.acuity.core.PipelineVertexShader;
-import grondag.acuity.core.Program;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;
@@ -77,8 +74,8 @@ public final class PipelineManager implements IPipelineManager
         {
             defaultPipelines[textureFormat.ordinal()] = (RenderPipeline) this.createPipeline(
                     textureFormat, 
-                    PipelineShaderManager.INSTANCE.getDefaultVertexShader(textureFormat),
-                    PipelineShaderManager.INSTANCE.getDefaultFragmentShader(textureFormat)).finish();
+                    PipelineShaderManager.INSTANCE.DEFAULT_VERTEX_SOURCE,
+                    PipelineShaderManager.INSTANCE.DEFAULT_FRAGMENT_SOURCE).finish();
         }
         this.waterPipeline = this.createPipeline(TextureFormat.SINGLE, "/assets/acuity/shader/water.vert", "/assets/acuity/shader/water.frag");
         this.lavaPipeline = this.createPipeline(TextureFormat.SINGLE, "/assets/acuity/shader/lava.vert", "/assets/acuity/shader/lava.frag");
@@ -96,7 +93,7 @@ public final class PipelineManager implements IPipelineManager
     
     @Nullable
     @Override
-    public final RenderPipeline createPipeline(
+    public final synchronized RenderPipeline createPipeline(
             TextureFormat textureFormat, 
             String vertexShader, 
             String fragmentShader)
@@ -104,19 +101,6 @@ public final class PipelineManager implements IPipelineManager
         
         if(this.pipelineCount >= PipelineManager.MAX_PIPELINES)
             return null;
-        
-        return createPipeline(
-                textureFormat, 
-                PipelineShaderManager.INSTANCE.getOrCreateVertexShader(vertexShader, textureFormat), 
-                PipelineShaderManager.INSTANCE.getOrCreateFragmentShader(fragmentShader, textureFormat));
-    }
-    
-    @Nullable
-    protected synchronized final RenderPipeline createPipeline(
-            TextureFormat textureFormat, 
-            PipelineVertexShader vertexShader, 
-            PipelineFragmentShader fragmentShader)
-    {
         
         if(this.pipelineCount >= PipelineManager.MAX_PIPELINES)
             return null;
@@ -157,38 +141,33 @@ public final class PipelineManager implements IPipelineManager
         return this.pipelines[index];
     }
     
-    private void addStandardUniforms(Program program)
+    private void addStandardUniforms(RenderPipeline program)
     {
         program.uniform1f("u_time", UniformUpdateFrequency.PER_FRAME, u -> u.set(this.worldTime));
         
-        if(Program.containsUniformSpec(program, "sampler2D", "u_textures"))
-            program.uniform1i("u_textures", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.defaultTexUnit - GL13.GL_TEXTURE0));
+        program.uniformSampler2d("u_textures", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.defaultTexUnit - GL13.GL_TEXTURE0));
         
-        if(Program.containsUniformSpec(program, "sampler2D", "u_lightmap"))
-            program.uniform1i("u_lightmap", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.lightmapTexUnit - GL13.GL_TEXTURE0));
+        program.uniformSampler2d("u_lightmap", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.lightmapTexUnit - GL13.GL_TEXTURE0));
         
-        if(Program.containsUniformSpec(program, "vec3", "u_eye_position"))
-            program.uniform3f("u_eye_position", UniformUpdateFrequency.PER_FRAME, u -> 
-            {
-                Vec3d eyePos = Minecraft.getMinecraft().player.getPositionEyes(partialTicks);
-                u.set((float)eyePos.x, (float)eyePos.y, (float)eyePos.z);
-            });
+        program.uniform3f("u_eye_position", UniformUpdateFrequency.PER_FRAME, u -> 
+        {
+            Vec3d eyePos = Minecraft.getMinecraft().player.getPositionEyes(partialTicks);
+            u.set((float)eyePos.x, (float)eyePos.y, (float)eyePos.z);
+        });
         
-        if(Program.containsUniformSpec(program, "vec3", "u_fogAttributes"))
-            program.uniform3f("u_fogAttributes", UniformUpdateFrequency.PER_TICK, u -> 
-            {
-                GlStateManager.FogState fogState = GlStateManager.fogState;
-                u.set(fogState.end, fogState.end - fogState.start, 
-                        // zero signals shader to use linear fog
-                        fogState.mode == GlStateManager.FogMode.LINEAR.capabilityId ? 0f : fogState.density);
-            });
+        program.uniform3f("u_fogAttributes", UniformUpdateFrequency.PER_TICK, u -> 
+        {
+            GlStateManager.FogState fogState = GlStateManager.fogState;
+            u.set(fogState.end, fogState.end - fogState.start, 
+                    // zero signals shader to use linear fog
+                    fogState.mode == GlStateManager.FogMode.LINEAR.capabilityId ? 0f : fogState.density);
+        });
         
-        if(Program.containsUniformSpec(program, "vec3", "u_fogColor"))
-            program.uniform3f("u_fogColor", UniformUpdateFrequency.PER_TICK, u -> 
-            {
-                EntityRenderer er = Minecraft.getMinecraft().entityRenderer;
-                u.set(er.fogColorRed, er.fogColorGreen, er.fogColorBlue);
-            });
+        program.uniform3f("u_fogColor", UniformUpdateFrequency.PER_TICK, u -> 
+        {
+            EntityRenderer er = Minecraft.getMinecraft().entityRenderer;
+            u.set(er.fogColorRed, er.fogColorGreen, er.fogColorBlue);
+        });
         
      // FAIL: unfortunately using explicit uniforms is slower
 //        if(Program.containsUniformSpec(program, "mat4", "u_projection"))

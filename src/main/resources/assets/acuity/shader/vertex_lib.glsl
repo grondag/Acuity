@@ -1,14 +1,3 @@
-#version 120
-
-#define LAYER_COUNT 1
-
-uniform float u_time;
-uniform sampler2D u_textures;
-uniform sampler2D u_lightmap;
-uniform vec3 u_eye_position;
-uniform vec3 u_fogColor;
-uniform vec3 u_fogAttributes;
-
 //attribute vec4 in_normal_ao;
 //attribute vec4 in_lightmaps;
 

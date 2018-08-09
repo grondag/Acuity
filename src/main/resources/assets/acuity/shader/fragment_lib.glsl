@@ -1,14 +1,3 @@
-#version 120
-
-#define LAYER_COUNT 1
-
-uniform float u_time;
-uniform sampler2D u_textures;
-uniform sampler2D u_lightmap;
-uniform vec3 u_eye_position;
-uniform vec3 u_fogColor;
-uniform vec3 u_fogAttributes;
-
 //varying vec3 v_light;
 
 #if LAYER_COUNT > 1
@@ -47,7 +36,24 @@ vec4 diffuseColor()
 	lightColor = vec4(lightColor.rgb, 1.0);
 
 	vec4 texCoord0 = gl_TexCoord[0];
-	vec4 a = texture2D(u_textures, texCoord0.st) * shadeColor(lightColor, gl_Color);
+
+#ifdef SOLID
+		float non_mipped = bitValue(gl_Color.a, 1);
+		vec4 a = texture2D(u_textures, texCoord0.st, non_mipped * -4.0);
+
+		float cutout = bitValue(gl_Color.a, 0);
+		if(cutout == 1.0 && a.a < 0.5)
+			discard;
+#else
+		vec4 a = texture2D(u_textures, texCoord0.st);
+#endif
+
+	// Note in the solid layer the lower bits of gl_Color.a will be a jumble
+	// of control flags but it won't matter because we'll be rendering with alpha off.
+	vec4 shade = shadeColor(lightColor, gl_Color);
+
+	a *= shade;
+
 
 #if LAYER_COUNT > 1
 	vec4 b = texture2D(u_textures, v_texcoord_1) * shadeColor(lightColor, v_color_1);

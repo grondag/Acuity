@@ -1,3 +1,15 @@
+#version 120
+#extension GL_EXT_gpu_shader4 : enable
+#define LAYER_COUNT 1
+#define SOLID // will be TRANSLUCENT when rendering translucent layer
+
+uniform float u_time;
+uniform sampler2D u_textures;
+uniform sampler2D u_lightmap;
+uniform vec3 u_eye_position;
+uniform vec3 u_fogColor;
+uniform vec3 u_fogAttributes;
+
 vec3 diffuse (vec3 normal)
 {
 	// same as Forge LightUtil.diffuse()
@@ -44,4 +56,41 @@ float tnoise (in vec2 st, float t)
     return mix(a, b, f.x) +
             (c - a)* f.y * (1.0 - f.x) +
             (d - b) * f.x * f.y;
+}
+
+#if GL_EXT_gpu_shader4 == 0
+	const float[8] BITWISE_FLOAT_DIVISORS = float[8](127.5, 63.75, 31.875, 15.9375, 7.96875, 3.984375, 1.9921875, 0.99609375);
+	const float[8] BITWISE_INT_DIVISORS = float[8](0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625);
+#endif
+
+/**
+ * Returns the value (0-1) of the indexed bit (0-7)
+ * within a normalized float value that represents a single byte (0-255).
+ *
+ * GLSL 120 unfortunately lacks bitwise operations
+ * so we need to emulate them unless the extension is active.
+ */
+float bitValue(float byteValue, int bitIndex)
+{
+#if GL_EXT_gpu_shader4 == 1
+	return (int(byteValue * 255.0) >> bitIndex) & 1;
+#else
+	return floor(fract(byteValue * BITWISE_FLOAT_DIVISORS[bitIndex]) * 2.0);
+#endif
+}
+
+/**
+ * Returns the value (0-1) of the indexed bit (0-7)
+ * within the given integer.
+ *
+ * GLSL 120 unfortunately lacks bitwise operations
+ * so we need to emulate them unless the extension is active.
+ */
+float bitValue(int flags, int bitIndex)
+{
+#if GL_EXT_gpu_shader4 == 1
+	return (flags >> bitIndex) & 1;
+#else
+	return floor(fract(float(flags) * BITWISE_INT_DIVISORS[bitIndex]) * 2.0);
+#endif
 }

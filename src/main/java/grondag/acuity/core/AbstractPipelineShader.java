@@ -26,16 +26,18 @@ abstract class AbstractPipelineShader
     
     private final int shaderType;
     public final TextureFormat textureFormat;
+    public final boolean isSolidLayer;
 
     private int glId = -1;
     private boolean needsLoad = true;
     private boolean isErrored = false;
     
-    AbstractPipelineShader(String fileName, int shaderType, TextureFormat textureFormat)
+    AbstractPipelineShader(String fileName, int shaderType, TextureFormat textureFormat, boolean isSolidLayer)
     {
         this.fileName = fileName;
         this.shaderType = shaderType;
         this.textureFormat = textureFormat;
+        this.isSolidLayer = isSolidLayer;
     }
     
     /**
@@ -97,14 +99,23 @@ abstract class AbstractPipelineShader
         }
     }
     
-    public String getSource()
+    public String buildSource(String librarySource)
     {
         String result = getShaderSource(this.fileName);
+        result = result.replaceAll("#version\\s+120", "");
+        result = librarySource + result;
+        
         final int layerCount = this.textureFormat.layerCount();
         if(layerCount > 1)
             result = result.replaceAll("#define LAYER_COUNT 1", String.format("#define LAYER_COUNT %d", layerCount));
+        
+        if(!isSolidLayer)
+            result = result.replaceAll("#define SOLID", "#define TRANSLUCENT");
+        
         return result;
     }
+    
+    abstract String getSource();
     
     public static String getShaderSource(String fileName)
     {

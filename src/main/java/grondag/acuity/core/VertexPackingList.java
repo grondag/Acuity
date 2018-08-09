@@ -70,15 +70,15 @@ public class VertexPackingList
     @FunctionalInterface
     public static interface IVertexPackingConsumer
     {
-        public void accept(RenderPipeline pipeline, int vertexCount);
+        void accept(RenderPipeline pipeline, int vertexCount, boolean isSolidLayer);
     }
     
-    public void forEach(IVertexPackingConsumer consumer)
+    public void forEach(IVertexPackingConsumer consumer, boolean isSolidLayer)
     {
         final int size = this.size;
         for(int i = 0; i < size; i++)
         {
-            consumer.accept(this.pipelines[i], this.counts[i]);
+            consumer.accept(this.pipelines[i], this.counts[i], isSolidLayer);
         }
     }
 }

@@ -8,16 +8,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public final class PipelineFragmentShader extends AbstractPipelineShader
 {
-    PipelineFragmentShader(String fileName, TextureFormat textureFormat)
+    PipelineFragmentShader(String fileName, TextureFormat textureFormat, boolean isSolidLayer)
     {
-        super(fileName, OpenGlHelper.GL_FRAGMENT_SHADER, textureFormat);
+        super(fileName, OpenGlHelper.GL_FRAGMENT_SHADER, textureFormat, isSolidLayer);
     }
     
     @Override
     public String getSource()
     {
-        String result = super.getSource();
-        result = result.replaceAll("#version\\s+120", "");
-        return PipelineShaderManager.INSTANCE.fragmentLibrarySource + result;
+        return buildSource(PipelineShaderManager.INSTANCE.fragmentLibrarySource);
     }
 }

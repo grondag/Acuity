@@ -129,9 +129,9 @@ public class CompoundVertexBuffer extends VertexBuffer
         
         @SuppressWarnings("null")
         @Override
-        public final void accept(RenderPipeline pipeline, int vertexCount)
+        public final void accept(RenderPipeline pipeline, int vertexCount, boolean isSolidLayer)
         {
-            pipeline.activate();
+            pipeline.activate(isSolidLayer);
             if(pipeline.piplineVertexFormat() != lastFormat)
             {
                 vertexOffset = 0;
@@ -225,12 +225,14 @@ public class CompoundVertexBuffer extends VertexBuffer
     
     /**
      * Renders all uploaded vbos relying on OpenGl fixed function state.
+     * 
+     * UGLY: need better way to pass solid layer state
      */
-    public final void renderChunk()
+    public final void renderChunk(boolean isSolidLayer)
     {
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         vertexPackingConsumer.reset();
-        this.vertexPackingList.forEach(vertexPackingConsumer);
+        this.vertexPackingList.forEach(vertexPackingConsumer, isSolidLayer);
     }
 
 //    /**

@@ -1,7 +1,9 @@
 package grondag.acuity.core;
 
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IRenderPipeline;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;
@@ -22,9 +24,9 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         }
         
         @Override
-        protected void resetForNewQuad()
+        protected void resetForNewQuad(IPipelinedQuad quad)
         {
-            super.resetForNewQuad();
+            super.resetForNewQuad(quad);
             this.areAllLayersEmissive = false;
         }
 
@@ -114,15 +116,44 @@ public class VanillaVertexLighter extends CompoundVertexLighter
          * Compresses alpha value to low bits of alpha component
          * and sets high bit of alpha to emissive indicator.
          * If not glowing, multiplies rgb by current shade value.
-         * Swaps red and blue.
+         * Swaps red and blue.<p>
+         * 
+         * Base layer alpha in solid render encodes flags for cutout and mipped handling.
+         * This allows MC CUTOUT and CUTOUT_MIPPED quads to be backed into a single buffer
+         * and rendered in the same draw command.  If cutout is on, then any fragment in
+         * the base layer with a (base) texture alpha value less than 0.5 will be discarded.<p>
+         * 
+         * Layered quads don't generally use cutout textures, but if a model does supply
+         * a base texture with holes and the quad is set to use a cutout layer, then the
+         * discard will also affect overlay textures.  In other words, if the base texture has 
+         * a hole,  the hole will not be covered by an overlay texture, even if the overlay is 
+         * fully opaque.  (This could change in the future.)
+         * 
          */
-        private int encodeColor(boolean glowing, int rawColor)
+        private int encodeColor(boolean isBaseLayer, boolean glowing, int rawColor)
         {
             int blue = rawColor & 0xFF;
             int green = (rawColor >> 8) & 0xFF;
             int red = (rawColor >> 16) & 0xFF;
-            int alpha = (rawColor >> 24) & 0xFF;
-            alpha = Math.round(alpha / 255f * 127f);
+            
+            // see above notes regarding base layer in solid render
+            int alpha = 0;
+            
+            if(isBaseLayer && currentQuad.getRenderLayer() != BlockRenderLayer.TRANSLUCENT)
+            {
+                // send cutout and mipped indicators
+                if(this.isCurrentQuadCutout)
+                    alpha |= 1;
+                
+                if(!this.isCurrentQuadMipped)
+                    alpha |= 2;
+            }
+            else
+            {
+                // send actual alpha compressed to lower 7 bits
+                alpha = (rawColor >> 24) & 0xFF;
+                alpha = Math.round(alpha / 255f * 127f);
+            }
             
             if(glowing)
                 alpha |= 128;
@@ -210,7 +241,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             output.add(target.zOffset + pos.getZ() + posZ);
             
             // BASE_RGBA_4UB
-            output.add(encodeColor((this.glowFlags & 1) == 1, unlitColorARGB0));
+            output.add(encodeColor(true, (this.glowFlags & 1) == 1, unlitColorARGB0));
             
             // BASE_TEX_2F
             output.add(u0);
@@ -230,8 +261,22 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             output.add((skyLight << 20) | (blockLight << 4));
             return output;
         }
+
+        @Override
+        protected void addSecondaryLayer(VertexCollector target, int unlitColorARGB1, float u1, float v1)
+        {
+            super.addSecondaryLayer(target, encodeColor(false, (this.glowFlags & 2) == 2, unlitColorARGB1), u1, v1);
+        }
+
+        @Override
+        protected void addTertiaryLayer(VertexCollector target, int unlitColorARGB2, float u2, float v2)
+        {
+            super.addTertiaryLayer(target, encodeColor(false, (this.glowFlags & 4) == 4, unlitColorARGB2), u2, v2);
+        }
     }
 
+    
+    
     @Override
     protected PipelinedVertexLighter createChildLighter(RenderPipeline pipeline)
     {
