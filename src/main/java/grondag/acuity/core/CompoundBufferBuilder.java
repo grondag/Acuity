@@ -60,10 +60,7 @@ public class CompoundBufferBuilder extends BufferBuilder
      */
     private @Nullable BlockRenderLayer layer;
 
-    /**
-     * Link to reference holder - use to find our peers.
-     */
-    private @Nullable  RegionRenderCacheBuilder owner;
+    private @Nullable CompoundBufferBuilder proxy;
     
     private class CompoundState extends State
     {
@@ -81,7 +78,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     public CompoundBufferBuilder(int bufferSizeIn)
     {
-        super(bufferSizeIn);
+        super(limitBufferSize(bufferSizeIn));
     }
     
     /**
@@ -90,19 +87,25 @@ public class CompoundBufferBuilder extends BufferBuilder
     public void setupLinks(RegionRenderCacheBuilder owner, BlockRenderLayer layer)
     {
         this.layer = layer;
-        this.owner = owner;
+        
+        if(this.layer == BlockRenderLayer.CUTOUT || this.layer == BlockRenderLayer.CUTOUT_MIPPED)
+        {
+            this.proxy = (CompoundBufferBuilder) owner.getWorldRendererByLayer(BlockRenderLayer.SOLID);
+        }
     }
     
-    // the RegionRenderCacheBuilder instantiates this with pretty large sizes
-    // but in most cases the super instance won't be used when the mod is enabled
-    // so don't honor these when mod is enabled to reduce memory footprint
+    /**
+     * The RegionRenderCacheBuilder instantiates this with significant sizes
+     * but in most cases the super instance won't be used when the mod is enabled
+     * so don't honor these when mod is enabled to reduce memory footprint.
+     */
     static final int limitBufferSize(int bufferSizeIn)
     {
         if(Acuity.isModEnabled())
         {
             if(bufferSizeIn == 2097152 || bufferSizeIn == 131072 || bufferSizeIn == 262144)
             {
-                return 2800;
+                return 2048;
             }
         }
         return bufferSizeIn;
@@ -151,6 +154,9 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     public VertexCollector getVertexCollector(RenderPipeline pipeline)
     {
+        if(Acuity.isModEnabled() && this.proxy != null)
+            return this.proxy.getVertexCollector(pipeline);
+        
         final int i = pipeline.getIndex();
         VertexCollector result = pipelineArray[i];
         if(result == null)
@@ -169,38 +175,68 @@ public class CompoundBufferBuilder extends BufferBuilder
         return result;
     }
 
+    public void beginIfNotAlreadyDrawing(int glMode, VertexFormat format)
+    {
+        if(!this.isDrawing)
+            super.begin(glMode, format);
+    }
+    
+    @Override
+    public void begin(int glMode, VertexFormat format)
+    {
+        if(Acuity.isModEnabled() && proxy != null)
+            proxy.beginIfNotAlreadyDrawing(glMode, format);
+        else
+            beginIfNotAlreadyDrawing(glMode, format);
+    }
+    
+    public void finishDrawingIfNotAlreadyFinished()
+    {
+        if(this.isDrawing)
+        {
+            super.finishDrawing();
+            
+            if(Acuity.isModEnabled())
+            {
+                // In transparency layer, packing list will already
+                // have been built via vertex sort.  
+                // If it is null, assume is non-transparent layer and build it now.
+                VertexPackingList packing = this.uploadPackingList;
+                if(packing == null)
+                {
+                    packing = new VertexPackingList();
+                    if(!pipelineList.isEmpty())
+                    {
+                        for(RenderPipeline p : pipelineList)
+                        {
+                            final VertexCollector b = pipelineArray[p.getIndex()];
+                            final int vertexCount = b.vertexCount();
+                            if(vertexCount != 0)
+                                packing.addPacking(p, vertexCount);
+                            
+                            // Collectors used in non-transparency layers can be reused.
+                            // (Transparency collectors are retained in compiled chunk for resorting.)
+                            this.collectors.enqueue(b);
+                        }
+                    }
+                    this.uploadPackingList = packing;
+                }
+                this.prepareUploadBuffer();
+            }
+        }
+    }
+    
     @Override
     public void finishDrawing()
     {
-        super.finishDrawing();
-        
-        if(Acuity.isModEnabled())
+        if(Acuity.isModEnabled() && proxy != null)
         {
-            // In transparency layer, packing list will already
-            // have been built via vertex sort.  
-            // If it is null, assume is non-transparent layer and build it now.
-            VertexPackingList packing = this.uploadPackingList;
-            if(packing == null)
-            {
-                packing = new VertexPackingList();
-                if(!pipelineList.isEmpty())
-                {
-                    for(RenderPipeline p : pipelineList)
-                    {
-                        final VertexCollector b = pipelineArray[p.getIndex()];
-                        final int vertexCount = b.vertexCount();
-                        if(vertexCount != 0)
-                            packing.addPacking(p, vertexCount);
-                        
-                        // Collectors used in non-transparency layers can be reused.
-                        // (Transparency collectors are retained in compiled chunk for resorting.)
-                        this.collectors.enqueue(b);
-                    }
-                }
-                this.uploadPackingList = packing;
-            }
-            this.prepareUploadBuffer();
+            proxy.finishDrawingIfNotAlreadyFinished();
+            return;
         }
+        else
+            this.finishDrawingIfNotAlreadyFinished();
+       
     }
 
     private void prepareUploadBuffer()
@@ -218,14 +254,15 @@ public class CompoundBufferBuilder extends BufferBuilder
         final IntBuffer intBuffer = buffer.intBuffer();
         intBuffer.position(0);
         
-        packing.forEach((RenderPipeline p, int vertexCount) ->
+        //UGLY: isSolid not used / makes no sense here. IOC in general not a good fit.
+        packing.forEach((RenderPipeline p, int vertexCount, boolean isSolid) ->
         {
             final int pipelineIndex = p.getIndex();
             final int startInt = pipelineStarts[pipelineIndex];
             final int intLength = vertexCount * p.piplineVertexFormat().stride / 4;
             intBuffer.put(pipelineArray[pipelineIndex].rawData(), startInt, intLength);
             pipelineStarts[pipelineIndex] = startInt + intLength;
-        });
+        }, false);
         buffer.byteBuffer().limit(packing.totalBytes());
         this.uploadBuffer = buffer;
     }
