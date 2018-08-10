@@ -7,6 +7,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
 import javax.annotation.Nullable;
@@ -87,6 +88,23 @@ public class OpenGlHelperExt
     static private long glDeleteVertexArraysFunctionPointer = -1;
     @SuppressWarnings("null")
     static private MethodHandle nglDeleteVertexArrays = null;
+    
+    static private long glPushMatrixFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglPushMatrix = null;
+    
+    static private long glPopMatrixFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglPopMatrix = null;
+    
+    static private long glTranslatefFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglTranslatef = null;
+    
+    static private long glMultMatrixfFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglMultMatrixf = null;
+    
     
     /**
      *  call after known that GL context is initialized
@@ -303,6 +321,74 @@ public class OpenGlHelperExt
         {
             glUseProgramFunctionPointer = -1;
             Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUseProgram"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glPushMatrix");
+            pointer.setAccessible(true);
+            glPushMatrixFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glPushMatrixFunctionPointer);
+            Method nglPushMatrix = GL11.class.getDeclaredMethod("nglPushMatrix", long.class);
+            nglPushMatrix.setAccessible(true);
+            OpenGlHelperExt.nglPushMatrix = lookup.unreflect(nglPushMatrix);
+        }
+        catch(Exception e)
+        {
+            glPushMatrixFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glPushMatrix"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glPopMatrix");
+            pointer.setAccessible(true);
+            glPopMatrixFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glPopMatrixFunctionPointer);
+            Method nglPopMatrix = GL11.class.getDeclaredMethod("nglPopMatrix", long.class);
+            nglPopMatrix.setAccessible(true);
+            OpenGlHelperExt.nglPopMatrix = lookup.unreflect(nglPopMatrix);
+        }
+        catch(Exception e)
+        {
+            glUseProgramFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glPopMatrix"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glTranslatef");
+            pointer.setAccessible(true);
+            glTranslatefFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glTranslatefFunctionPointer);
+            Method nglTranslatef = GL11.class.getDeclaredMethod("nglTranslatef", float.class, float.class, float.class, long.class);
+            nglTranslatef.setAccessible(true);
+            OpenGlHelperExt.nglTranslatef = lookup.unreflect(nglTranslatef);
+        }
+        catch(Exception e)
+        {
+            glTranslatefFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glTranslatef"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glMultMatrixf");
+            pointer.setAccessible(true);
+            glMultMatrixfFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glMultMatrixfFunctionPointer);
+            Method nglMultMatrixf = GL11.class.getDeclaredMethod("nglMultMatrixf", long.class, long.class);
+            nglMultMatrixf.setAccessible(true);
+            OpenGlHelperExt.nglMultMatrixf = lookup.unreflect(nglMultMatrixf);
+        }
+        catch(Exception e)
+        {
+            glMultMatrixfFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glMultMatrixf"), e);
         }
     }
     
@@ -605,6 +691,74 @@ public class OpenGlHelperExt
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUseProgram"), e);
                 glUseProgramFunctionPointer = -1;
                 OpenGlHelper.glUseProgram(programId);
+            }
+    }
+    
+    public static void pushMatrixFast()
+    {
+        if(glPushMatrixFunctionPointer == -1)
+            GL11.glPushMatrix();
+        else
+            try
+            {
+                nglPushMatrix.invokeExact(glPushMatrixFunctionPointer);
+            }
+            catch (Throwable e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glPushMatrix"), e);
+                glPushMatrixFunctionPointer = -1;
+                GL11.glPushMatrix();
+            }
+    }
+
+    public static void popMatrixFast()
+    {
+        if(glPopMatrixFunctionPointer == -1)
+            GL11.glPopMatrix();
+        else
+            try
+            {
+                nglPopMatrix.invokeExact(glPopMatrixFunctionPointer);
+            }
+            catch (Throwable e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glPopMatrix"), e);
+                glPopMatrixFunctionPointer = -1;
+                GL11.glPopMatrix();
+            }
+    }
+    
+    public static void translateFast(float x, float y, float z)
+    {
+        if(glTranslatefFunctionPointer == -1)
+            GL11.glTranslatef(x, y, z);
+        else
+            try
+            {
+                nglTranslatef.invokeExact(x, y, z, glTranslatefFunctionPointer);
+            }
+            catch (Throwable e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glTranslatef"), e);
+                glTranslatefFunctionPointer = -1;
+                GL11.glTranslatef(x, y, z);
+            }
+    }
+    
+    public static void multMatrixFast(FloatBuffer matrix)
+    {
+        if(glMultMatrixfFunctionPointer == -1)
+            GL11.glMultMatrix(matrix);
+        else
+            try
+            {
+                nglMultMatrixf.invokeExact(MemoryUtil.getAddress(matrix), glMultMatrixfFunctionPointer);
+            }
+            catch (Throwable e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glMultMatrixf"), e);
+                glMultMatrixfFunctionPointer = -1;
+                GL11.glMultMatrix(matrix);
             }
     }
 }
