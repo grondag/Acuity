@@ -17,6 +17,7 @@ import org.lwjgl.BufferChecks;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.MemoryUtil;
 import org.lwjgl.opengl.APPLEVertexArrayObject;
+import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.ARBVertexBufferObject;
 import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GL11;
@@ -105,6 +106,17 @@ public class OpenGlHelperExt
     static private long glMultMatrixfFunctionPointer = -1;
     @SuppressWarnings("null")
     static private MethodHandle nglMultMatrixf = null;
+    
+    static private long glUniformMatrix4fvFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglUniformMatrix4fv = null;
+    
+    @SuppressWarnings("null")
+    static private MethodHandle nioCopyFromArray = null;
+    @SuppressWarnings("null")
+    static private MethodHandle nioCopyFromIntArray = null;
+    static private boolean fastNioCopy;
+    static private long nioFloatArrayBaseOffset;
     
     
     /**
@@ -390,6 +402,60 @@ public class OpenGlHelperExt
         {
             glMultMatrixfFunctionPointer = -1;
             Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glMultMatrixf"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            if(caps.OpenGL21)
+            {
+                Field pointer = ContextCapabilities.class.getDeclaredField("glUniformMatrix4fv");
+                pointer.setAccessible(true);
+                glUniformMatrix4fvFunctionPointer = pointer.getLong(caps);
+                BufferChecks.checkFunctionAddress(glUniformMatrix4fvFunctionPointer);
+                Method nglUniformMatrix4fv = GL20.class.getDeclaredMethod("nglUniformMatrix4fv", int.class, int.class, boolean.class, long.class, long.class);
+                nglUniformMatrix4fv.setAccessible(true);
+                OpenGlHelperExt.nglUniformMatrix4fv = lookup.unreflect(nglUniformMatrix4fv);
+            }
+            else 
+            {
+                Field pointer = ContextCapabilities.class.getDeclaredField("glUniformMatrix4fvARB");
+                pointer.setAccessible(true);
+                glUniformMatrix4fvFunctionPointer = pointer.getLong(caps);
+                BufferChecks.checkFunctionAddress(glUniformMatrix4fvFunctionPointer);
+                Method nglUniformMatrix4fv = ARBShaderObjects.class.getDeclaredMethod("nglUniformMatrix4fvARB", int.class, int.class, boolean.class, long.class, long.class);
+                nglUniformMatrix4fv.setAccessible(true);
+                OpenGlHelperExt.nglUniformMatrix4fv = lookup.unreflect(nglUniformMatrix4fv);
+            }
+        }
+        catch(Exception e)
+        {
+            glUniformMatrix4fvFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUniformMatrix4fv"), e);
+        }
+        
+        try
+        {
+            Class<?> clazz = Class.forName("java.nio.Bits");
+            Method nioCopyFromArray = clazz.getDeclaredMethod("copyFromArray", Object.class, long.class, long.class, long.class, long.class);
+            nioCopyFromArray.setAccessible(true);
+            OpenGlHelperExt.nioCopyFromArray = lookup.unreflect(nioCopyFromArray);
+            
+            Method nioCopyFromIntArray = clazz.getDeclaredMethod("copyFromIntArray", Object.class, long.class, long.class, long.class);
+            nioCopyFromIntArray.setAccessible(true);
+            OpenGlHelperExt.nioCopyFromIntArray = lookup.unreflect(nioCopyFromIntArray);
+            
+            clazz = Class.forName("java.nio.DirectFloatBufferU");
+            Field f = clazz.getDeclaredField("arrayBaseOffset");
+            f.setAccessible(true);
+            nioFloatArrayBaseOffset = f.getLong(null);
+            
+            fastNioCopy = true;
+        }
+        catch(Exception e)
+        {
+            fastNioCopy = false;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "fastNioCopy"), e);
         }
     }
     
@@ -776,6 +842,27 @@ public class OpenGlHelperExt
             }
     }
     
+    /**
+     * Note that bufferAddress and matrix are redundant but both needed.  Obtain bufferAddress via lwjgl memory utility
+     * and then cache it.  FloatBuffer will only be used if fast call doesn't work.
+     */
+    public static void glUniformMatrix4Fast(int location, boolean transpose, FloatBuffer matrix, long bufferAddress)
+    {
+        if(glUniformMatrix4fvFunctionPointer == -1)
+            OpenGlHelper.glUniformMatrix4(location, transpose, matrix);
+        else
+            try
+            {
+                nglUniformMatrix4fv.invokeExact(location,  1, transpose, bufferAddress, glUniformMatrix4fvFunctionPointer);
+            }
+            catch (Throwable e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUniformMatrix4fv"), e);
+                glUniformMatrix4fvFunctionPointer = -1;
+                OpenGlHelper.glUniformMatrix4(location, transpose, matrix);
+            }
+    }
+    
     private static final float[] LOAD_ARRAY = new float[16];
     /**
      * NOT THREAD SAFE
@@ -800,5 +887,35 @@ public class OpenGlHelperExt
         dest.m13 = load[13];
         dest.m23 = load[14];
         dest.m33 = load[15];
+    }
+    
+    public static final boolean isFastNioCopyEnabled()
+    {
+        return fastNioCopy;
+    }
+    
+    /**
+     * Accessible version of nio Bits method.
+     * Check {@link #isFastNioCopyEnabled()} before calling 
+     * or bad things will happen.
+     */
+    public static void nioCopyFromArray(Object src, long srcBaseOffset, long srcPos, long dstAddr, long length) throws Throwable
+    {
+        nioCopyFromArray.invokeExact(src, srcBaseOffset, srcPos, dstAddr, length);
+    }
+    
+    /**
+     * Accessible version of nio Bits method.
+     * Check {@link #isFastNioCopyEnabled()} before calling 
+     * or bad things will happen.
+     */
+    public static void nioCopyFromIntArray(Object src, long srcPos, long dstAddr, long length) throws Throwable
+    {
+        nioCopyFromIntArray.invokeExact(src, srcPos, dstAddr, length);
+    }
+    
+    public static final long nioFloatArrayBaseOffset()
+    {
+        return nioFloatArrayBaseOffset;
     }
 }

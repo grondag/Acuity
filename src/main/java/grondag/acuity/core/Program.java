@@ -1,5 +1,6 @@
 package grondag.acuity.core;
 
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.function.Consumer;
@@ -8,6 +9,7 @@ import java.util.regex.Pattern;
 import javax.annotation.Nullable;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.MemoryUtil;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.util.vector.Matrix4f;
 
@@ -493,6 +495,8 @@ public class Program
     public class UniformMatrix4f extends Uniform<IUniformMatrix4f> implements IUniformMatrix4f
     {
         protected final FloatBuffer uniformFloatBuffer;
+        protected final long bufferAddress;
+        protected final boolean needsFlip;
         
         protected final float[] lastValue = new float[16];
         
@@ -500,6 +504,8 @@ public class Program
         {
             super(name, initializer, frequency);
             this.uniformFloatBuffer = BufferUtils.createFloatBuffer(16);
+            this.bufferAddress = MemoryUtil.getAddress(this.uniformFloatBuffer);
+            this.needsFlip = uniformFloatBuffer.order() != ByteOrder.nativeOrder();
         }
 
         @Override
@@ -533,15 +539,40 @@ public class Program
                  && lastValue[15] == elements[15]) 
                 return;
             
-            this.uniformFloatBuffer.put(elements, 0, 16);
-            this.uniformFloatBuffer.position(0);
+            if(OpenGlHelperExt.isFastNioCopyEnabled()) try
+            {
+                // avoid NIO overhead
+                if (this.needsFlip)
+                    OpenGlHelperExt.nioCopyFromIntArray(elements,
+                                                0,
+                                                this.bufferAddress,
+                                                64);
+                else
+    
+                    OpenGlHelperExt.nioCopyFromArray(elements, 
+                                       OpenGlHelperExt.nioFloatArrayBaseOffset(),
+                                       0,
+                                       this.bufferAddress,
+                                       64);
+            }
+            catch (Throwable  t)
+            {
+                this.uniformFloatBuffer.put(elements, 0, 16);
+                this.uniformFloatBuffer.position(0);
+            }
+            else
+            {
+                this.uniformFloatBuffer.put(elements, 0, 16);
+                this.uniformFloatBuffer.position(0);
+            }
+            
             this.setDirty();
         }
         
         @Override
         protected void uploadInner()
         {
-            OpenGlHelper.glUniformMatrix4(this.unifID, true, this.uniformFloatBuffer);
+            OpenGlHelperExt.glUniformMatrix4Fast(this.unifID, true, this.uniformFloatBuffer, this.bufferAddress);
         }
     }
     
