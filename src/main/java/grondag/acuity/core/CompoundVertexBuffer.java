@@ -8,13 +8,12 @@ import javax.annotation.Nullable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
-import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
-import grondag.acuity.core.VertexPackingList.IVertexPackingConsumer;
+import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
@@ -45,10 +44,12 @@ public class CompoundVertexBuffer extends VertexBuffer
         return Acuity.isModEnabled() ? this.vertexPackingList.quadCount() : this.count / 4;
     }
     
-    private class VertexPackingRenderer implements IVertexPackingConsumer
+    private class VertexPackingRenderer extends VertexPackingConsumer
     {
         int bufferOffset = 0;
         int vertexOffset = 0;
+        boolean isSolidLayer;
+        
         @Nullable PipelineVertexFormat lastFormat = null;
         
         /**
@@ -121,16 +122,17 @@ public class CompoundVertexBuffer extends VertexBuffer
             }
         }
         
-        private void reset()
+        private void reset(boolean isSolidLayer)
         {
             bufferOffset = 0;
             vertexOffset = 0;
             lastFormat = null;
+            this.isSolidLayer = isSolidLayer;
         }
         
         @SuppressWarnings("null")
         @Override
-        public final void accept(RenderPipeline pipeline, int vertexCount, boolean isSolidLayer)
+        public final void accept(RenderPipeline pipeline, int vertexCount)
         {
             pipeline.activate(isSolidLayer);
             if(pipeline.piplineVertexFormat() != lastFormat)
@@ -223,30 +225,18 @@ public class CompoundVertexBuffer extends VertexBuffer
         super.deleteGlBuffers();
         this.vertexPackingConsumer.deleteGlBuffers();
     }
-    
-//    /**
-//     * Renders all uploaded vbos relying on OpenGl fixed function state.
-//     * 
-//     * UGLY: need better way to pass solid layer state
-//     */
-//    public final void renderChunk(boolean isSolidLayer)
-//    {
-//        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-//        vertexPackingConsumer.reset();
-//        this.vertexPackingList.forEach(vertexPackingConsumer, isSolidLayer);
-//    }
 
     /**
-     * Remnant of a failed experiment
-     * Renders all uploaded vbos using the given model view matrix.
+     * Renders all uploaded vbos.
      */
-    public void renderChunk(Matrix4f modelViewMatrix, boolean isSolidLayer)
+    public final void renderChunk(boolean isSolidLayer)
     {
         final VertexPackingList packing = this.vertexPackingList;
         if(packing.size() == 0) return;
         
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        vertexPackingConsumer.reset();
-        packing.forEach((RenderPipeline pipeline, int vertexCount, boolean isSolid) -> vertexPackingConsumer.accept(pipeline.updateModelViewMatrix(modelViewMatrix, isSolidLayer), vertexCount, isSolid), isSolidLayer);
+        vertexPackingConsumer.reset(isSolidLayer);
+        
+        packing.forEach(vertexPackingConsumer);
     }
 }

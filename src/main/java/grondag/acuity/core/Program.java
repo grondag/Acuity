@@ -1,6 +1,5 @@
 package grondag.acuity.core;
 
-import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.function.Consumer;
@@ -25,6 +24,7 @@ import grondag.acuity.api.IUniform.IUniform3i;
 import grondag.acuity.api.IUniform.IUniform4f;
 import grondag.acuity.api.IUniform.IUniform4i;
 import grondag.acuity.api.IUniform.IUniformMatrix4f;
+import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.api.UniformUpdateFrequency;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -70,7 +70,7 @@ public class Program
             this.frequency = frequency;
         }
         
-        protected final void setDirty()
+        public final void setDirty()
         {
             final int flags = this.flags;
             if(flags == 0)
@@ -471,6 +471,17 @@ public class Program
     }
 
     
+    //TODO: add new activation frequency & don't keep adding/clearing from array/count
+    @SuppressWarnings("null")
+    private final void updateModelUniforms()
+    {
+        if(this.modelViewUniform != null);
+            this.modelViewUniform.markForInitialization();
+    
+        if(this.modelViewProjectionUniform != null);
+            this.modelViewProjectionUniform.markForInitialization();
+    }
+    
     public final void activate()
     {
         if(this.needsLoad)
@@ -479,7 +490,11 @@ public class Program
         if(this.isErrored)
             return;
         
+        this.updateModelUniforms();
+        
         OpenGlHelperExt.glUseProgramFast(this.progID);
+        
+        
         
         final int count = this.dirtyCount;
         if(count == 0)
@@ -496,18 +511,24 @@ public class Program
     {
         protected final FloatBuffer uniformFloatBuffer;
         protected final long bufferAddress;
-        protected final boolean needsFlip;
         
         protected final float[] lastValue = new float[16];
         
         protected UniformMatrix4f(String name, Consumer<IUniformMatrix4f> initializer, UniformUpdateFrequency frequency)
         {
-            super(name, initializer, frequency);
-            this.uniformFloatBuffer = BufferUtils.createFloatBuffer(16);
-            this.bufferAddress = MemoryUtil.getAddress(this.uniformFloatBuffer);
-            this.needsFlip = uniformFloatBuffer.order() != ByteOrder.nativeOrder();
+            this(name, initializer, frequency, BufferUtils.createFloatBuffer(16));
         }
 
+        /**
+         * Use when have a shared direct buffer
+         */
+        protected UniformMatrix4f(String name, Consumer<IUniformMatrix4f> initializer, UniformUpdateFrequency frequency, FloatBuffer uniformFloatBuffer)
+        {
+            super(name, initializer, frequency);
+            this.uniformFloatBuffer = uniformFloatBuffer;
+            this.bufferAddress = MemoryUtil.getAddress(this.uniformFloatBuffer);
+        }
+        
         @Override
         public final void set(Matrix4f matrix)
         {
@@ -539,33 +560,13 @@ public class Program
                  && lastValue[15] == elements[15]) 
                 return;
             
-            if(OpenGlHelperExt.isFastNioCopyEnabled()) try
-            {
-                // avoid NIO overhead
-                if (this.needsFlip)
-                    OpenGlHelperExt.nioCopyFromIntArray(elements,
-                                                0,
-                                                this.bufferAddress,
-                                                64);
-                else
-    
-                    OpenGlHelperExt.nioCopyFromArray(elements, 
-                                       OpenGlHelperExt.nioFloatArrayBaseOffset(),
-                                       0,
-                                       this.bufferAddress,
-                                       64);
-            }
-            catch (Throwable  t)
+            // avoid NIO overhead
+            if(!OpenGlHelperExt.fastMatrix4fBufferCopy(elements, bufferAddress))
             {
                 this.uniformFloatBuffer.put(elements, 0, 16);
                 this.uniformFloatBuffer.position(0);
             }
-            else
-            {
-                this.uniformFloatBuffer.put(elements, 0, 16);
-                this.uniformFloatBuffer.position(0);
-            }
-            
+           
             this.setDirty();
         }
         
@@ -579,6 +580,11 @@ public class Program
     public UniformMatrix4f uniformMatrix4f(String name, UniformUpdateFrequency frequency, Consumer<IUniformMatrix4f> initializer)
     {
         return addUniform(new UniformMatrix4f(name, initializer, frequency));
+    }
+    
+    public UniformMatrix4f uniformMatrix4f(String name, UniformUpdateFrequency frequency, FloatBuffer floatBuffer, Consumer<IUniformMatrix4f> initializer)
+    {
+        return addUniform(new UniformMatrix4f(name, initializer, frequency, floatBuffer));
     }
     
     /**
@@ -665,24 +671,41 @@ public class Program
     public UniformMatrix4f modelViewUniform;
     @Nullable
     public UniformMatrix4f modelViewProjectionUniform;
+    @Nullable
+    public UniformMatrix4f projectionMatrixUniform;
     
+    
+    @SuppressWarnings("null")
     public final void setupModelViewUniforms()
     {
         if(containsUniformSpec("mat4", "u_modelView"))
         {
-            this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.ON_LOAD, u -> 
+            this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.PER_ACTIVATION, PipelineManager.projectionMatrixBuffer,
+                    u -> 
             {
-                // NOOP - will be set as needed
+                this.modelViewUniform.setDirty();
             });
         }
 
         if(containsUniformSpec("mat4", "u_modelViewProjection"))
         {
-            this.modelViewProjectionUniform = this.uniformMatrix4f("u_modelViewProjection", UniformUpdateFrequency.ON_LOAD, u -> 
+            this.modelViewProjectionUniform = this.uniformMatrix4f("u_modelViewProjection", UniformUpdateFrequency.PER_ACTIVATION,
+                    PipelineManager.modelViewProjectionMatrixBuffer, u -> 
             {
-                // NOOP - will be set as needed
+                this.modelViewProjectionUniform.setDirty();
             });
         }
+        
+        if(containsUniformSpec("mat4", "u_projection"))
+        {
+            this.projectionMatrixUniform = this.uniformMatrix4f("u_projection", UniformUpdateFrequency.PER_ACTIVATION, 
+                    PipelineManager.projectionMatrixBuffer, u -> 
+            {
+                this.projectionMatrixUniform.setDirty();
+            });
+        }
+        
+        
     }
     
     public boolean containsUniformSpec(String type, String name)

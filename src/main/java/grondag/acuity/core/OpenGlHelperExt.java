@@ -7,6 +7,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 
@@ -117,7 +118,8 @@ public class OpenGlHelperExt
     static private MethodHandle nioCopyFromIntArray = null;
     static private boolean fastNioCopy;
     static private long nioFloatArrayBaseOffset;
-    
+    static private boolean nioFloatNeedsFlip;
+    static private MethodHandle fastMatrixBufferCopyHandler;
     
     /**
      *  call after known that GL context is initialized
@@ -450,7 +452,23 @@ public class OpenGlHelperExt
             f.setAccessible(true);
             nioFloatArrayBaseOffset = f.getLong(null);
             
+            FloatBuffer testBuffer = BufferUtils.createFloatBuffer(16);
+            nioFloatNeedsFlip = testBuffer.order() != ByteOrder.nativeOrder();
+            
             fastNioCopy = true;
+            
+            Method handlerMethod;
+            if(fastNioCopy)
+            {
+                if(nioFloatNeedsFlip)
+                    handlerMethod = OpenGlHelperExt.class.getDeclaredMethod("fastMatrix4fBufferCopyFlipped", float[].class, long.class);
+                else
+                    handlerMethod = OpenGlHelperExt.class.getDeclaredMethod("fastMatrix4fBufferCopyStraight", float[].class, long.class);
+            }
+            else
+                handlerMethod = OpenGlHelperExt.class.getDeclaredMethod("fastMatrix4fBufferCopyFail", float[].class, long.class);
+            
+            fastMatrixBufferCopyHandler = lookup.unreflect(handlerMethod);
         }
         catch(Exception e)
         {
@@ -894,28 +912,57 @@ public class OpenGlHelperExt
         return fastNioCopy;
     }
     
-    /**
-     * Accessible version of nio Bits method.
-     * Check {@link #isFastNioCopyEnabled()} before calling 
-     * or bad things will happen.
-     */
-    public static void nioCopyFromArray(Object src, long srcBaseOffset, long srcPos, long dstAddr, long length) throws Throwable
+//    /**
+//     * Accessible version of nio Bits method.
+//     * Check {@link #isFastNioCopyEnabled()} before calling 
+//     * or bad things will happen.
+//     */
+//    public static void nioCopyFromArray(Object src, long srcBaseOffset, long srcPos, long dstAddr, long length) throws Throwable
+//    {
+//        nioCopyFromArray.invokeExact(src, srcBaseOffset, srcPos, dstAddr, length);
+//    }
+    
+//    /**
+//     * Accessible version of nio Bits method.
+//     * Check {@link #isFastNioCopyEnabled()} before calling 
+//     * or bad things will happen.
+//     */
+//    public static void nioCopyFromIntArray(Object src, long srcPos, long dstAddr, long length) throws Throwable
+//    {
+//        nioCopyFromIntArray.invokeExact(src, srcPos, dstAddr, length);
+//    }
+    
+//    public static final long nioFloatArrayBaseOffset()
+//    {
+//        return nioFloatArrayBaseOffset;
+//    }
+    
+    public static final boolean fastMatrix4fBufferCopy(float[] elements, long bufferAddress)
     {
-        nioCopyFromArray.invokeExact(src, srcBaseOffset, srcPos, dstAddr, length);
+        try
+        {
+            return (boolean) fastMatrixBufferCopyHandler.invokeExact(elements, bufferAddress);
+        }
+        catch (Throwable e)
+        {
+            return false;
+        }
     }
     
-    /**
-     * Accessible version of nio Bits method.
-     * Check {@link #isFastNioCopyEnabled()} before calling 
-     * or bad things will happen.
-     */
-    public static void nioCopyFromIntArray(Object src, long srcPos, long dstAddr, long length) throws Throwable
+    public static final boolean fastMatrix4fBufferCopyFlipped(float[] elements, long bufferAddress) throws Throwable
     {
-        nioCopyFromIntArray.invokeExact(src, srcPos, dstAddr, length);
+        nioCopyFromIntArray.invokeExact((Object)elements, 0l, bufferAddress, 64l);
+        return true;
     }
     
-    public static final long nioFloatArrayBaseOffset()
+    public static final boolean fastMatrix4fBufferCopyStraight(float[] elements, long bufferAddress) throws Throwable
     {
-        return nioFloatArrayBaseOffset;
+        nioCopyFromArray.invokeExact((Object)elements, nioFloatArrayBaseOffset, 0l, bufferAddress, 64l);
+        return true;
+    }
+    
+    public static final boolean fastMatrix4fBufferCopyFail(float[] elements, long bufferAddress)
+    {
+        return false;
     }
 }

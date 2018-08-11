@@ -5,6 +5,7 @@ import java.nio.FloatBuffer;
 import javax.annotation.Nullable;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.MemoryUtil;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.util.vector.Matrix4f;
@@ -39,7 +40,40 @@ public final class PipelineManager implements IPipelineManager
 
     public static final int MAX_PIPELINES = Configurator.maxPipelines;
     
+    
+    // NB: initialization sequence works better if these are static (may also prevent a pointer chase)
+    
+    /**
+     * Current projection matrix. Refreshed from GL state each frame after camera setup
+     * in {@link #beforeRenderChunks()}. Unfortunately not immutable so use caution.
+     */
+    public static final Matrix4f projMatrix = new Matrix4f();
+    
+    /**
+     * Used to retrieve and store project matrix from GLState. Avoids re-instantiating each frame.
+     */
+    public static final FloatBuffer projectionMatrixBuffer = BufferUtils.createFloatBuffer(16);
+    
+    /**
+     * Current mv matrix - set at program activation
+     */
+    public static final Matrix4f modelViewMatrix = new Matrix4f();
+    
+    public static final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
+    
+    private static final long modelViewMatrixBufferAddress = MemoryUtil.getAddress(modelViewMatrixBuffer);
+    
+    /**
+     * Current mvp matrix - set at program activation
+     */
+    public static final Matrix4f modelViewProjectionMatrix = new Matrix4f();
+    
+    public static final FloatBuffer modelViewProjectionMatrixBuffer = BufferUtils.createFloatBuffer(16);
+    
+    private static final long modelViewProjectionMatrixBufferAddress = MemoryUtil.getAddress(modelViewProjectionMatrixBuffer);
+    
     public static final PipelineManager INSTANCE = new PipelineManager();
+    
     
     private final RenderPipeline[] pipelines = new RenderPipeline[PipelineManager.MAX_PIPELINES];
     
@@ -53,16 +87,6 @@ public final class PipelineManager implements IPipelineManager
     private float worldTime;
     private float partialTicks;
     
-    /**
-     * Used to retrieve project matrix from GLState. Avoids re-instantiating each frame.
-     */
-    protected final FloatBuffer projectionMatrixBuffer = BufferUtils.createFloatBuffer(16);
-    
-    /**
-     * Current projection matrix. Refreshed from GL state each frame after camera setup
-     * in {@link #beforeRenderChunks()}. Unfortunately not immutable so use caution.
-     */
-    public final Matrix4f projMatrix = new Matrix4f();
     
     /**
      * See {@link #onRenderTick(RenderTickEvent)}
@@ -174,11 +198,6 @@ public final class PipelineManager implements IPipelineManager
             u.set(er.fogColorRed, er.fogColorGreen, er.fogColorBlue);
         });
         
-        pipeline.uniformMatrix4f("u_projection", UniformUpdateFrequency.PER_FRAME, u -> 
-        {
-            u.set(projMatrix);
-        });
-        
         pipeline.setupModelViewUniforms();
     }
             
@@ -221,7 +240,6 @@ public final class PipelineManager implements IPipelineManager
         projectionMatrixBuffer.position(0);
         GlStateManager.getFloat(GL11.GL_PROJECTION_MATRIX, projectionMatrixBuffer);
         OpenGlHelperExt.loadTransposeQuickly(projectionMatrixBuffer, projMatrix);
-//        projMatrix.loadTranspose(projectionMatrixBuffer);
         
         for(int i = 0; i < this.pipelineCount; i++)
         {
@@ -243,5 +261,86 @@ public final class PipelineManager implements IPipelineManager
     public float worldTime()
     {
         return this.worldTime;
+    }
+
+    private final float[] transferArray = new float[16];
+    
+    private void loadTransferArray(Matrix4f m)
+    {
+        transferArray[0] = m.m00;
+        transferArray[1] = m.m01;
+        transferArray[2] = m.m02;
+        transferArray[3] = m.m03;
+        transferArray[4] = m.m10;
+        transferArray[5] = m.m11;
+        transferArray[6] = m.m12;
+        transferArray[7] = m.m13;
+        transferArray[8] = m.m20;
+        transferArray[9] = m.m21;
+        transferArray[10] = m.m22;
+        transferArray[11] = m.m23;
+        transferArray[12] = m.m30;
+        transferArray[13] = m.m31;
+        transferArray[14] = m.m32;
+        transferArray[15] = m.m33;
+    }
+    
+    public final void setModelViewMatrix(Matrix4f mvMatrix)
+    {
+        final Matrix4f mv = PipelineManager.modelViewMatrix;
+        mv.m00 = mvMatrix.m00;
+        mv.m01 = mvMatrix.m01;
+        mv.m02 = mvMatrix.m02;
+        mv.m03 = mvMatrix.m03;
+        mv.m10 = mvMatrix.m10;
+        mv.m11 = mvMatrix.m11;
+        mv.m12 = mvMatrix.m12;
+        mv.m13 = mvMatrix.m13;
+        mv.m20 = mvMatrix.m20;
+        mv.m21 = mvMatrix.m21;
+        mv.m22 = mvMatrix.m22;
+        mv.m23 = mvMatrix.m23;
+        mv.m30 = mvMatrix.m30;
+        mv.m31 = mvMatrix.m31;
+        mv.m32 = mvMatrix.m32;
+        mv.m33 = mvMatrix.m33;
+        
+        loadTransferArray(mv);
+        
+        // avoid NIO overhead
+        if(!OpenGlHelperExt.fastMatrix4fBufferCopy(transferArray, PipelineManager.modelViewMatrixBufferAddress))
+        {
+            PipelineManager.modelViewMatrixBuffer.put(transferArray, 0, 16);
+            PipelineManager.modelViewMatrixBuffer.position(0);
+        }
+        
+        final Matrix4f p = PipelineManager.projMatrix;
+        final Matrix4f mvp = PipelineManager.modelViewProjectionMatrix;
+        
+        mvp.m00 = mv.m00 * p.m00 + mv.m10 * p.m01 + mv.m20 * p.m02 + mv.m30 * p.m03;
+        mvp.m01 = mv.m01 * p.m00 + mv.m11 * p.m01 + mv.m21 * p.m02 + mv.m31 * p.m03;
+        mvp.m02 = mv.m02 * p.m00 + mv.m12 * p.m01 + mv.m22 * p.m02 + mv.m32 * p.m03;
+        mvp.m03 = mv.m03 * p.m00 + mv.m13 * p.m01 + mv.m23 * p.m02 + mv.m33 * p.m03;
+        mvp.m10 = mv.m00 * p.m10 + mv.m10 * p.m11 + mv.m20 * p.m12 + mv.m30 * p.m13;
+        mvp.m11 = mv.m01 * p.m10 + mv.m11 * p.m11 + mv.m21 * p.m12 + mv.m31 * p.m13;
+        mvp.m12 = mv.m02 * p.m10 + mv.m12 * p.m11 + mv.m22 * p.m12 + mv.m32 * p.m13;
+        mvp.m13 = mv.m03 * p.m10 + mv.m13 * p.m11 + mv.m23 * p.m12 + mv.m33 * p.m13;
+        mvp.m20 = mv.m00 * p.m20 + mv.m10 * p.m21 + mv.m20 * p.m22 + mv.m30 * p.m23;
+        mvp.m21 = mv.m01 * p.m20 + mv.m11 * p.m21 + mv.m21 * p.m22 + mv.m31 * p.m23;
+        mvp.m22 = mv.m02 * p.m20 + mv.m12 * p.m21 + mv.m22 * p.m22 + mv.m32 * p.m23;
+        mvp.m23 = mv.m03 * p.m20 + mv.m13 * p.m21 + mv.m23 * p.m22 + mv.m33 * p.m23;
+        mvp.m30 = mv.m00 * p.m30 + mv.m10 * p.m31 + mv.m20 * p.m32 + mv.m30 * p.m33;
+        mvp.m31 = mv.m01 * p.m30 + mv.m11 * p.m31 + mv.m21 * p.m32 + mv.m31 * p.m33;
+        mvp.m32 = mv.m02 * p.m30 + mv.m12 * p.m31 + mv.m22 * p.m32 + mv.m32 * p.m33;
+        mvp.m33 = mv.m03 * p.m30 + mv.m13 * p.m31 + mv.m23 * p.m32 + mv.m33 * p.m33;
+        
+        loadTransferArray(mvp);
+        
+        // avoid NIO overhead
+        if(!OpenGlHelperExt.fastMatrix4fBufferCopy(transferArray, PipelineManager.modelViewProjectionMatrixBufferAddress))
+        {
+            PipelineManager.modelViewProjectionMatrixBuffer.put(transferArray, 0, 16);
+            PipelineManager.modelViewProjectionMatrixBuffer.position(0);
+        }
     }
 }

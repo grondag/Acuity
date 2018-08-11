@@ -10,6 +10,7 @@ import grondag.acuity.Acuity;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
+import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -221,7 +222,7 @@ public class CompoundBufferBuilder extends BufferBuilder
                     }
                     this.uploadPackingList = packing;
                 }
-                this.prepareUploadBuffer();
+                this.packingConsumer.packUpload();
             }
         }
     }
@@ -239,33 +240,49 @@ public class CompoundBufferBuilder extends BufferBuilder
        
     }
 
-    private void prepareUploadBuffer()
+    private static final int[] EMPTY_STARTS = new int[PipelineManager.MAX_PIPELINES];
+    
+    private final class Consumer extends VertexPackingConsumer
     {
-        final VertexPackingList packing = this.uploadPackingList;
-        if(packing == null)
-            return;
-        
         // tracks current position within vertex collectors
         // necessary in transparency layer when splitting pipelines
-        int[] pipelineStarts = new int[PipelineManager.MAX_PIPELINES];
+        final int[] pipelineStarts = new int[PipelineManager.MAX_PIPELINES];
         
-        final ExpandableByteBuffer buffer = BufferStore.claim();
-        buffer.expand(packing.totalBytes());
-        final IntBuffer intBuffer = buffer.intBuffer();
-        intBuffer.position(0);
+        @SuppressWarnings("null")
+        IntBuffer intBuffer;
         
-        //UGLY: isSolid not used / makes no sense here. IOC in general not a good fit.
-        packing.forEach((RenderPipeline p, int vertexCount, boolean isSolid) ->
+        private final void packUpload()
         {
-            final int pipelineIndex = p.getIndex();
+            final VertexPackingList packing = uploadPackingList;
+            if(packing == null)
+                return;
+            
+            System.arraycopy(EMPTY_STARTS, 0, pipelineStarts, 0, PipelineManager.MAX_PIPELINES);
+            
+            final ExpandableByteBuffer buffer = BufferStore.claim();
+            buffer.expand(packing.totalBytes());
+            intBuffer = buffer.intBuffer();
+            intBuffer.position(0);
+            
+            packing.forEach(this);
+            
+            buffer.byteBuffer().limit(packing.totalBytes());
+            uploadBuffer = buffer;
+        }
+        
+        @Override
+        public final void accept(RenderPipeline pipeline, int vertexCount)
+        {
+            final int pipelineIndex = pipeline.getIndex();
             final int startInt = pipelineStarts[pipelineIndex];
-            final int intLength = vertexCount * p.piplineVertexFormat().stride / 4;
+            final int intLength = vertexCount * pipeline.piplineVertexFormat().stride / 4;
             intBuffer.put(pipelineArray[pipelineIndex].rawData(), startInt, intLength);
             pipelineStarts[pipelineIndex] = startInt + intLength;
-        }, false);
-        buffer.byteBuffer().limit(packing.totalBytes());
-        this.uploadBuffer = buffer;
+        }            
+
     }
+    
+    private final Consumer packingConsumer = new Consumer();
     
     public void uploadTo(CompoundVertexBuffer target)
     {   

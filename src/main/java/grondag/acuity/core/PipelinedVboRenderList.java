@@ -166,7 +166,10 @@ public class PipelinedVboRenderList extends VboRenderList implements IAcuityList
             
             Matrix4f.mul(xlatMatrix, mvMatrix, mvPos);
             Matrix4f.mul(mvChunk, mvPos, mvPos);
-            vertexbuffer.renderChunk(mvPos, isSolidLayer);
+            
+            PipelineManager.INSTANCE.setModelViewMatrix(mvPos);
+            
+            vertexbuffer.renderChunk(isSolidLayer);
         }
         
         if(OpenGlHelperExt.isVaoEnabled())
