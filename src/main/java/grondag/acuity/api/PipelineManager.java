@@ -10,6 +10,7 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Configurator;
+import grondag.acuity.core.OpenGlHelperExt;
 import grondag.acuity.core.PipelineShaderManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
@@ -222,7 +223,8 @@ public final class PipelineManager implements IPipelineManager
         
         projectionMatrixBuffer.position(0);
         GlStateManager.getFloat(GL11.GL_PROJECTION_MATRIX, projectionMatrixBuffer);
-        projMatrix.loadTranspose(projectionMatrixBuffer);
+        OpenGlHelperExt.loadTransposeQuickly(projectionMatrixBuffer, projMatrix);
+//        projMatrix.loadTranspose(projectionMatrixBuffer);
         
         for(int i = 0; i < this.pipelineCount; i++)
         {

@@ -496,6 +496,8 @@ public class Program
     {
         protected final FloatBuffer uniformFloatBuffer;
         
+        protected final float[] lastValue = new float[16];
+        
         protected UniformMatrix4f(String name, @Nullable Consumer<IUniformMatrix4f> initializer, @Nullable UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency);
@@ -509,45 +511,33 @@ public class Program
         }
         
         @Override
-        public void set(float m00, float m01, float m02, float m03, float m10, float m11, float m12, float m13, float m20, float m21, float m22, float m23, float m30, float m31, float m32, float m33)
+        public void set(float... elements)
         {
             if(this.unifID == -1) return;
-            if(!(   this.uniformFloatBuffer.get(0) == m00
-                 && this.uniformFloatBuffer.get(1) == m01
-                 && this.uniformFloatBuffer.get(2) == m02
-                 && this.uniformFloatBuffer.get(3) == m03
-                 && this.uniformFloatBuffer.get(4) == m10
-                 && this.uniformFloatBuffer.get(5) == m11
-                 && this.uniformFloatBuffer.get(6) == m12
-                 && this.uniformFloatBuffer.get(7) == m13
-                 && this.uniformFloatBuffer.get(8) == m20
-                 && this.uniformFloatBuffer.get(9) == m21
-                 && this.uniformFloatBuffer.get(10) == m22
-                 && this.uniformFloatBuffer.get(11) == m23
-                 && this.uniformFloatBuffer.get(12) == m30
-                 && this.uniformFloatBuffer.get(13) == m31
-                 && this.uniformFloatBuffer.get(14) == m32
-                 && this.uniformFloatBuffer.get(15) == m33))
-            {
-                this.uniformFloatBuffer.put(0, m00);
-                this.uniformFloatBuffer.put(1, m01);
-                this.uniformFloatBuffer.put(2, m02);
-                this.uniformFloatBuffer.put(3, m03);
-                this.uniformFloatBuffer.put(4, m10);
-                this.uniformFloatBuffer.put(5, m11);
-                this.uniformFloatBuffer.put(6, m12);
-                this.uniformFloatBuffer.put(7, m13);
-                this.uniformFloatBuffer.put(8, m20);
-                this.uniformFloatBuffer.put(9, m21);
-                this.uniformFloatBuffer.put(10, m22);
-                this.uniformFloatBuffer.put(11, m23);
-                this.uniformFloatBuffer.put(12, m30);
-                this.uniformFloatBuffer.put(13, m31);
-                this.uniformFloatBuffer.put(14, m32);
-                this.uniformFloatBuffer.put(15, m33);
-                this.uniformFloatBuffer.position(0);
-                this.setDirty();
-            }
+            if(elements.length != 16)
+                throw new ArrayIndexOutOfBoundsException("Matrix arrays must have 16 elements");
+            
+            if(lastValue[0] == elements[0]
+                 && lastValue[1] == elements[1]
+                 && lastValue[2] == elements[2]
+                 && lastValue[3] == elements[3]
+                 && lastValue[4] == elements[4]
+                 && lastValue[5] == elements[5]
+                 && lastValue[6] == elements[6]
+                 && lastValue[7] == elements[7]
+                 && lastValue[8] == elements[8]
+                 && lastValue[9] == elements[9]
+                 && lastValue[10] == elements[10]
+                 && lastValue[11] == elements[11]
+                 && lastValue[12] == elements[12]
+                 && lastValue[13] == elements[13]
+                 && lastValue[14] == elements[14]
+                 && lastValue[15] == elements[15]) 
+                return;
+            
+            this.uniformFloatBuffer.put(elements, 0, 16);
+            this.uniformFloatBuffer.position(0);
+            this.setDirty();
         }
         
         @Override

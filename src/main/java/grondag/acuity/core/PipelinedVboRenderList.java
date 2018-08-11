@@ -75,7 +75,22 @@ public class PipelinedVboRenderList extends VboRenderList
             }
         }
     }
+    /**
+     * Mimics what is in every render chunk. They all have the same matrix. 
+     */
+    private static final Matrix4f mvChunk = new Matrix4f();    
 
+    static
+    {
+        mvChunk.m00 = 1.000001f;
+        mvChunk.m11 = 1.000001f;
+        mvChunk.m22 = 1.000001f;
+        mvChunk.m03 = 0.0000076293945f;
+        mvChunk.m13 = 0.0000076293945f;
+        mvChunk.m23 = 0.0000076293945f;
+        mvChunk.m33 = 1.0f;
+    }
+    
     private final void renderChunkLayerAcuity(BlockRenderLayer layer)
     {
         final boolean isSolidLayer = layer != BlockRenderLayer.TRANSLUCENT;
@@ -92,10 +107,9 @@ public class PipelinedVboRenderList extends VboRenderList
             modelViewMatrixBuffer.position(0);
             GlStateManager.getFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrixBuffer);
             Matrix4f mvMatrix = new Matrix4f();
-            mvMatrix.loadTranspose(modelViewMatrixBuffer);
+            OpenGlHelperExt.loadTransposeQuickly(modelViewMatrixBuffer, mvMatrix);
             
-            Matrix4f xlatMatrix = new Matrix4f();
-            xlatMatrix.setIdentity();
+   
             
             // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
             // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
@@ -103,6 +117,10 @@ public class PipelinedVboRenderList extends VboRenderList
             // Forcing INVOKEVIRTUAL instead of INVOKEINTERFACE here.
             // May not matter with JIT compilers, but won't hurt.
             final ArrayList<RenderChunk> chunks = (ArrayList<RenderChunk>) this.renderChunks;
+            
+            Matrix4f mvPos = new Matrix4f();
+            Matrix4f xlatMatrix = new Matrix4f();
+            xlatMatrix.setIdentity();
             
             for (int i = 0; i < chunkCount; i++)
             {
@@ -115,19 +133,9 @@ public class PipelinedVboRenderList extends VboRenderList
                 xlatMatrix.m13 = (float)((double)blockpos.getY() - this.viewEntityY);
                 xlatMatrix.m23 = (float)((double)blockpos.getZ() - this.viewEntityZ);
                 
-                Matrix4f mvPos = Matrix4f.mul(xlatMatrix, mvMatrix, null);
-                Matrix4f mvChunk = new Matrix4f();
-                mvChunk.loadTranspose(renderchunk.modelviewMatrix);
-                // RenderChunk.multModelviewMatrix() may crash due to buffer overrun without this
-                renderchunk.modelviewMatrix.position(0);
-                Matrix4f mvm = Matrix4f.mul(mvChunk, mvPos, null);
-                
-//                OpenGlHelperExt.pushMatrixFast();
-//                this.preRenderChunk(renderchunk);
-//                OpenGlHelperExt.multMatrixFast(renderchunk.modelviewMatrix);
-
-                vertexbuffer.renderChunk(mvm, isSolidLayer);
-//                OpenGlHelperExt.popMatrixFast();
+                Matrix4f.mul(xlatMatrix, mvMatrix, mvPos);
+                Matrix4f.mul(mvChunk, mvPos, mvPos);
+                vertexbuffer.renderChunk(mvPos, isSolidLayer);
             }
             
             if(OpenGlHelperExt.isVaoEnabled())
@@ -140,13 +148,4 @@ public class PipelinedVboRenderList extends VboRenderList
             chunks.clear();
         }
     }
-
-    @Override
-    public final void preRenderChunk(RenderChunk renderChunkIn)
-    {
-        BlockPos blockpos = renderChunkIn.getPosition();
-        OpenGlHelperExt.translateFast((float)((double)blockpos.getX() - this.viewEntityX), (float)((double)blockpos.getY() - this.viewEntityY), (float)((double)blockpos.getZ() - this.viewEntityZ));
-    }
-    
-    
 }
