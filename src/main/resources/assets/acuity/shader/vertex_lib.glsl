@@ -19,9 +19,13 @@ varying vec2 v_texcoord_2;
 
 void setupVertex()
 {
-    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
-    vec4 viewCoord = gl_ModelViewMatrix * gl_Vertex;
+//    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;
+//    vec4 viewCoord = gl_ModelViewMatrix * gl_Vertex;
+    gl_Position = u_modelViewProjection * gl_Vertex;
+    vec4 viewCoord = u_modelView * gl_Vertex;
     gl_ClipVertex = viewCoord;
+
+    //TODO: put back
     gl_FogFragCoord = viewCoord.z; //length(viewCoord.xyz);
     gl_TexCoord[0] = gl_MultiTexCoord0;
     gl_TexCoord[1] = gl_MultiTexCoord1;

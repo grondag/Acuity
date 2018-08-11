@@ -29,9 +29,11 @@ import org.lwjgl.opengl.GLContext;
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
 import grondag.acuity.api.PipelineManager;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.text.translation.I18n;
+import net.minecraftforge.client.ForgeClientHandler;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -531,6 +533,19 @@ public class OpenGlHelperExt
             while(enabledCount < attributeEnabledCount)
                 GL20.glDisableVertexAttribArray(--attributeEnabledCount + 1);
         }
+    }
+    
+    /**
+     * Disables all generic vertex attributes and resets tracking state.
+     * Use after calling {@link #enableAttributesVao(int)}
+     */
+    public static void resetAttributes()
+    {
+        for(int i = 0; i < 6; i++)
+        {
+            GL20.glDisableVertexAttribArray(i);
+        }
+        attributeEnabledCount = 0;
     }
     
     /**

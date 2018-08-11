@@ -8,6 +8,7 @@ import javax.annotation.Nullable;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
@@ -223,29 +224,29 @@ public class CompoundVertexBuffer extends VertexBuffer
         this.vertexPackingConsumer.deleteGlBuffers();
     }
     
+//    /**
+//     * Renders all uploaded vbos relying on OpenGl fixed function state.
+//     * 
+//     * UGLY: need better way to pass solid layer state
+//     */
+//    public final void renderChunk(boolean isSolidLayer)
+//    {
+//        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+//        vertexPackingConsumer.reset();
+//        this.vertexPackingList.forEach(vertexPackingConsumer, isSolidLayer);
+//    }
+
     /**
-     * Renders all uploaded vbos relying on OpenGl fixed function state.
-     * 
-     * UGLY: need better way to pass solid layer state
+     * Remnant of a failed experiment
+     * Renders all uploaded vbos using the given model view matrix.
      */
-    public final void renderChunk(boolean isSolidLayer)
+    public void renderChunk(Matrix4f modelViewMatrix, boolean isSolidLayer)
     {
+        final VertexPackingList packing = this.vertexPackingList;
+        if(packing.size() == 0) return;
+        
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         vertexPackingConsumer.reset();
-        this.vertexPackingList.forEach(vertexPackingConsumer, isSolidLayer);
+        packing.forEach((RenderPipeline pipeline, int vertexCount, boolean isSolid) -> vertexPackingConsumer.accept(pipeline.updateModelViewMatrix(modelViewMatrix, isSolidLayer), vertexCount, isSolid), isSolidLayer);
     }
-
-//    /**
-//     * Remnant of a failed experiment
-//     * Renders all uploaded vbos using the given model view matrix.
-//     */
-//    public void renderChunk(Matrix4f modelViewMatrix)
-//    {
-//        final VertexPackingList packing = this.vertexPackingList;
-//        if(packing == null || packing.size() == 0) return;
-//        
-//        OpenGlHelper.glBindBuffer(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-//        vertexPackingConsumer.reset();
-//        packing.forEach((RenderPipeline pipeline, int vertexCount) -> vertexPackingConsumer.accept(pipeline.updateModelViewMatrix(modelViewMatrix), vertexCount));
-//    }
 }

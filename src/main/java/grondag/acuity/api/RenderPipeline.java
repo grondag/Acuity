@@ -4,6 +4,8 @@ import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
+import org.lwjgl.util.vector.Matrix4f;
+
 import grondag.acuity.Configurator;
 import grondag.acuity.api.IUniform.IUniform1f;
 import grondag.acuity.api.IUniform.IUniform1i;
@@ -90,24 +92,29 @@ public final class RenderPipeline implements IRenderPipeline
         return this.pipelineVertexFormat;
     }
     
-    // FAIL: unfortunately using explicit uniforms is slower
-//    /**
-//     * Will update modelView and modelViewProjection matrix uniforms if they were created via {@link #setupModelViewUniforms()}.
-//     * Otherwise has no effect.  Should be called after it is known the projection matrix will be current.<p>
-//     * 
-//     * Returns self as convenience.
-//     */
-//    @SuppressWarnings("null")
-//    public RenderPipeline updateModelViewMatrix(Matrix4f modelViewMatrix)
-//    {
-//        if(this.modelViewUniform != null);
-//            this.modelViewUniform.set(modelViewMatrix);
-//            
-//        if(this.modelViewProjectionUniform != null);
-//            this.modelViewProjectionUniform.set(Matrix4f.mul(modelViewMatrix, PipelineManager.INSTANCE.projMatrix, null));
-//            
-//        return this;
-//    }
+    /**
+     * Will update modelView and modelViewProjection matrix uniforms if they were created via {@link #setupModelViewUniforms()}.
+     * Otherwise has no effect.  Should be called after it is known the projection matrix will be current.<p>
+     * 
+     * Returns self as convenience.
+     */
+    public RenderPipeline updateModelViewMatrix(Matrix4f modelViewMatrix, boolean isSolidLayer)
+    {
+        updateModelViewMatrixInner(isSolidLayer ? this.solidProgram : this.translucentProgram, modelViewMatrix);
+        return this;
+    }
+    
+    @SuppressWarnings("null")
+    private RenderPipeline updateModelViewMatrixInner(Program targetProgram, Matrix4f modelViewMatrix)
+    {
+        if(targetProgram.modelViewUniform != null);
+            targetProgram.modelViewUniform.set(modelViewMatrix);
+            
+        if(targetProgram.modelViewProjectionUniform != null);
+            targetProgram.modelViewProjectionUniform.set(Matrix4f.mul(modelViewMatrix, PipelineManager.INSTANCE.projMatrix, null));
+            
+        return this;
+    }
     
     /**
      * Avoids a pointer chase, more concise code.
@@ -237,5 +244,11 @@ public final class RenderPipeline implements IRenderPipeline
     {
         this.solidProgram.onGameTick();
         this.translucentProgram.onGameTick();        
+    }
+
+    public void setupModelViewUniforms()
+    {
+        this.solidProgram.setupModelViewUniforms();
+        this.translucentProgram.setupModelViewUniforms();
     }
 }

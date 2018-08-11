@@ -642,27 +642,29 @@ public class Program
         this.gameTickUpdates.forEach(u -> u.markForInitialization());
     }
     
-    // FAIL: unfortunately using explicit uniforms is slower
-//    protected @Nullable UniformMatrix4f modelViewUniform;
-//    protected @Nullable UniformMatrix4f modelViewProjectionUniform;
-//    public void setupModelViewUniforms()
-//    {
-//        if(containsUniformSpec(this, "mat4", "u_modelView"))
-//        {
-//            this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.ON_LOAD, u -> 
-//            {
-//                // NOOP - will be set as needed
-//            });
-//        }
-//
-//        if(containsUniformSpec(this, "mat4", "u_modelViewProjection"))
-//        {
-//            this.modelViewProjectionUniform = this.uniformMatrix4f("u_modelViewProjection", UniformUpdateFrequency.ON_LOAD, u -> 
-//            {
-//                // NOOP - will be set as needed
-//            });
-//        }
-//    }
+    @Nullable
+    public UniformMatrix4f modelViewUniform;
+    @Nullable
+    public UniformMatrix4f modelViewProjectionUniform;
+    
+    public void setupModelViewUniforms()
+    {
+        if(containsUniformSpec("mat4", "u_modelView"))
+        {
+            this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.ON_LOAD, u -> 
+            {
+                // NOOP - will be set as needed
+            });
+        }
+
+        if(containsUniformSpec("mat4", "u_modelViewProjection"))
+        {
+            this.modelViewProjectionUniform = this.uniformMatrix4f("u_modelViewProjection", UniformUpdateFrequency.ON_LOAD, u -> 
+            {
+                // NOOP - will be set as needed
+            });
+        }
+    }
     
     public boolean containsUniformSpec(String type, String name)
     {
