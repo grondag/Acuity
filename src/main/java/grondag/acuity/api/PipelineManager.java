@@ -207,12 +207,14 @@ public final class PipelineManager implements IPipelineManager
      * Called by our chunk render list before each round of chunk renders.
      * Can be called multiple times per frame but we only update once per frame.
      * Necessary because Forge doesn't provide a hook that happens after camera setup
-     * but before block rendering.
+     * but before block rendering.<p>
+     * 
+     * Returns true if this was first pass so caller can handle 1x actions.
      */
-    public void beforeRenderChunks()
+    public boolean beforeRenderChunks()
     {
         if(didUpdatePipelinesThisFrame)
-            return;
+            return false;
         
         didUpdatePipelinesThisFrame = true;
         
@@ -225,6 +227,8 @@ public final class PipelineManager implements IPipelineManager
         {
             this.pipelines[i].onRenderTick();
         }
+        
+        return true;
     }
 
     public void onGameTick(ClientTickEvent event)

@@ -1,6 +1,8 @@
 package grondag.acuity.api;
 
+import java.lang.ref.WeakReference;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.function.Consumer;
 
 import grondag.acuity.Acuity;
@@ -15,7 +17,7 @@ public final class AcuityRuntime implements IAcuityRuntime
 {
     public static final AcuityRuntime INSTANCE = new AcuityRuntime();
 
-    private ArrayList<IAcuityListener> listeners = new ArrayList<>();
+    private ArrayList<WeakReference<IAcuityListener>> listeners = new ArrayList<WeakReference<IAcuityListener>>();
     
     private AcuityRuntime() {};
     
@@ -35,6 +37,7 @@ public final class AcuityRuntime implements IAcuityRuntime
     public void forceReload()
     {
         Acuity.INSTANCE.getLog().info(I18n.translateToLocal("misc.info_reloading"));
+        Acuity.recomputeEnabledStatus();
         PipelineShaderManager.INSTANCE.forceReload();
         PipelineManager.INSTANCE.forceReload();
         PipelineHooks.forceReload();
@@ -43,11 +46,20 @@ public final class AcuityRuntime implements IAcuityRuntime
     @Override
     public void registerListener(IAcuityListener listener)
     {
-        this.listeners.add(listener);
+        this.listeners.add(new WeakReference<IAcuityListener>(listener));
     }
     
     public void forEachListener(Consumer<IAcuityListener> c)
     {
-        this.listeners.forEach(c);
+        Iterator<WeakReference<IAcuityListener>> it = this.listeners.iterator();
+        while(it.hasNext())
+        {
+            WeakReference<IAcuityListener> ref = it.next();
+            IAcuityListener listener = ref.get();
+            if(listener == null)
+                it.remove();
+            else
+                c.accept(listener);
+        }
     }
 }

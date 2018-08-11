@@ -62,8 +62,11 @@ public class Configurator
         ConfigManager.sync(Acuity.MODID, Config.Type.INSTANCE);
         if(oldEnabled != Configurator.enabled)
         {
+            Acuity.recomputeEnabledStatus();
+            
             // important to reload renderers immediately in case 
             // this results in change of vbo to/from  displaylists
+            // or changes rendering pipline logic path
             Minecraft.getMinecraft().renderGlobal.loadRenderers();
             
             final boolean isEnabled = Acuity.isModEnabled();

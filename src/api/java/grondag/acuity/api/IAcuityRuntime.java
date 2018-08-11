@@ -20,7 +20,9 @@ public interface IAcuityRuntime
     
     /**
      * Use if you need callbacks for status changes.
+     * Holds a weak reference, so no need to remove listeners that fall out of scope.
      */
     @SideOnly(Side.CLIENT)
     void registerListener(IAcuityListener lister);
+
 }

@@ -60,13 +60,20 @@ public class Acuity
 	@Instance
 	public static Acuity INSTANCE = new Acuity();
 	
-	@SideOnly(Side.CLIENT)
-	public static final boolean isModEnabled()
-	{
-	    return glCapabilitiesMet && ASMTransformer.allPatchesSuccessful() && Configurator.enabled;
-	}
-	
 	private static boolean glCapabilitiesMet = false;
+	private static boolean isEnabled = false;
+	
+	@SideOnly(Side.CLIENT)
+    public static final boolean isModEnabled()
+    {
+        return isEnabled;
+    }
+	
+	@SideOnly(Side.CLIENT)
+	public static final void recomputeEnabledStatus()
+	{
+	    isEnabled = glCapabilitiesMet && ASMTransformer.allPatchesSuccessful() && Configurator.enabled;
+	}
 	
     @Nullable
     private static Logger log;
@@ -104,6 +111,7 @@ public class Acuity
         }
         getLog().info(I18n.translateToLocal("misc.hardware_ok"));
         glCapabilitiesMet = true;
+        recomputeEnabledStatus();
 	}
 
     @SideOnly(Side.CLIENT)
