@@ -2,8 +2,6 @@ package grondag.acuity.api;
 
 import java.util.function.Consumer;
 
-import javax.annotation.Nullable;
-
 import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Configurator;
@@ -136,7 +134,7 @@ public final class RenderPipeline implements IRenderPipeline
             throw new UnsupportedOperationException(I18n.translateToLocal("misc.warn_uniform_program_immutable_exception"));    
     }
     
-    public void uniformSampler2d(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1i> initializer)
+    public void uniformSampler2d(String name, UniformUpdateFrequency frequency, Consumer<IUniform1i> initializer)
     {
         if(solidProgram.containsUniformSpec("sampler2D", name))
             solidProgram.uniform1i(name, frequency, initializer);
@@ -145,7 +143,7 @@ public final class RenderPipeline implements IRenderPipeline
     }
     
     @Override
-    public void uniform1f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1f> initializer)
+    public void uniform1f(String name, UniformUpdateFrequency frequency, Consumer<IUniform1f> initializer)
     {
         checkFinal();
         if(solidProgram.containsUniformSpec("float", name))
@@ -155,7 +153,7 @@ public final class RenderPipeline implements IRenderPipeline
     }
 
     @Override
-    public void uniform2f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2f> initializer)
+    public void uniform2f(String name, UniformUpdateFrequency frequency, Consumer<IUniform2f> initializer)
     {
         checkFinal();    
         if(solidProgram.containsUniformSpec("vec2", name))
@@ -165,7 +163,7 @@ public final class RenderPipeline implements IRenderPipeline
     }
 
     @Override
-    public void uniform3f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3f> initializer)
+    public void uniform3f(String name, UniformUpdateFrequency frequency, Consumer<IUniform3f> initializer)
     {
         checkFinal();
         if(solidProgram.containsUniformSpec("vec3", name))
@@ -175,7 +173,7 @@ public final class RenderPipeline implements IRenderPipeline
     }
 
     @Override
-    public void uniform4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4f> initializer)
+    public void uniform4f(String name, UniformUpdateFrequency frequency, Consumer<IUniform4f> initializer)
     {
         checkFinal();
         if(solidProgram.containsUniformSpec("vec4", name))
@@ -185,7 +183,7 @@ public final class RenderPipeline implements IRenderPipeline
     }
 
     @Override
-    public void uniform1i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1i> initializer)
+    public void uniform1i(String name, UniformUpdateFrequency frequency, Consumer<IUniform1i> initializer)
     {
         checkFinal();
         if(solidProgram.containsUniformSpec("int", name))
@@ -195,7 +193,7 @@ public final class RenderPipeline implements IRenderPipeline
     }
 
     @Override
-    public void uniform2i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2i> initializer)
+    public void uniform2i(String name, UniformUpdateFrequency frequency, Consumer<IUniform2i> initializer)
     {
         checkFinal();
         if(solidProgram.containsUniformSpec("ivec2", name))
@@ -205,7 +203,7 @@ public final class RenderPipeline implements IRenderPipeline
     }
 
     @Override
-    public void uniform3i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3i> initializer)
+    public void uniform3i(String name, UniformUpdateFrequency frequency, Consumer<IUniform3i> initializer)
     {
         checkFinal();
         if(solidProgram.containsUniformSpec("ivec3", name))
@@ -215,7 +213,7 @@ public final class RenderPipeline implements IRenderPipeline
     }
 
     @Override
-    public void uniform4i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4i> initializer)
+    public void uniform4i(String name, UniformUpdateFrequency frequency, Consumer<IUniform4i> initializer)
     {
         checkFinal();
         if(solidProgram.containsUniformSpec("ivec4", name))

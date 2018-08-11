@@ -44,82 +44,77 @@ public class Program
     public final boolean isSolidLayer;
  
     private final ObjectArrayList<Uniform<?>> uniforms = new ObjectArrayList<>();
-    protected final ObjectArrayList<Uniform<?>> dirtyUniforms = new ObjectArrayList<>();
     private final ObjectArrayList<Uniform<?>> renderTickUpdates = new ObjectArrayList<>();
     private final ObjectArrayList<Uniform<?>> gameTickUpdates = new ObjectArrayList<>();
     
+    protected int dirtyCount = 0;
+    protected final Uniform<?>[] dirtyUniforms = new Uniform[32];
+    
     public abstract class Uniform<T extends IUniform>
     {
-        private final String name;
-        protected boolean isUniformDirty = true;
-        protected boolean needsInitialization = true;
-        protected int unifID = -1;
-        protected final @Nullable Consumer<T> initializer;
-        protected final@Nullable UniformUpdateFrequency frequency;
+        protected static final int FLAG_NEEDS_UPLOAD = 1;
+        protected static final int FLAG_NEEDS_INITIALIZATION = 2;
         
-        protected Uniform(String name, @Nullable Consumer<T> initializer, @Nullable UniformUpdateFrequency frequency)
+        private final String name;
+        protected int flags = 0;
+        protected int unifID = -1;
+        protected final Consumer<T> initializer;
+        protected final UniformUpdateFrequency frequency;
+        
+        protected Uniform(String name, Consumer<T> initializer, UniformUpdateFrequency frequency)
         {
             this.name = name;
             this.initializer = initializer;
             this.frequency = frequency;
-            this.needsInitialization = initializer != null;
-            this.setDirty();
         }
         
-        protected void setDirty()
+        protected final void setDirty()
         {
-            if(!this.isUniformDirty)
-            {
-                this.isUniformDirty = true;
-                dirtyUniforms.add(this);
-            }
+            final int flags = this.flags;
+            if(flags == 0)
+                dirtyUniforms[dirtyCount++] = this;
+            
+            this.flags = flags | FLAG_NEEDS_UPLOAD;
         }
         
-        protected void markForInitialization()
+        protected final void markForInitialization()
         {
-            if(this.initializer != null)
-            {
-                this.needsInitialization = true;
-                dirtyUniforms.add(this);
-            }
+            final int flags = this.flags;
+            
+            if(flags == 0)
+                dirtyUniforms[dirtyCount++] = this;
+            
+            this.flags = flags | FLAG_NEEDS_INITIALIZATION;
         }
         
-        @SuppressWarnings({ "unchecked"})
-        protected void initialize()
-        {
-            if(this.needsInitialization && this.initializer != null)
-            {
-                this.initializer.accept((T) this);
-                this.needsInitialization = false;
-            }
-        }
-        
-        private void load(int programID)
+        private final void load(int programID)
         {
             this.unifID = OpenGlHelper.glGetUniformLocation(programID, name);
             if(this.unifID == -1)
             {
                 Acuity.INSTANCE.getLog().debug(I18n.translateToLocalFormatted("misc.debug_missing_uniform", name, Program.this.vertexShader.fileName, Program.this.fragmentShader.fileName));
-                this.isUniformDirty = false;
+                this.flags = 0;
             }
             else
             {
-                this.markForInitialization();
-                this.isUniformDirty = true;
+                this.flags = FLAG_NEEDS_INITIALIZATION | FLAG_NEEDS_UPLOAD;
+                dirtyUniforms[dirtyCount++] = this;
             }
         }
         
+        @SuppressWarnings("unchecked")
         protected final void upload()
         {
-            if(this.unifID >= 0)
-            {
-                this.initialize();
-                if(this.isUniformDirty)
-                {
-                    this.isUniformDirty = false;
-                    this.uploadInner();
-                }
-            }
+            if(this.flags == 0)
+                return;
+            
+            if((this.flags & FLAG_NEEDS_INITIALIZATION) == FLAG_NEEDS_INITIALIZATION)
+                this.initializer.accept((T) this);
+            
+            if((this.flags & FLAG_NEEDS_UPLOAD) == FLAG_NEEDS_UPLOAD)
+                this.uploadInner();
+            
+            this.flags = 0;
         }
         
         protected abstract void uploadInner();
@@ -129,7 +124,7 @@ public class Program
     {
         protected final FloatBuffer uniformFloatBuffer;
         
-        protected UniformFloat(String name, @Nullable Consumer<T> initializer, @Nullable UniformUpdateFrequency frequency, int size)
+        protected UniformFloat(String name, Consumer<T> initializer, UniformUpdateFrequency frequency, int size)
         {
             super(name, initializer, frequency);
             this.uniformFloatBuffer = BufferUtils.createFloatBuffer(size);
@@ -138,13 +133,13 @@ public class Program
     
     public class Uniform1f extends UniformFloat<IUniform1f> implements IUniform1f
     {
-        protected Uniform1f(String name, @Nullable Consumer<IUniform1f> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform1f(String name, Consumer<IUniform1f> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 1);
         }
 
         @Override
-        public void set(float value)
+        public final void set(float value)
         {
             if(this.unifID == -1) return;
             if(this.uniformFloatBuffer.get(0) != value)
@@ -163,13 +158,13 @@ public class Program
     
     public class Uniform2f extends UniformFloat<IUniform2f> implements IUniform2f
     {
-        protected Uniform2f(String name, @Nullable Consumer<IUniform2f> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform2f(String name, Consumer<IUniform2f> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 2);
         }
 
         @Override
-        public void set(float v0, float v1)
+        public final void set(float v0, float v1)
         {
             if(this.unifID == -1) return;
             if(this.uniformFloatBuffer.get(0) != v0)
@@ -193,13 +188,13 @@ public class Program
     
     public class Uniform3f extends UniformFloat<IUniform3f> implements IUniform3f
     {
-        protected Uniform3f(String name, @Nullable Consumer<IUniform3f> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform3f(String name, Consumer<IUniform3f> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 3);
         }
 
         @Override
-        public void set(float v0, float v1, float v2)
+        public final void set(float v0, float v1, float v2)
         {
             if(this.unifID == -1) return;
             if(this.uniformFloatBuffer.get(0) != v0)
@@ -228,13 +223,13 @@ public class Program
     
     public class Uniform4f extends UniformFloat<IUniform4f> implements IUniform4f
     {
-        protected Uniform4f(String name, @Nullable Consumer<IUniform4f> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform4f(String name, Consumer<IUniform4f> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 4);
         }
 
         @Override
-        public void set(float v0, float v1, float v2, float v3)
+        public final void set(float v0, float v1, float v2, float v3)
         {
             if(this.unifID == -1) return;
             if(this.uniformFloatBuffer.get(0) != v0)
@@ -276,22 +271,22 @@ public class Program
         return toAdd;
     }
     
-    public IUniform1f uniform1f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1f> initializer)
+    public IUniform1f uniform1f(String name, UniformUpdateFrequency frequency, Consumer<IUniform1f> initializer)
     {
         return addUniform(new Uniform1f(name, initializer, frequency));
     }
     
-    public IUniform2f uniform2f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2f> initializer)
+    public IUniform2f uniform2f(String name, UniformUpdateFrequency frequency, Consumer<IUniform2f> initializer)
     {
         return addUniform(new Uniform2f(name, initializer, frequency));
     }
     
-    public IUniform3f uniform3f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3f> initializer)
+    public IUniform3f uniform3f(String name, UniformUpdateFrequency frequency, Consumer<IUniform3f> initializer)
     {
         return addUniform(new Uniform3f(name, initializer, frequency));
     }
     
-    public IUniform4f uniform4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4f> initializer)
+    public IUniform4f uniform4f(String name, UniformUpdateFrequency frequency, Consumer<IUniform4f> initializer)
     {
         return addUniform(new Uniform4f(name, initializer, frequency));
     }
@@ -300,7 +295,7 @@ public class Program
     {
         protected final IntBuffer uniformIntBuffer;
         
-        protected UniformInt(String name, @Nullable Consumer<T> initializer, @Nullable UniformUpdateFrequency frequency, int size)
+        protected UniformInt(String name, Consumer<T> initializer, UniformUpdateFrequency frequency, int size)
         {
             super(name, initializer, frequency);
             this.uniformIntBuffer = BufferUtils.createIntBuffer(size);
@@ -309,13 +304,13 @@ public class Program
     
     public class Uniform1i extends UniformInt<IUniform1i> implements IUniform1i
     {
-        protected Uniform1i(String name, @Nullable Consumer<IUniform1i> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform1i(String name, Consumer<IUniform1i> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 1);
         }
 
         @Override
-        public void set(int value)
+        public final void set(int value)
         {
             if(this.unifID == -1) return;
             if(this.uniformIntBuffer.get(0) != value)
@@ -334,13 +329,13 @@ public class Program
     
     public class Uniform2i extends UniformInt<IUniform2i> implements IUniform2i
     {
-        protected Uniform2i(String name, @Nullable Consumer<IUniform2i> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform2i(String name, Consumer<IUniform2i> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 2);
         }
 
         @Override
-        public void set(int v0, int v1)
+        public final void set(int v0, int v1)
         {
             if(this.unifID == -1) return;
             if(this.uniformIntBuffer.get(0) != v0)
@@ -364,13 +359,13 @@ public class Program
     
     public class Uniform3i extends UniformInt<IUniform3i> implements IUniform3i
     {
-        protected Uniform3i(String name, @Nullable Consumer<IUniform3i> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform3i(String name, Consumer<IUniform3i> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 3);
         }
 
         @Override
-        public void set(int v0, int v1, int v2)
+        public final void set(int v0, int v1, int v2)
         {
             if(this.unifID == -1) return;
             if(this.uniformIntBuffer.get(0) != v0)
@@ -399,13 +394,13 @@ public class Program
     
     public class Uniform4i extends UniformInt<IUniform4i> implements IUniform4i
     {
-        protected Uniform4i(String name, @Nullable Consumer<IUniform4i> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected Uniform4i(String name, Consumer<IUniform4i> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 4);
         }
 
         @Override
-        public void set(int v0, int v1, int v2, int v3)
+        public final void set(int v0, int v1, int v2, int v3)
         {
             if(this.unifID == -1) return;
             if(this.uniformIntBuffer.get(0) != v0)
@@ -437,22 +432,22 @@ public class Program
         }
     }
     
-    public IUniform1i uniform1i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1i> initializer)
+    public IUniform1i uniform1i(String name, UniformUpdateFrequency frequency, Consumer<IUniform1i> initializer)
     {
         return addUniform(new Uniform1i(name, initializer, frequency));
     }
     
-    public IUniform2i uniform2i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2i> initializer)
+    public IUniform2i uniform2i(String name, UniformUpdateFrequency frequency, Consumer<IUniform2i> initializer)
     {
         return addUniform(new Uniform2i(name, initializer, frequency));
     }
     
-    public IUniform3i uniform3i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3i> initializer)
+    public IUniform3i uniform3i(String name, UniformUpdateFrequency frequency, Consumer<IUniform3i> initializer)
     {
         return addUniform(new Uniform3i(name, initializer, frequency));
     }
     
-    public IUniform4i uniform4i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4i> initializer)
+    public IUniform4i uniform4i(String name, UniformUpdateFrequency frequency, Consumer<IUniform4i> initializer)
     {
         return addUniform(new Uniform4i(name, initializer, frequency));
     }
@@ -468,28 +463,31 @@ public class Program
     /**
      * Call after render / resource refresh to force shader reload.
      */
-    public void forceReload()
+    public final void forceReload()
     {
         this.needsLoad = true;
     }
 
     
-    public void activate()
+    public final void activate()
     {
         if(this.needsLoad)
             this.load();
         
-        final int progID = this.progID;
-        if(progID <= 0 || this.isErrored)
+        if(this.isErrored)
             return;
         
-        OpenGlHelperExt.glUseProgramFast(progID);
+        OpenGlHelperExt.glUseProgramFast(this.progID);
         
-        if(!this.dirtyUniforms.isEmpty())
+        final int count = this.dirtyCount;
+        if(count == 0)
+            return;
+        
+        for(int i = 0; i < count; i++)
         {
-            this.dirtyUniforms.forEach(u -> u.upload());
-            this.dirtyUniforms.clear();
+            this.dirtyUniforms[i].upload();
         }
+        this.dirtyCount = 0;
     }
     
     public class UniformMatrix4f extends Uniform<IUniformMatrix4f> implements IUniformMatrix4f
@@ -498,20 +496,20 @@ public class Program
         
         protected final float[] lastValue = new float[16];
         
-        protected UniformMatrix4f(String name, @Nullable Consumer<IUniformMatrix4f> initializer, @Nullable UniformUpdateFrequency frequency)
+        protected UniformMatrix4f(String name, Consumer<IUniformMatrix4f> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency);
             this.uniformFloatBuffer = BufferUtils.createFloatBuffer(16);
         }
 
         @Override
-        public void set(Matrix4f matrix)
+        public final void set(Matrix4f matrix)
         {
             this.set(matrix.m00, matrix.m01, matrix.m02, matrix.m03, matrix.m10, matrix.m11, matrix.m12, matrix.m13, matrix.m20, matrix.m21, matrix.m22, matrix.m23, matrix.m30, matrix.m31, matrix.m32, matrix.m33);
         }
         
         @Override
-        public void set(float... elements)
+        public final void set(float... elements)
         {
             if(this.unifID == -1) return;
             if(elements.length != 16)
@@ -547,7 +545,7 @@ public class Program
         }
     }
     
-    public UniformMatrix4f uniformMatrix4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniformMatrix4f> initializer)
+    public UniformMatrix4f uniformMatrix4f(String name, UniformUpdateFrequency frequency, Consumer<IUniformMatrix4f> initializer)
     {
         return addUniform(new UniformMatrix4f(name, initializer, frequency));
     }
@@ -555,12 +553,12 @@ public class Program
     /**
      * NB: Not necessary to call if going to activate a different shader.
      */
-    public void deactivate()
+    public final void deactivate()
     {
         OpenGlHelper.glUseProgram(0);
     }
     
-    private void load()
+    private final void load()
     {
         this.needsLoad = false;
         this.isErrored = true;
@@ -592,7 +590,7 @@ public class Program
     /**
      * Return true on success
      */
-    private boolean loadInner()
+    private final boolean loadInner()
     {
         final int programID = this.progID;
         if(programID <= 0)
@@ -622,12 +620,12 @@ public class Program
         return true;
     }
 
-    public void onRenderTick()
+    public final void onRenderTick()
     {
         this.renderTickUpdates.forEach(u -> u.markForInitialization());
     }
 
-    public void onGameTick()
+    public final void onGameTick()
     {
         this.gameTickUpdates.forEach(u -> u.markForInitialization());
     }
@@ -637,7 +635,7 @@ public class Program
     @Nullable
     public UniformMatrix4f modelViewProjectionUniform;
     
-    public void setupModelViewUniforms()
+    public final void setupModelViewUniforms()
     {
         if(containsUniformSpec("mat4", "u_modelView"))
         {

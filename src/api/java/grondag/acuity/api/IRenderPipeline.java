@@ -2,8 +2,6 @@ package grondag.acuity.api;
 
 import java.util.function.Consumer;
 
-import javax.annotation.Nullable;
-
 import grondag.acuity.api.IUniform.IUniform1f;
 import grondag.acuity.api.IUniform.IUniform1i;
 import grondag.acuity.api.IUniform.IUniform2f;
@@ -28,28 +26,28 @@ public interface IRenderPipeline
     TextureFormat textureFormat();
     
     @SideOnly(Side.CLIENT)
-    void uniform1f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1f> initializer);
+    void uniform1f(String name, UniformUpdateFrequency frequency, Consumer<IUniform1f> initializer);
 
     @SideOnly(Side.CLIENT)
-    void uniform2f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2f> initializer);
+    void uniform2f(String name, UniformUpdateFrequency frequency, Consumer<IUniform2f> initializer);
 
     @SideOnly(Side.CLIENT)
-    void uniform3f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3f> initializer);
+    void uniform3f(String name, UniformUpdateFrequency frequency, Consumer<IUniform3f> initializer);
 
     @SideOnly(Side.CLIENT)
-    void uniform4f(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4f> initializer);
+    void uniform4f(String name, UniformUpdateFrequency frequency, Consumer<IUniform4f> initializer);
 
     @SideOnly(Side.CLIENT)
-    void uniform1i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform1i> initializer);
+    void uniform1i(String name, UniformUpdateFrequency frequency, Consumer<IUniform1i> initializer);
 
     @SideOnly(Side.CLIENT)
-    void uniform2i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform2i> initializer);
+    void uniform2i(String name, UniformUpdateFrequency frequency, Consumer<IUniform2i> initializer);
 
     @SideOnly(Side.CLIENT)
-    void uniform3i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform3i> initializer);
+    void uniform3i(String name, UniformUpdateFrequency frequency, Consumer<IUniform3i> initializer);
 
     @SideOnly(Side.CLIENT)
-    void uniform4i(String name, @Nullable UniformUpdateFrequency frequency, @Nullable Consumer<IUniform4i> initializer);
+    void uniform4i(String name, UniformUpdateFrequency frequency, Consumer<IUniform4i> initializer);
 
     /**
      * Call after all uniforms are added to make this program immutable.  Any attempt to add uniforms after calling

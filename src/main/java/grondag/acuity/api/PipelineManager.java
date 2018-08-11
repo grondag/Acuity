@@ -201,11 +201,6 @@ public final class PipelineManager implements IPipelineManager
         this.partialTicks = partialTicks;
         if(entity.world != null)
             worldTime = Animation.getWorldTime(entity.world, partialTicks);
-        
-        for(int i = 0; i < this.pipelineCount; i++)
-        {
-            this.pipelines[i].onRenderTick();
-        }
     }
     
     /**
