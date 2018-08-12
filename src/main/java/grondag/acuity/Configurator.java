@@ -57,6 +57,20 @@ public class Configurator
     @Comment({"When enabled, tracks and outputs timing statistics for rendering.",
         " Has a small performance impact. Useful only for testing."})
     public static boolean enableRenderStats = false;
+    
+    @LangKey("config.enable_block_stats")
+    @RequiresMcRestart
+    @Comment({"When enabled, tracks and outputs timing statistics for lighting ",
+        " and buffering block models during chunk rebuilds.",
+        " Has a small performance impact. Useful only for testing."})
+    public static boolean enableBlockStats = false;
+    
+    @LangKey("config.enable_fluid_stats")
+    @RequiresMcRestart
+    @Comment({"When enabled, tracks and outputs timing statistics for lighting ",
+        " and buffering fluid models during chunk rebuilds.",
+        " Has a small performance impact. Useful only for testing."})
+    public static boolean enableFluidStats = false;
 
     public static void handleChange(PostConfigChangedEvent event)
     {

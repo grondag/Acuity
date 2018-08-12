@@ -1,6 +1,8 @@
 package grondag.acuity.core;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.LongAccumulator;
 
 import grondag.acuity.Configurator;
 import grondag.acuity.Acuity;
@@ -119,6 +121,30 @@ public class PipelineHooks
         layerFlags[2] = false;
     }
     
+    private static AtomicInteger fluidModelCount = new AtomicInteger();
+    private static LongAccumulator fluidModelNanos = new LongAccumulator((l, r) -> l + r, 0);
+    
+    /**
+     * Performance counting version of {@link #renderFluid(BlockFluidRenderer, IBlockAccess, IBlockState, BlockPos, BufferBuilder)}
+     */
+    public static boolean renderFluidDebug(BlockFluidRenderer fluidRenderer, IBlockAccess blockAccess, IBlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
+    {
+        final long start = System.nanoTime();
+        final boolean result = renderFluid(fluidRenderer, blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
+        fluidModelNanos.accumulate(System.nanoTime() - start);
+        if(fluidModelCount.incrementAndGet() == 50000)
+        {
+            // could misalign one or two samples but close enough
+            long total = fluidModelNanos.getThenReset();
+            fluidModelCount.set(0);
+            
+            Acuity.INSTANCE.getLog().info(String.format("Average ns per fluid model rebuild (Acuity %s) = %f", 
+                    Acuity.isModEnabled() ? "Enabled" : "Disabled",
+                    total / 50000.0));
+        }
+        return result;
+    }
+    
     /**
      * Handles vanilla special-case rendering for lava and water.
      * Forge fluids should come as block models instead.
@@ -149,6 +175,31 @@ public class PipelineHooks
             return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
     }
 
+    private static AtomicInteger blockModelCount = new AtomicInteger();
+    private static LongAccumulator blockModelNanos = new LongAccumulator((l, r) -> l + r, 0);
+    
+    /**
+     * Performance counting version of #
+     */
+    public static boolean renderModelDebug(BlockModelRenderer blockModelRenderer, IBlockAccess blockAccess, IBakedModel model, 
+            IBlockState state, BlockPos pos, BufferBuilder bufferBuilderIn, boolean checkSides)
+    {
+        final long start = System.nanoTime();
+        final boolean result = renderModel(blockModelRenderer, blockAccess, model, state, pos, bufferBuilderIn, checkSides);
+        blockModelNanos.accumulate(System.nanoTime() - start);
+        if(blockModelCount.incrementAndGet() == 500000)
+        {
+            // could misalign one or two samples but close enough
+            long total = blockModelNanos.getThenReset();
+            blockModelCount.set(0);
+            
+            Acuity.INSTANCE.getLog().info(String.format("Average ns per block model rebuild (Acuity %s) = %f", 
+                    Acuity.isModEnabled() ? "Enabled" : "Disabled",
+                    total / 500000.0));
+        }
+        return result;
+    }
+    
     public static boolean renderModel(BlockModelRenderer blockModelRenderer, IBlockAccess blockAccess, IBakedModel model, IBlockState state, BlockPos pos,
             BufferBuilder bufferBuilderIn, boolean checkSides)
     {
@@ -179,7 +230,7 @@ public class PipelineHooks
         }
         catch (Throwable throwable)
         {
-            CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Tesselating block model (pipelined render)");
+            CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Tesselating block model (Acuity pipelined render)");
             CrashReportCategory crashreportcategory = crashreport.makeCategory("Block model being tesselated");
             CrashReportCategory.addBlockInfo(crashreportcategory, posIn, stateIn);
             throw new ReportedException(crashreport);
@@ -210,7 +261,7 @@ public class PipelineHooks
         }
         catch (Throwable throwable)
         {
-            CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Tesselating block model (pipelined render)");
+            CrashReport crashreport = CrashReport.makeCrashReport(throwable, "Tesselating block model (Acuity pipelined vanilla render)");
             CrashReportCategory crashreportcategory = crashreport.makeCategory("Block model being tesselated");
             CrashReportCategory.addBlockInfo(crashreportcategory, posIn, stateIn);
             throw new ReportedException(crashreport);

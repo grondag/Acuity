@@ -27,3 +27,6 @@ config.acuity_enabled=Enabled
 config.acuity_enable_vao=Enable VAOs
 config.lighting_model=Lighting Model (WIP)
 config.acuity_fancy_fluids=Fancy Water and Lava (WIP)
+config.enable_render_stats=Enabled Render Stats
+config.enable_block_stats=Enabled Block Stats
+config.enable_fluid_stats=Enabled Fluid Stats

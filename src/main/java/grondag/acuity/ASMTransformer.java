@@ -68,7 +68,7 @@ public class ASMTransformer implements IClassTransformer
                         {
                             op.setOpcode(INVOKESTATIC);
                             op.owner = "grondag/acuity/core/PipelineHooks";
-                            op.name = "renderModel";
+                            op.name = Configurator.enableBlockStats ? "renderModelDebug" : "renderModel";
                             op.desc = "(Lnet/minecraft/client/renderer/BlockModelRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/client/renderer/block/model/IBakedModel;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;Z)Z";
                             op.itf = false;
                             blockWorked = true;
@@ -78,7 +78,7 @@ public class ASMTransformer implements IClassTransformer
                         {
                             op.setOpcode(INVOKESTATIC);
                             op.owner = "grondag/acuity/core/PipelineHooks";
-                            op.name = "renderFluid";
+                            op.name = Configurator.enableFluidStats ? "renderFluidDebug" : "renderFluid";
                             op.desc = "(Lnet/minecraft/client/renderer/BlockFluidRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;)Z";
                             op.itf = false;
                             fluidWorked = true;
