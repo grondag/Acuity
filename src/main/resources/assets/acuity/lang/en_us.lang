@@ -19,6 +19,7 @@ misc.error_vertex_texture_format_mismatch_single=Single-layer vertex must use si
 misc.error_vertex_texture_format_mismatch_double=Double-layer vertex must use double-layer texture format.
 misc.error_vertex_texture_format_mismatch_triple=Triple-layer vertex must use triple-layer texture format.
 misc.warn_unknown_fluid_render=Unknown fluid sent to vanilla fluid render handler. Will render using water pipeline.
+misc.error_no_fast_nio_copy=Unable to access fast buffer copy methods. This is unexpected. Acuity will be disabled to prevent crashes.
 
 #CONFIG LABELS
 config.max_pipelines=Max Rendering Pipelines
