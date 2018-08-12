@@ -13,6 +13,18 @@ uniform mat4 u_modelView;
 uniform mat4 u_projection;
 uniform mat4 u_modelViewProjection;
 
+varying vec4 v_light;
+
+#if LAYER_COUNT > 1
+varying vec4 v_color_1;
+varying vec2 v_texcoord_1;
+#endif
+
+#if LAYER_COUNT > 2
+varying vec4 v_color_2;
+varying vec2 v_texcoord_2;
+#endif
+
 vec3 diffuse (vec3 normal)
 {
 	// same as Forge LightUtil.diffuse()
