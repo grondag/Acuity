@@ -339,10 +339,13 @@ public class CompoundBufferBuilder extends BufferBuilder
     private void sortCompondVertexData(float x, float y, float z)
     {
         // First sort quads within each pipeline
-        final float relativeX = (float)((double)x + this.xOffset);
-        final float relativeY = (float)((double)y + this.yOffset);
-        final float relativeZ = (float)((double)z + this.zOffset);
-        
+        //TODO: remove cruft
+//        final float relativeX = (float)((double)x + this.xOffset);
+//        final float relativeY = (float)((double)y + this.yOffset);
+//        final float relativeZ = (float)((double)z + this.zOffset);
+      final float relativeX = Utility.renderCubeRelative(x);
+      final float relativeY = Utility.renderCubeRelative(y);
+      final float relativeZ = Utility.renderCubeRelative(z);
         VertexPackingList packing = new VertexPackingList();
         packing = new VertexPackingList();
 

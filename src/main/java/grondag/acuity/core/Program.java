@@ -51,6 +51,11 @@ public class Program
     protected int dirtyCount = 0;
     protected final Uniform<?>[] dirtyUniforms = new Uniform[32];
     
+    /**
+     * Tracks last matrix version to avoid unnecessary uploads.
+     */
+    private int lastViewMatrixVersion = 0;
+    
     public abstract class Uniform<T extends IUniform>
     {
         protected static final int FLAG_NEEDS_UPLOAD = 1;
@@ -475,13 +480,21 @@ public class Program
     {
         this.load();
     }
-
     
-    @SuppressWarnings("null")
     /**
-     * Handle these directly because update each activation.
+     * Handle these directly because may update each activation.
      */
     private final void updateModelUniforms()
+    {
+        if(lastViewMatrixVersion != PipelineManager.viewMatrixVersionCounter)
+        {
+            updateModelUniformsInner();
+            lastViewMatrixVersion = PipelineManager.viewMatrixVersionCounter;
+        }
+    }
+    
+    @SuppressWarnings("null")
+    private final void updateModelUniformsInner()
     {
         if(this.modelViewUniform != null);
             this.modelViewUniform.uploadInner();

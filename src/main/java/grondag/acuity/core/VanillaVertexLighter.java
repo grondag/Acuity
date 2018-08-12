@@ -236,9 +236,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             this.combinedShade = (float)shade * ao / 0xFFFF;
             
             // POSITION_3F
-            output.add(target.xOffset + pos.getX() + posX);
-            output.add(target.yOffset + pos.getY() + posY);
-            output.add(target.zOffset + pos.getZ() + posZ);
+            output.pos(pos, posX, posY, posZ);
             
             // BASE_RGBA_4UB
             output.add(encodeColor(true, (this.glowFlags & 1) == 1, unlitColorARGB0));

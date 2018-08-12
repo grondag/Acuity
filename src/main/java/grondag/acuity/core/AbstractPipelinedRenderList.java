@@ -45,6 +45,9 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
 
     protected final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
     
+    private int originX = Integer.MIN_VALUE;
+    private int originZ = Integer.MIN_VALUE;
+  
     public AbstractPipelinedRenderList()
     {
         super();
@@ -79,24 +82,39 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
             super.renderChunkLayer(layer);
     }
     
-    protected final void renderChunkLayerAcuity(BlockRenderLayer layer)
+    private final void updateViewMatrix(BlockPos renderChunkOrigin)
     {
-        // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
-        // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
-        final int chunkCount = this.chunkCount;
+        final int ox = Utility.renderCubeOrigin(renderChunkOrigin.getX());
+        final int oz = Utility.renderCubeOrigin(renderChunkOrigin.getZ());
         
-        if (chunkCount == 0) 
+        if(ox == originX && oz == originZ)
             return;
-        
-        final boolean isSolidLayer = layer != BlockRenderLayer.TRANSLUCENT;
-        final RenderChunk[] chunks = this.chunks;
+
+        originX = ox;
+        originZ = oz;
+        updateViewMatrixInner(ox, oz);
+    }
+    
+    private final void updateViewMatrixInner(final int ox, final int oz)
+    {
         final Matrix4f mvPos = this.mvPos;
-        final Matrix4f xlatMatrix = this.xlatMatrix;
-        final Matrix4f mvChunk = this.mvChunk;
-        final double viewX = -this.viewEntityX;
-        final double viewY = -this.viewEntityY;
-        final double viewZ = -this.viewEntityZ;
-        final Matrix4f mvMatrix = this.mvMatrix;
+        
+        // note row-major order in the matrix library we are using
+        xlatMatrix.m03 = (float)(ox -viewEntityX);
+        xlatMatrix.m13 = (float)(-viewEntityY);
+        xlatMatrix.m23 = (float)(oz - viewEntityZ);
+
+        Matrix4f.mul(xlatMatrix, mvMatrix, mvPos);
+        //TODO: confirm not needed - probably a hack to prevent seams/holes due to FP error
+//        Matrix4f.mul(mvChunk, mvPos, mvPos);
+
+        PipelineManager.setModelViewMatrix(mvPos);
+    }
+    
+    private final void preRenderSetup()
+    {
+        originX = Integer.MIN_VALUE;
+        originZ = Integer.MIN_VALUE;
         
         // Forge doesn't give us a hook in the render loop that comes
         // after camera transform is set up - so call out event handler
@@ -108,26 +126,40 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
             GlStateManager.getFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrixBuffer);
             OpenGlHelperExt.loadTransposeQuickly(modelViewMatrixBuffer, mvMatrix);
         }
+    }
+    
+    // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
+    // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
+    protected final void renderChunkLayerAcuity(BlockRenderLayer layer)
+    {
+        final int chunkCount = this.chunkCount;
+        if (chunkCount == 0) 
+            return;
+        
+        preRenderSetup();
+        
+        final int layerOrdinal = layer.ordinal();
+        final RenderChunk[] chunks = this.chunks;
         
         for (int i = 0; i < chunkCount; i++)
         {
-            final RenderChunk renderchunk = chunks[i];
-            final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(layer.ordinal());
-            
-            final BlockPos blockpos = renderchunk.getPosition();
-            // note row-major order in the matrix library we are using
-            xlatMatrix.m03 = (float)(viewX + blockpos.getX());
-            xlatMatrix.m13 = (float)(viewY + blockpos.getY());
-            xlatMatrix.m23 = (float)(viewZ + blockpos.getZ());
-            
-            Matrix4f.mul(xlatMatrix, mvMatrix, mvPos);
-            Matrix4f.mul(mvChunk, mvPos, mvPos);
-            
-            PipelineManager.setModelViewMatrix(mvPos);
-            
-            vertexbuffer.renderChunk(isSolidLayer);
+            renderTheChunk(chunks[i], layerOrdinal);
         }
         
+        postRenderCleanup();
+    }
+    
+    final private static int TRANSLUCENT_ORDINAL = BlockRenderLayer.TRANSLUCENT.ordinal();
+    
+    private final void renderTheChunk(final RenderChunk renderchunk, int layerOrdinal)
+    {
+        final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(layerOrdinal);
+        updateViewMatrix(renderchunk.getPosition());
+        vertexbuffer.renderChunk(layerOrdinal != TRANSLUCENT_ORDINAL);
+    }
+    
+    private final void postRenderCleanup()
+    {
         if(OpenGlHelperExt.isVaoEnabled())
             OpenGlHelperExt.glBindVertexArray(0);
         

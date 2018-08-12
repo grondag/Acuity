@@ -70,6 +70,10 @@ public final class PipelineManager implements IPipelineManager
     
     public static final PipelineManager INSTANCE = new PipelineManager();
     
+    /**
+     * Incremented whenever view matrix changes. Used by programs to know if they must update.
+     */
+    public static int viewMatrixVersionCounter = Integer.MIN_VALUE;
     
     private final RenderPipeline[] pipelines = new RenderPipeline[PipelineManager.MAX_PIPELINES];
     
@@ -310,6 +314,15 @@ public final class PipelineManager implements IPipelineManager
     
     public static final void setModelViewMatrix(Matrix4f mvMatrix)
     {
+        updateModelViewMatrix(mvMatrix);
+        
+        updateModelViewProjectionMatrix(mvMatrix);
+        
+        viewMatrixVersionCounter++;
+    }
+    
+    private static final void updateModelViewMatrix(Matrix4f mvMatrix)
+    {
         loadTransferArray(mvMatrix);
         
         // avoid NIO overhead
@@ -317,7 +330,10 @@ public final class PipelineManager implements IPipelineManager
         //TODO: handle case with fast nio copy not available
         
             //uploadTransferArraySlow(PipelineManager.modelViewMatrixBuffer);
-        
+    }
+    
+    private static final void updateModelViewProjectionMatrix(Matrix4f mvMatrix)
+    {
         loadMVPMatrix(mvMatrix);
         
         // avoid NIO overhead

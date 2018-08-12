@@ -7,6 +7,7 @@ import com.google.common.primitives.Floats;
 import grondag.acuity.api.RenderPipeline;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -81,14 +82,18 @@ public class VertexCollector
         return result;
     }
     
-    public final void add(final int i)
+    private final void checkForSize(int toBeAdded)
     {
-        if (integerSize == data.length)
+        if ((integerSize + toBeAdded) > data.length)
         {
             final int copy[] = new int[integerSize * 2];
             System.arraycopy(data, 0, copy, 0, integerSize);
             data  = copy;
         }
+    }
+    
+    public final void add(final int i)
+    {
         data[integerSize++] = i;
     }
     
@@ -97,9 +102,12 @@ public class VertexCollector
         this.add(Float.floatToRawIntBits(f));
     }
     
-    public final void add(final double d)
+    public final void pos(final BlockPos pos, float modelX, float modelY, float modelZ)
     {
-        this.add((float)d);
+        this.checkForSize(this.pipeline.piplineVertexFormat().stride);
+        this.add(Utility.renderCubeRelative(pos.getX()) + modelX);
+        this.add(Utility.renderCubeRelative(pos.getY()) + modelY);
+        this.add(Utility.renderCubeRelative(pos.getZ()) + modelZ);
     }
     
     @SuppressWarnings("serial")
