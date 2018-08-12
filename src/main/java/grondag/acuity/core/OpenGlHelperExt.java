@@ -119,6 +119,7 @@ public class OpenGlHelperExt
     static private boolean fastNioCopy;
     static private long nioFloatArrayBaseOffset;
     static private boolean nioFloatNeedsFlip;
+    @SuppressWarnings("null")
     static private MethodHandle fastMatrixBufferCopyHandler;
     
     /**
@@ -937,32 +938,30 @@ public class OpenGlHelperExt
 //        return nioFloatArrayBaseOffset;
 //    }
     
-    public static final boolean fastMatrix4fBufferCopy(float[] elements, long bufferAddress)
+    public static final void fastMatrix4fBufferCopy(float[] elements, long bufferAddress)
     {
         try
         {
-            return (boolean) fastMatrixBufferCopyHandler.invokeExact(elements, bufferAddress);
+            fastMatrixBufferCopyHandler.invokeExact(elements, bufferAddress);
         }
         catch (Throwable e)
         {
-            return false;
+            throw new UnsupportedOperationException(e); 
         }
     }
     
-    public static final boolean fastMatrix4fBufferCopyFlipped(float[] elements, long bufferAddress) throws Throwable
+    public static final void fastMatrix4fBufferCopyFlipped(float[] elements, long bufferAddress) throws Throwable
     {
         nioCopyFromIntArray.invokeExact((Object)elements, 0l, bufferAddress, 64l);
-        return true;
     }
     
-    public static final boolean fastMatrix4fBufferCopyStraight(float[] elements, long bufferAddress) throws Throwable
+    public static final void fastMatrix4fBufferCopyStraight(float[] elements, long bufferAddress) throws Throwable
     {
         nioCopyFromArray.invokeExact((Object)elements, nioFloatArrayBaseOffset, 0l, bufferAddress, 64l);
-        return true;
     }
     
-    public static final boolean fastMatrix4fBufferCopyFail(float[] elements, long bufferAddress)
+    public static final void fastMatrix4fBufferCopyFail(float[] elements, long bufferAddress)
     {
-        return false;
+        throw new UnsupportedOperationException("Fast matrix copy not supported."); 
     }
 }

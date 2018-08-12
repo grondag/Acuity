@@ -80,6 +80,7 @@ public final class RenderPipeline implements IRenderPipeline
     public IRenderPipeline finish()
     {
         this.isFinal = true;
+        this.forceReload();
         return this;
     }
     

@@ -37,7 +37,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class Program
 {
     private int progID = -1;
-    private boolean needsLoad = true;
     private boolean isErrored = false;
 
     public final PipelineVertexShader vertexShader;
@@ -467,34 +466,31 @@ public class Program
      */
     public final void forceReload()
     {
-        this.needsLoad = true;
+        this.load();
     }
 
     
-    //TODO: add new activation frequency & don't keep adding/clearing from array/count
     @SuppressWarnings("null")
+    /**
+     * Handle these directly because update each activation.
+     */
     private final void updateModelUniforms()
     {
         if(this.modelViewUniform != null);
-            this.modelViewUniform.markForInitialization();
+            this.modelViewUniform.uploadInner();
     
         if(this.modelViewProjectionUniform != null);
-            this.modelViewProjectionUniform.markForInitialization();
+            this.modelViewProjectionUniform.uploadInner();
     }
     
     public final void activate()
     {
-        if(this.needsLoad)
-            this.load();
-        
         if(this.isErrored)
             return;
         
-        this.updateModelUniforms();
-        
         OpenGlHelperExt.glUseProgramFast(this.progID);
         
-        
+        this.updateModelUniforms();
         
         final int count = this.dirtyCount;
         if(count == 0)
@@ -561,7 +557,9 @@ public class Program
                 return;
             
             // avoid NIO overhead
-            if(!OpenGlHelperExt.fastMatrix4fBufferCopy(elements, bufferAddress))
+            if(OpenGlHelperExt.isFastNioCopyEnabled())
+                OpenGlHelperExt.fastMatrix4fBufferCopy(elements, bufferAddress);
+            else
             {
                 this.uniformFloatBuffer.put(elements, 0, 16);
                 this.uniformFloatBuffer.position(0);
@@ -597,7 +595,6 @@ public class Program
     
     private final void load()
     {
-        this.needsLoad = false;
         this.isErrored = true;
         try
         {
@@ -680,7 +677,7 @@ public class Program
     {
         if(containsUniformSpec("mat4", "u_modelView"))
         {
-            this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.PER_ACTIVATION, PipelineManager.projectionMatrixBuffer,
+            this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.ON_LOAD, PipelineManager.projectionMatrixBuffer,
                     u -> 
             {
                 this.modelViewUniform.setDirty();
@@ -689,7 +686,7 @@ public class Program
 
         if(containsUniformSpec("mat4", "u_modelViewProjection"))
         {
-            this.modelViewProjectionUniform = this.uniformMatrix4f("u_modelViewProjection", UniformUpdateFrequency.PER_ACTIVATION,
+            this.modelViewProjectionUniform = this.uniformMatrix4f("u_modelViewProjection", UniformUpdateFrequency.ON_LOAD,
                     PipelineManager.modelViewProjectionMatrixBuffer, u -> 
             {
                 this.modelViewProjectionUniform.setDirty();
@@ -698,7 +695,8 @@ public class Program
         
         if(containsUniformSpec("mat4", "u_projection"))
         {
-            this.projectionMatrixUniform = this.uniformMatrix4f("u_projection", UniformUpdateFrequency.PER_ACTIVATION, 
+            // on load because handled directly
+            this.projectionMatrixUniform = this.uniformMatrix4f("u_projection", UniformUpdateFrequency.ON_LOAD, 
                     PipelineManager.projectionMatrixBuffer, u -> 
             {
                 this.projectionMatrixUniform.setDirty();

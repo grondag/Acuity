@@ -21,10 +21,5 @@ public enum UniformUpdateFrequency
     /**
      * Uniform initializer called 1X per render frame. (Variable frequency.)
      */
-    PER_FRAME, 
-    
-    /**
-     * Called each program activation. 
-     */
-    PER_ACTIVATION
+    PER_FRAME
 }

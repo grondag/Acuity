@@ -95,7 +95,7 @@ abstract class AbstractPipelineShader
                 OpenGlHelper.glDeleteShader(glId);
                 this.glId = -1;
             }
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.fail_create_shader", this.fileName, e.getMessage()));
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.fail_create_shader", this.fileName, this.textureFormat.toString(), e.getMessage()));
         }
     }
     
