@@ -54,7 +54,7 @@ public class Acuity
 	@SideOnly(Side.CLIENT)
 	public static final void recomputeEnabledStatus()
 	{
-	    isEnabled = glCapabilitiesMet && ASMTransformer.allPatchesSuccessful() && Configurator.enabled;
+	    isEnabled = glCapabilitiesMet && ASMTransformer.allPatchesSuccessful() && Configurator.enabled && OpenGlHelperExt.isFastNioCopyEnabled();
 	}
 	
     @Nullable
@@ -110,6 +110,12 @@ public class Acuity
         // try to get faster access to GL calls
         OpenGlHelperExt.initialize();
         getLog().info(I18n.translateToLocal(OpenGlHelperExt.isVaoEnabled() ? "misc.vao_on" : "misc.vao_off"));
+        
+        if(!OpenGlHelperExt.isFastNioCopyEnabled())
+        {
+            getLog().error(I18n.translateToLocal("misc.error_no_fast_nio_copy"));
+            recomputeEnabledStatus();
+        }
         
         IResourceManager rm = Minecraft.getMinecraft().getResourceManager();
         if(rm instanceof IReloadableResourceManager)

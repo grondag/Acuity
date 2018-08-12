@@ -327,9 +327,6 @@ public final class PipelineManager implements IPipelineManager
         
         // avoid NIO overhead
         OpenGlHelperExt.fastMatrix4fBufferCopy(transferArray, PipelineManager.modelViewMatrixBufferAddress);
-        //TODO: handle case with fast nio copy not available
-        
-            //uploadTransferArraySlow(PipelineManager.modelViewMatrixBuffer);
     }
     
     private static final void updateModelViewProjectionMatrix(Matrix4f mvMatrix)
@@ -338,12 +335,5 @@ public final class PipelineManager implements IPipelineManager
         
         // avoid NIO overhead
         OpenGlHelperExt.fastMatrix4fBufferCopy(transferArray, PipelineManager.modelViewProjectionMatrixBufferAddress);
-//            uploadTransferArraySlow(PipelineManager.modelViewProjectionMatrixBuffer);
-    }
-    
-    private static void uploadTransferArraySlow(FloatBuffer buffer)
-    {
-        buffer.put(transferArray, 0, 16);
-        buffer.position(0);
     }
 }

@@ -116,7 +116,7 @@ public class OpenGlHelperExt
     static private MethodHandle nioCopyFromArray = null;
     @SuppressWarnings("null")
     static private MethodHandle nioCopyFromIntArray = null;
-    static private boolean fastNioCopy;
+    static private boolean fastNioCopy = true;
     static private long nioFloatArrayBaseOffset;
     static private boolean nioFloatNeedsFlip;
     @SuppressWarnings("null")
@@ -458,18 +458,16 @@ public class OpenGlHelperExt
             
             fastNioCopy = true;
             
-            Method handlerMethod;
             if(fastNioCopy)
             {
+                Method handlerMethod;
                 if(nioFloatNeedsFlip)
                     handlerMethod = OpenGlHelperExt.class.getDeclaredMethod("fastMatrix4fBufferCopyFlipped", float[].class, long.class);
                 else
                     handlerMethod = OpenGlHelperExt.class.getDeclaredMethod("fastMatrix4fBufferCopyStraight", float[].class, long.class);
+                
+                fastMatrixBufferCopyHandler = lookup.unreflect(handlerMethod);
             }
-            else
-                handlerMethod = OpenGlHelperExt.class.getDeclaredMethod("fastMatrix4fBufferCopyFail", float[].class, long.class);
-            
-            fastMatrixBufferCopyHandler = lookup.unreflect(handlerMethod);
         }
         catch(Exception e)
         {
@@ -958,10 +956,5 @@ public class OpenGlHelperExt
     public static final void fastMatrix4fBufferCopyStraight(float[] elements, long bufferAddress) throws Throwable
     {
         nioCopyFromArray.invokeExact((Object)elements, nioFloatArrayBaseOffset, 0l, bufferAddress, 64l);
-    }
-    
-    public static final void fastMatrix4fBufferCopyFail(float[] elements, long bufferAddress)
-    {
-        throw new UnsupportedOperationException("Fast matrix copy not supported."); 
     }
 }

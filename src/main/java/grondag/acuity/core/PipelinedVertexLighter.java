@@ -104,7 +104,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     
     protected void resetForNewQuad(IPipelinedQuad quad)
     {
-        //TODO: keep less internal state and instead query the quad reference
+        //UGLY: keep less internal state and instead query the quad reference
         this.currentQuad = quad;
         switch(quad.getRenderLayer())
         {
