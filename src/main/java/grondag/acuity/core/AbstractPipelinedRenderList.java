@@ -46,6 +46,7 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     protected final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
     
     private int originX = Integer.MIN_VALUE;
+    private int originY = Integer.MIN_VALUE;
     private int originZ = Integer.MIN_VALUE;
   
     public AbstractPipelinedRenderList()
@@ -85,23 +86,25 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     private final void updateViewMatrix(BlockPos renderChunkOrigin)
     {
         final int ox = Utility.renderCubeOrigin(renderChunkOrigin.getX());
+        final int oy = Utility.renderCubeOrigin(renderChunkOrigin.getY());
         final int oz = Utility.renderCubeOrigin(renderChunkOrigin.getZ());
         
-        if(ox == originX && oz == originZ)
+        if(ox == originX && oz == originZ && oy == originY)
             return;
 
         originX = ox;
+        originY = oy;
         originZ = oz;
-        updateViewMatrixInner(ox, oz);
+        updateViewMatrixInner(ox, oy, oz);
     }
     
-    private final void updateViewMatrixInner(final int ox, final int oz)
+    private final void updateViewMatrixInner(final int ox, final int oy, final int oz)
     {
         final Matrix4f mvPos = this.mvPos;
         
         // note row-major order in the matrix library we are using
         xlatMatrix.m03 = (float)(ox -viewEntityX);
-        xlatMatrix.m13 = (float)(-viewEntityY);
+        xlatMatrix.m13 = (float)(oy -viewEntityY);
         xlatMatrix.m23 = (float)(oz - viewEntityZ);
 
         Matrix4f.mul(xlatMatrix, mvMatrix, mvPos);

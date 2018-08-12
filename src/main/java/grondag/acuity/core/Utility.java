@@ -13,7 +13,6 @@ public class Utility
         return worldCoord & 0xFFFFFF00;
     }
     
-    
     /**
      * Returns coordinate value relative to its origin. Essentially a macro for
      * worldCood - {@link #renderCubeOrigin(int)}
