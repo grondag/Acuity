@@ -52,6 +52,12 @@ public class Configurator
     
     public static LightingModel lightingModel = LightingModel.CLASSIC;
 
+    @LangKey("config.enable_render_stats")
+    @RequiresMcRestart
+    @Comment({"When enabled, tracks and outputs timing statistics for rendering.",
+        " Has a small performance impact. Useful only for testing."})
+    public static boolean enableRenderStats = false;
+
     public static void handleChange(PostConfigChangedEvent event)
     {
         LightingModel oldModel = lightingModel;

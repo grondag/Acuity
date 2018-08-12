@@ -20,39 +20,32 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public class PipelinedVboRenderList extends VboRenderList implements IAcuityListener
+public class AbstractPipelinedRenderList extends VboRenderList implements IAcuityListener
 {
-    private long startNanos;
-    private long totalNanos;
-    private int frameCounter;
-    private int chunkCounter;
-    private int drawCounter;
-    private int quadCounter;
-    
-    private boolean isAcuityEnabled = Acuity.isModEnabled();
+    protected boolean isAcuityEnabled = Acuity.isModEnabled();
     
     /**
      * Faster than array list - enough to make a difference.
      * The fixed size is sloppy & risky - but <em>should</em> be enough to hold all visible in any reasonable scenario.
      */
-    private final RenderChunk[] chunks = new RenderChunk[64000];
-    private int chunkCount = 0;
+    protected final RenderChunk[] chunks = new RenderChunk[64000];
+    protected int chunkCount = 0;
     
     /**
      * Will hold the modelViewMatrix that was in GL context before first call to block render layer this pass.
      */
-    private final Matrix4f mvMatrix = new Matrix4f();
-    private final Matrix4f mvPos = new Matrix4f();
-    private final Matrix4f xlatMatrix = new Matrix4f();
+    protected final Matrix4f mvMatrix = new Matrix4f();
+    protected final Matrix4f mvPos = new Matrix4f();
+    protected final Matrix4f xlatMatrix = new Matrix4f();
     
     /**
      * Mimics what is in every render chunk. They all have the same matrix. 
      */
-    private final Matrix4f mvChunk = new Matrix4f();    
+    protected final Matrix4f mvChunk = new Matrix4f();    
 
-    private final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
+    protected final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
     
-    public PipelinedVboRenderList()
+    public AbstractPipelinedRenderList()
     {
         super();
         xlatMatrix.setIdentity();
@@ -67,18 +60,10 @@ public class PipelinedVboRenderList extends VboRenderList implements IAcuityList
         
         AcuityRuntime.INSTANCE.registerListener(this);
     }
-    
 
     @Override
-    public final void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
+    public void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
     {
-        if(Acuity.DEBUG)
-        {
-            chunkCounter++;
-            CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderChunkIn.getVertexBufferByLayer(layer.ordinal());
-            drawCounter += vertexbuffer.drawCount();
-            quadCounter += vertexbuffer.quadCount();
-        }
         if(isAcuityEnabled)
             this.chunks[this.chunkCount++] = renderChunkIn;
         else
@@ -86,44 +71,15 @@ public class PipelinedVboRenderList extends VboRenderList implements IAcuityList
     }
 
     @Override
-    public final void renderChunkLayer(BlockRenderLayer layer)
+    public void renderChunkLayer(BlockRenderLayer layer)
     {
-        if(Acuity.DEBUG)
-        {
-            startNanos = System.nanoTime();
-            // assumes will always be a solid layer - probably true enough for us
-            if(layer == BlockRenderLayer.SOLID)
-                frameCounter++;
-        }
-        
         if(isAcuityEnabled)
-        {
             renderChunkLayerAcuity(layer);
-        }
         else
-        {
             super.renderChunkLayer(layer);
-        }
-        
-        if(Acuity.DEBUG)
-        {
-            totalNanos += (System.nanoTime() - startNanos);
-            if(frameCounter >= 600)
-            {
-                final double ms = totalNanos / 1000000.0;
-                String msg = this.isAcuityEnabled ? "ENABLED" : "Disabled";
-                Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %d frames / %d chunks / %d draws / %d quads (Acuity API %s)", frameCounter, chunkCounter, drawCounter, quadCounter, msg));
-                Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %f ms / %f ms / %f ms / %f ns", ms / frameCounter, ms / chunkCounter, ms / drawCounter, (double)totalNanos / quadCounter));
-                totalNanos = 0;
-                frameCounter = 0;
-                chunkCounter = 0;
-                drawCounter = 0;
-                quadCounter = 0;
-            }
-        }
     }
     
-    private final void renderChunkLayerAcuity(BlockRenderLayer layer)
+    protected final void renderChunkLayerAcuity(BlockRenderLayer layer)
     {
         // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
         // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.

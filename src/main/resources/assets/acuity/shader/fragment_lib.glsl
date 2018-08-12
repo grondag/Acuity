@@ -10,11 +10,6 @@ varying vec4 v_color_2;
 varying vec2 v_texcoord_2;
 #endif
 
-varying vec4 v_color_1;
-varying vec2 v_texcoord_1;
-varying vec4 v_color_2;
-varying vec2 v_texcoord_2;
-
 vec4 shadeColor(vec4 lightColor, vec4 fragmentColor)
 {
 	float glow = fragmentColor.a >= 0.5 ? 1.0 : 0;

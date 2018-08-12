@@ -98,8 +98,15 @@ public class Program
             }
             else
             {
-                this.flags = FLAG_NEEDS_INITIALIZATION | FLAG_NEEDS_UPLOAD;
-                dirtyUniforms[dirtyCount++] = this;
+                // never add view uniforms to dirty list - have special handling
+                if(this == modelViewUniform || this == modelViewProjectionUniform)
+                    this.flags = 0;
+                else
+                {
+                    if(flags == 0)
+                        dirtyUniforms[dirtyCount++] = this;
+                    this.flags = FLAG_NEEDS_INITIALIZATION | FLAG_NEEDS_UPLOAD;
+                }
             }
         }
         
@@ -677,8 +684,8 @@ public class Program
     {
         if(containsUniformSpec("mat4", "u_modelView"))
         {
-            this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.ON_LOAD, PipelineManager.projectionMatrixBuffer,
-                    u -> 
+            this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.ON_LOAD, 
+                    PipelineManager.modelViewMatrixBuffer, u -> 
             {
                 this.modelViewUniform.setDirty();
             });

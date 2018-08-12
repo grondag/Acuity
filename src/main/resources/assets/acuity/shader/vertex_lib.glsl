@@ -24,8 +24,6 @@ void setupVertex()
     gl_Position = u_modelViewProjection * gl_Vertex;
     vec4 viewCoord = u_modelView * gl_Vertex;
     gl_ClipVertex = viewCoord;
-
-    //TODO: put back
     gl_FogFragCoord = length(viewCoord.xyz);
     gl_TexCoord[0] = gl_MultiTexCoord0;
     gl_TexCoord[1] = gl_MultiTexCoord1;

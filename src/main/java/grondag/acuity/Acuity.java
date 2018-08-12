@@ -39,24 +39,6 @@ public class Acuity
 	public static final String MODNAME = "Acuity Rendering API";
 	public static final String VERSION = "%VERSION%";
 	
-	public static final boolean DEBUG;
-	
-	private static final boolean DEBUG_ENABLED = true;
-	
-	static
-	{
-	    boolean debug = false;
-	    for(String s : System.getenv().values())
-	    {
-	        if(s.contains("GradleStart"))
-	        {
-	            debug = true;
-	            break;
-	        }
-	    }
-	    DEBUG = debug && DEBUG_ENABLED;
-	}
-	
 	@Instance
 	public static Acuity INSTANCE = new Acuity();
 	

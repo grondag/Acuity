@@ -330,6 +330,10 @@ public class ASMTransformer implements IClassTransformer
         int newCount = 0;
         int invokeCount = 0;
         
+        final String listClass = Configurator.enableRenderStats
+                ? "grondag/acuity/core/PipelinedRenderListDebug"
+                : "grondag/acuity/core/PipelinedRenderList";
+        
         while (methods.hasNext())
         {
             MethodNode m = methods.next();
@@ -346,7 +350,7 @@ public class ASMTransformer implements IClassTransformer
                         TypeInsnNode op = (TypeInsnNode)next;
                         if(op.desc.equals("net/minecraft/client/renderer/VboRenderList"))
                         {
-                            op.desc = "grondag/acuity/core/PipelinedVboRenderList";
+                            op.desc = listClass;
                             newCount++;
                         }
                     }
@@ -356,7 +360,7 @@ public class ASMTransformer implements IClassTransformer
                         MethodInsnNode op = (MethodInsnNode)next;
                         if(op.owner.equals("net/minecraft/client/renderer/VboRenderList") && op.name.equals("<init>"))
                         {
-                            op.owner = "grondag/acuity/core/PipelinedVboRenderList";
+                            op.owner = listClass;
                             op.itf = false;
                             invokeCount++;
                         }
