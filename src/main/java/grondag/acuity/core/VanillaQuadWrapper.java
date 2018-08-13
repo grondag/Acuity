@@ -116,10 +116,9 @@ public class VanillaQuadWrapper implements IPipelinedQuad
             {
                 LightUtil.unpack(data, unpack, format, i, lightMapIndex);
                 
-                //FIXME: This isn't right at all - needs to match 0-255 lighter expects
-                // 0-255 in lower half for block/sky light
-                vertexLighter.setSkyLightMap(Math.round(unpack[1] * 255));
-                int blockLight = Math.round(unpack[0] * 255);
+                // convert to match 0-255 lighter expects
+                vertexLighter.setSkyLightMap(Math.round(unpack[1] * PipelinedVertexLighter.LIGHTMAP_TO_255));
+                int blockLight = Math.round(unpack[0] * PipelinedVertexLighter.LIGHTMAP_TO_255);
                 // pass it as white light with 100% flicker
                 vertexLighter.setBlockLightMap(blockLight, blockLight, blockLight, 0xFF);
             }

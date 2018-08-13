@@ -28,7 +28,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     
     protected boolean enableDiffuse = true;
     protected boolean enableAmbientOcclusion = true;
-    protected boolean usePrecomputedLightmaps = false;
     protected boolean isCurrentQuadCutout = false;
     protected boolean isCurrentQuadMipped = true;
     
@@ -95,13 +94,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.enableAmbientOcclusion = enableAmbientOcclusion && Minecraft.isAmbientOcclusionEnabled();
     }
     
-    @Override
-    @Deprecated
-    public void setPrecomputedLighting(boolean isPrecomputedLighting)
-    {
-        this.usePrecomputedLightmaps = isPrecomputedLighting;
-    }
-    
     protected void resetForNewQuad(IPipelinedQuad quad)
     {
         //UGLY: keep less internal state and instead query the quad reference
@@ -130,7 +122,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.skyLightMap = 0;
         this.enableDiffuse = true;
         this.enableAmbientOcclusion = Minecraft.isAmbientOcclusionEnabled();
-        this.usePrecomputedLightmaps = false;
     }
     
     public VertexFormat getVertexFormat()
