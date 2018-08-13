@@ -121,32 +121,37 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         
         // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
         // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
-        
         // We don't use these except for GL_VERTEX so disable them now unless we
         // are using VAOs, which will cause them to be ignored.
         // Not a problem to disable them because MC disables the when we return.
         if(!OpenGlHelperExt.isVaoEnabled())
-        {
-            GlStateManager.glDisableClientState(GL11.GL_COLOR_ARRAY);
-            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
-            GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
-            GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
-        }
+            disableUnusedAttributes();
         
         // Forge doesn't give us a hook in the render loop that comes
         // after camera transform is set up - so call out event handler
         // here as a workaround. Our event handler will only act 1x/frame.
         if(PipelineManager.INSTANCE.beforeRenderChunks())
-        {
-            final FloatBuffer modelViewMatrixBuffer = this.modelViewMatrixBuffer;
-            modelViewMatrixBuffer.position(0);
-            GlStateManager.getFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrixBuffer);
-            OpenGlHelperExt.loadTransposeQuickly(modelViewMatrixBuffer, mvMatrix);
-        }
+            downloadModelViewMatrix();
+    }
+    
+    private final void disableUnusedAttributes()
+    {
+        GlStateManager.glDisableClientState(GL11.GL_COLOR_ARRAY);
+        OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
+        GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+        OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
+        GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+        OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
     }
 
+    private final void downloadModelViewMatrix()
+    {
+        final FloatBuffer modelViewMatrixBuffer = this.modelViewMatrixBuffer;
+        modelViewMatrixBuffer.position(0);
+        GlStateManager.getFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrixBuffer);
+        OpenGlHelperExt.loadTransposeQuickly(modelViewMatrixBuffer, mvMatrix);
+    }
+    
     protected final void renderChunkLayerAcuity(BlockRenderLayer layer)
     {
         final int chunkCount = this.chunkCount;
