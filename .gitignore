@@ -15,6 +15,7 @@ bin
 eclipse
 
 ## gradle
+gradlew*
 gradle
 .gradle
 build
