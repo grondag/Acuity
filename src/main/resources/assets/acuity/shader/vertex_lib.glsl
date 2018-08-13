@@ -1,5 +1,6 @@
 //attribute vec4 in_normal_ao;
 //attribute vec4 in_lightmaps;
+attribute vec4 in_color_0;
 
 #if LAYER_COUNT > 1
 attribute vec4 in_color_1;
@@ -23,7 +24,7 @@ void setupVertex()
     // it is also clamped to repeat and has linear min/mag
     v_light = texture2D(u_lightmap, vec2((gl_MultiTexCoord1.x + 8.0) / 255.0, (gl_MultiTexCoord1.y + 8.0) / 255.0));
 
-    gl_FrontColor = gl_Color;
+    gl_FrontColor = in_color_0;
 
 #if LAYER_COUNT > 1
     v_color_1 = in_color_1; //vec4(in_color_1.rgb * shade, in_color_1.a);

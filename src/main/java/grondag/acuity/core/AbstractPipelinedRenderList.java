@@ -119,6 +119,17 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         originX = Integer.MIN_VALUE;
         originZ = Integer.MIN_VALUE;
         
+        // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
+        // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
+        
+        // We don't use these except for GL_VERTEX so disable them now unless we
+        // are using VAOs, which will cause them to be ignored.
+        // Not a problem to disable them because MC disables the when we return.
+        if(!OpenGlHelperExt.isVaoEnabled())
+        {
+            GlStateManager.glDisableClientState(GL11.GL_COLOR_ARRAY);
+        }
+        
         // Forge doesn't give us a hook in the render loop that comes
         // after camera transform is set up - so call out event handler
         // here as a workaround. Our event handler will only act 1x/frame.
@@ -131,8 +142,7 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         }
     }
     
-    // NB: Vanilla MC will have already enabled GL_VERTEX_ARRAY, GL_COLOR_ARRAY
-    // and GL_TEXTURE_COORD_ARRAY for both default texture and lightmap.
+
     protected final void renderChunkLayerAcuity(BlockRenderLayer layer)
     {
         final int chunkCount = this.chunkCount;

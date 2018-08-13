@@ -88,24 +88,28 @@ public class CompoundVertexBuffer extends VertexBuffer
                     // can set up everything except binding offsets for 2nd and 3rd pipeline
                     OpenGlHelperExt.glBindVertexArray(bufferId);
                     
-                    GlStateManager.glEnableClientState(32884);
+                    GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
                     OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
-                    GlStateManager.glEnableClientState(32888);
+                    GlStateManager.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
                     OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
-                    GlStateManager.glEnableClientState(32888);
+                    GlStateManager.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
                     OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
-                    GlStateManager.glEnableClientState(32886);
+                    
+                    //GlStateManager.glEnableClientState(GL11.GL_COLOR_ARRAY);
                     
                     PipelineVertexFormat pvf = Configurator.lightingModel.vertexFormat(format);
                     OpenGlHelperExt.enableAttributesVao(pvf.attributeCount);
                     final int stride = pvf.stride; 
                     final int bufferOffset = 0;
                     OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
-                    OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
+                    //OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
                     OpenGlHelperExt.glTexCoordPointerFast(2, 5126, stride, bufferOffset + 16);
                     OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
                     OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
                     OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
+                    
+                    // UGLY: inefficient for now - because is only color and will wastefully bind secondary/tertiary layers
+                    pvf.bindAttributeLocations(bufferOffset);
                     
                     //TODO: leave the base attributes interleaved and pack extended attributes at the end
                     //this will mean only the extended attributes ever have to be rebound

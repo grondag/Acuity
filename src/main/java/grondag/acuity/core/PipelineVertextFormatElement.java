@@ -12,7 +12,7 @@ public class PipelineVertextFormatElement extends VertexFormatElement
     // openGL implementation on my dev laptop *really* wants to get vertex positions via standard (GL 2.1) binding
     // slows to a crawl otherwise
     public static final PipelineVertextFormatElement POSITION_3F = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.POSITION, 3, null);
-    public static final PipelineVertextFormatElement BASE_RGBA_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.COLOR, 4, null);
+    public static final PipelineVertextFormatElement BASE_RGBA_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_color_0");
     public static final PipelineVertextFormatElement BASE_TEX_2F = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.UV, 2, null);
     public static final PipelineVertextFormatElement LIGHTMAPS_2S = new PipelineVertextFormatElement(1, VertexFormatElement.EnumType.SHORT, VertexFormatElement.EnumUsage.UV, 2, null, false);
     
@@ -31,13 +31,13 @@ public class PipelineVertextFormatElement extends VertexFormatElement
      * The most significant bit of the rgb color bytes indicates if layers are emissive. 
      * The color values are thus scale to 0-127 and need to be normalized in the shader after stripping the glow bit.<p>
      */
-    public static final PipelineVertextFormatElement LIGHTMAPS_4UB = new PipelineVertextFormatElement(1, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_lightmaps", false);
+    public static final PipelineVertextFormatElement LIGHTMAPS_4UB = new PipelineVertextFormatElement(2, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_lightmaps", false);
 
-    public static final PipelineVertextFormatElement SECONDARY_RGBA_4UB = new PipelineVertextFormatElement(2, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_color_1");
-    public static final PipelineVertextFormatElement SECONDARY_TEX_2F = new PipelineVertextFormatElement(3, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_uv_1");
+    public static final PipelineVertextFormatElement SECONDARY_RGBA_4UB = new PipelineVertextFormatElement(3, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_color_1");
+    public static final PipelineVertextFormatElement SECONDARY_TEX_2F = new PipelineVertextFormatElement(4, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_uv_1");
 
-    public static final PipelineVertextFormatElement TERTIARY_RGBA_4UB = new PipelineVertextFormatElement(4, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_color_2");
-    public static final PipelineVertextFormatElement TERTIARY_TEX_2F = new PipelineVertextFormatElement(5, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_uv_2");
+    public static final PipelineVertextFormatElement TERTIARY_RGBA_4UB = new PipelineVertextFormatElement(5, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_color_2");
+    public static final PipelineVertextFormatElement TERTIARY_TEX_2F = new PipelineVertextFormatElement(6, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_uv_2");
 
     public final @Nullable String attributeName;
     public final int elementCount;
