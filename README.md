@@ -33,6 +33,25 @@ This mod is [licensed under the MIT license](https://github.com/grondag/Acuity/b
 However, useful bug reports are always welcome.  Please use the [issue tracker](https://github.com/grondag/Acuity/issues) for all bug reports. 
 
 # Including Acuity in Your Dev Environment
+Note: this will likely change in MC 1.13 due to Forge Gradle being rewritten.
+
+In the repositories section of your build gradle, add a link to my maven repo, like so:
+
+```gradle
+repositories {
+    maven {
+    	  name = "grondag"
+    	  url = "https://grondag-repo.appspot.com"
+    }
+}
+```
+
+And then add a deobfuscated dependency, as you would with other mods. You'll want to change the version to something current. (Look on Twitch launcher for released builds or browse the maven repo directly to find the very latest.)
+```gradle
+dependencies {
+    deobfCompile "grondag:acuity:mc1.12.2-0.0.0.240-alpha"
+}
+```
 
 # Contributing
 This mod is a lot of work, and I will happily consider serious offers of collaboration.  Best way to start would be to post a feature request on the issue tracker to start a discussion and then create a pull request to implement an agreed-on feature. All contriburs must agree to license all submitted content under the license terms of this mod.
