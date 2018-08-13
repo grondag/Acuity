@@ -4,8 +4,8 @@
 
 This mod is client-side only and can be quickly enabled and disabled at run time via configuration settings. When the mod is disabled, the game uses normal Minecraft rendering.
 
-# Why is this mod needed when Optifine and shader packs already exist?
-Those solutions are oriented towards players and don't offer much control or extensibility for modders and pack makers.  Optifine, while technically amazing, is not open-source and not targeted at Forge modders. It's also not available on the Twitch launcher where most mods and packs are nowadays distributed.  Similarly, shaders demand high-end hardware, can be difficult for players to configure or to distribute with a pack, and - most importantly - don't provide a consistent framework for modders to control the visual appearance of their blocks in a way that will be consistent with the shader pack.
+# Why is this mod needed?
+I wanted an API targeted at Forge modders like myself - one that will provide a consistent framework to control the visual appearance of blocks in a lighting-consistent way. I also wanted it to be available on the Twitch launcher where most mods and packs are nowadays distributed.  Lastly, I didn't want to sacrifice performance to use shaders. Shaders are the modern way to program the graphics pipeline and peform well if employed correctly.
 
 # Current Features
 * Render blocks with multiple texture layers (for example, base color + decorative texture + border) in a single pass without transparency. (It's possible to do this in vanilla, but requires three quads and possibly one or more transparency sorts unless you can get by with cutout textures.)
@@ -31,6 +31,8 @@ That all said, you MAY use this mod in ModPacks if you are willing to accept the
 This mod is [licensed under the MIT license](https://github.com/grondag/Acuity/blob/master/LICENSE). This means no warranty is provided.
 
 However, useful bug reports are always welcome.  Please use the [issue tracker](https://github.com/grondag/Acuity/issues) for all bug reports. 
+
+# Including Acuity in Your Dev Environment
 
 # Contributing
 This mod is a lot of work, and I will happily consider serious offers of collaboration.  Best way to start would be to post a feature request on the issue tracker to start a discussion and then create a pull request to implement an agreed-on feature. All contriburs must agree to license all submitted content under the license terms of this mod.
