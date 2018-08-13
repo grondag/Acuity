@@ -14,11 +14,7 @@ public class PipelineVertextFormatElement extends VertexFormatElement
     public static final PipelineVertextFormatElement POSITION_3F = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.POSITION, 3, null);
     public static final PipelineVertextFormatElement BASE_RGBA_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_color_0");
     public static final PipelineVertextFormatElement BASE_TEX_2F = new PipelineVertextFormatElement(1, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_uv_0");
-    public static final PipelineVertextFormatElement LIGHTMAPS_2S = new PipelineVertextFormatElement(2, VertexFormatElement.EnumType.SHORT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_lightmap", false);
-    
-    //FIXME: index in for generic attributes misaligned now due to mismatched usage in vanilla vs extended formats 
-    // (doesn't currently matter)
-    public static final PipelineVertextFormatElement NORMAL_AO_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_normal_ao", false);
+//    public static final PipelineVertextFormatElement LIGHTMAPS_2S = new PipelineVertextFormatElement(2, VertexFormatElement.EnumType.SHORT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_lightmap", false);
 
     /**
      * Format varies by model.  <p>
@@ -31,7 +27,11 @@ public class PipelineVertextFormatElement extends VertexFormatElement
      * The most significant bit of the rgb color bytes indicates if layers are emissive. 
      * The color values are thus scale to 0-127 and need to be normalized in the shader after stripping the glow bit.<p>
      */
-    public static final PipelineVertextFormatElement LIGHTMAPS_4UB = new PipelineVertextFormatElement(2, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_lightmaps", false);
+    public static final PipelineVertextFormatElement LIGHTMAPS_4UB = new PipelineVertextFormatElement(2, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_lightmap", false);
+
+    //FIXME: index in for generic attributes misaligned now due to mismatched usage in vanilla vs extended formats 
+    // (doesn't currently matter)
+    public static final PipelineVertextFormatElement NORMAL_AO_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_normal_ao", false);
 
     public static final PipelineVertextFormatElement SECONDARY_RGBA_4UB = new PipelineVertextFormatElement(3, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_color_1");
     public static final PipelineVertextFormatElement SECONDARY_TEX_2F = new PipelineVertextFormatElement(4, VertexFormatElement.EnumType.FLOAT, VertexFormatElement.EnumUsage.GENERIC, 2, "in_uv_1");

@@ -248,9 +248,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
 //            output.add(normAo);
             
             //LIGHTMAP
-            skyLight = skyLight / 17;
-            blockLight = blockLight / 17;
-            output.add((skyLight << 20) | (blockLight << 4));
+            output.add(blockLight | (skyLight << 8));
             return output;
         }
 

@@ -155,11 +155,6 @@ public class CompoundVertexBuffer extends VertexBuffer
                 {
                     final int stride = format.stride;
                     OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
-                    OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
-                    OpenGlHelperExt.glTexCoordPointerFast(2, 5126, stride, bufferOffset + 16);
-                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
-                    OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
-                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
                     format.bindAttributeLocations(bufferOffset);
                     this.vaoBindingFlags |= (1 << ordinal);
                 }
@@ -170,11 +165,6 @@ public class CompoundVertexBuffer extends VertexBuffer
         {
             final int stride = format.stride;
             OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
-            OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
-            OpenGlHelperExt.glTexCoordPointerFast(2, 5126, stride, bufferOffset + 16);
-            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
-            OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
-            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
             format.enableAndBindAttributes(bufferOffset);
         }
 

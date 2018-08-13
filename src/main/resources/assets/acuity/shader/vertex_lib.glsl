@@ -2,7 +2,7 @@
 //attribute vec4 in_lightmaps;
 attribute vec4 in_color_0;
 attribute vec2 in_uv_0;
-attribute vec2 in_lightmap;
+attribute vec4 in_lightmap;
 
 #if LAYER_COUNT > 1
 attribute vec4 in_color_1;
@@ -24,7 +24,7 @@ void setupVertex()
 
     // the lightmap texture matrix is scaled to 1/256 and then offset + 8
     // it is also clamped to repeat and has linear min/mag
-    v_light = texture2D(u_lightmap, vec2((in_lightmap.x + 8.0) / 255.0, (in_lightmap.y + 8.0) / 255.0));
+    v_light = texture2D(u_lightmap, (in_lightmap.rg * 0.00367647) + 0.03125);
 
     gl_FrontColor = in_color_0;
 
