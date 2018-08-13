@@ -2,7 +2,7 @@ package grondag.acuity.core;
 
 import net.minecraft.util.math.MathHelper;
 
-public class Utility
+public class RenderCube
 {
     /**
      * Finds the origin of the 256x256x256 render cube for the given coordinate.

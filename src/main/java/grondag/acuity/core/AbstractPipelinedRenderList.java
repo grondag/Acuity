@@ -85,9 +85,9 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     
     private final void updateViewMatrix(BlockPos renderChunkOrigin)
     {
-        final int ox = Utility.renderCubeOrigin(renderChunkOrigin.getX());
-        final int oy = Utility.renderCubeOrigin(renderChunkOrigin.getY());
-        final int oz = Utility.renderCubeOrigin(renderChunkOrigin.getZ());
+        final int ox = RenderCube.renderCubeOrigin(renderChunkOrigin.getX());
+        final int oy = RenderCube.renderCubeOrigin(renderChunkOrigin.getY());
+        final int oz = RenderCube.renderCubeOrigin(renderChunkOrigin.getZ());
         
         if(ox == originX && oz == originZ && oy == originY)
             return;

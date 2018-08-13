@@ -105,9 +105,9 @@ public class VertexCollector
     public final void pos(final BlockPos pos, float modelX, float modelY, float modelZ)
     {
         this.checkForSize(this.pipeline.piplineVertexFormat().stride);
-        this.add(Utility.renderCubeRelative(pos.getX()) + modelX);
-        this.add(Utility.renderCubeRelative(pos.getY()) + modelY);
-        this.add(Utility.renderCubeRelative(pos.getZ()) + modelZ);
+        this.add(RenderCube.renderCubeRelative(pos.getX()) + modelX);
+        this.add(RenderCube.renderCubeRelative(pos.getY()) + modelY);
+        this.add(RenderCube.renderCubeRelative(pos.getZ()) + modelZ);
     }
     
     @SuppressWarnings("serial")
