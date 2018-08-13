@@ -89,26 +89,14 @@ public class CompoundVertexBuffer extends VertexBuffer
                     OpenGlHelperExt.glBindVertexArray(bufferId);
                     
                     GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
-                    GlStateManager.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
-                    GlStateManager.glEnableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
-                    
-                    //GlStateManager.glEnableClientState(GL11.GL_COLOR_ARRAY);
                     
                     PipelineVertexFormat pvf = Configurator.lightingModel.vertexFormat(format);
                     OpenGlHelperExt.enableAttributesVao(pvf.attributeCount);
                     final int stride = pvf.stride; 
                     final int bufferOffset = 0;
                     OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), stride, bufferOffset);
-                    //OpenGlHelperExt.glColorPointerFast(4, 5121, stride, bufferOffset + 12);
-                    OpenGlHelperExt.glTexCoordPointerFast(2, 5126, stride, bufferOffset + 16);
-                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
-                    OpenGlHelperExt.glTexCoordPointerFast(2, 5122, stride, bufferOffset + 24);
-                    OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
                     
-                    // UGLY: inefficient for now - because is only color and will wastefully bind secondary/tertiary layers
+                    // UGLY: will wastefully bind secondary/tertiary layers
                     pvf.bindAttributeLocations(bufferOffset);
                     
                     //TODO: leave the base attributes interleaved and pack extended attributes at the end

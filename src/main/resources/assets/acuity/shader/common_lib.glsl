@@ -13,6 +13,7 @@ uniform mat4 u_modelView;
 uniform mat4 u_projection;
 uniform mat4 u_modelViewProjection;
 
+varying vec2 v_texcoord_0;
 varying vec4 v_light;
 
 #if LAYER_COUNT > 1

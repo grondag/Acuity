@@ -128,6 +128,11 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         if(!OpenGlHelperExt.isVaoEnabled())
         {
             GlStateManager.glDisableClientState(GL11.GL_COLOR_ARRAY);
+            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
+            GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
+            GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+            OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
         }
         
         // Forge doesn't give us a hook in the render loop that comes
@@ -141,7 +146,6 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
             OpenGlHelperExt.loadTransposeQuickly(modelViewMatrixBuffer, mvMatrix);
         }
     }
-    
 
     protected final void renderChunkLayerAcuity(BlockRenderLayer layer)
     {

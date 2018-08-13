@@ -1,6 +1,8 @@
 //attribute vec4 in_normal_ao;
 //attribute vec4 in_lightmaps;
 attribute vec4 in_color_0;
+attribute vec2 in_uv_0;
+attribute vec2 in_lightmap;
 
 #if LAYER_COUNT > 1
 attribute vec4 in_color_1;
@@ -18,11 +20,11 @@ void setupVertex()
     vec4 viewCoord = u_modelView * gl_Vertex;
     gl_ClipVertex = viewCoord;
     gl_FogFragCoord = length(viewCoord.xyz);
-    gl_TexCoord[0] = gl_MultiTexCoord0;
+    v_texcoord_0 = in_uv_0;
 
     // the lightmap texture matrix is scaled to 1/256 and then offset + 8
     // it is also clamped to repeat and has linear min/mag
-    v_light = texture2D(u_lightmap, vec2((gl_MultiTexCoord1.x + 8.0) / 255.0, (gl_MultiTexCoord1.y + 8.0) / 255.0));
+    v_light = texture2D(u_lightmap, vec2((in_lightmap.x + 8.0) / 255.0, (in_lightmap.y + 8.0) / 255.0));
 
     gl_FrontColor = in_color_0;
 

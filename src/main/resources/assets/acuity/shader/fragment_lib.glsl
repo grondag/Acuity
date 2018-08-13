@@ -13,17 +13,15 @@ vec4 shadeColor(vec4 lightColor, vec4 fragmentColor)
 
 vec4 diffuseColor()
 {
-	vec4 texCoord0 = gl_TexCoord[0];
-
 #ifdef SOLID
 		float non_mipped = bitValue(gl_Color.a, 1);
-		vec4 a = texture2D(u_textures, texCoord0.st, non_mipped * -4.0);
+		vec4 a = texture2D(u_textures, v_texcoord_0, non_mipped * -4.0);
 
 		float cutout = bitValue(gl_Color.a, 0);
 		if(cutout == 1.0 && a.a < 0.5)
 			discard;
 #else
-		vec4 a = texture2D(u_textures, texCoord0.st);
+		vec4 a = texture2D(u_textures, v_texcoord_0);
 #endif
 
 	// Note in the solid layer the lower bits of gl_Color.a will be a jumble
