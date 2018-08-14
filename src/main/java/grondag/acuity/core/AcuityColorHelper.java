@@ -25,25 +25,30 @@ public class AcuityColorHelper
         }
     }
 
-    /**
-     * Multiplies RGB by given factor and returns with alpha unmodified.
-     */
-    public static int shadeColor(int colorRGBA, float shade)
-    {
-        if(shade ==  1.0f)
-            return colorRGBA;
-        
-        int red = Math.round((colorRGBA & 0xFF) * shade);
-        int green = Math.round(((colorRGBA >> 8) & 0xFF) * shade);
-        int blue = Math.round(((colorRGBA >> 16) & 0xFF) * shade);
     
-        return (colorRGBA & 0xFF000000) | (blue << 16) | (green << 8) | red;
+    /**
+     * Multiplies RGB by given factor and swaps the R and B components, leaving alpha intact.<br>
+     * In game code/data, colors are generally in ARGB order (left to right = high to low).<br>
+     * OpenGL wants them in ABGR order (left to right = high to low).<br>
+     */
+    public static int shadeColorAndSwapRedBlue(int colorARGB, float shade)
+    {
+        int blue = colorARGB & 0xFF;
+        int green = (colorARGB >> 8) & 0xFF;
+        int red = (colorARGB >> 16) & 0xFF;
+        
+        if(shade !=  1.0f)
+        {
+            blue = Math.round(blue * shade);
+            green = Math.round(green * shade);
+            red = Math.round(red * shade);
+        }
+    
+        return (colorARGB & 0xFF000000) | (blue << 16) | (green << 8) | red;
     }
     
     /**
-     * Swaps the R and B components, leaving green and alpha intact.<br>
-     * In game code/data, colors are generally in ARGB order (left to right = high to low).<br>
-     * OpenGL wants them in ABGR order (left to right = high to low).<br>
+     * 
      */
     public static int swapRedBlue(int color)
     {

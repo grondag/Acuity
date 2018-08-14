@@ -15,6 +15,7 @@ uniform mat4 u_modelViewProjection;
 
 varying vec2 v_texcoord_0;
 varying vec4 v_light;
+varying float v_flags;
 
 #if LAYER_COUNT > 1
 varying vec4 v_color_1;
@@ -81,7 +82,7 @@ float tnoise (in vec2 st, float t)
 
 /**
  * Returns the value (0-1) of the indexed bit (0-7)
- * within a normalized float value that represents a single byte (0-255).
+ * within a float value that represents a single byte (0-255).
  *
  * GLSL 120 unfortunately lacks bitwise operations
  * so we need to emulate them unless the extension is active.
@@ -89,8 +90,9 @@ float tnoise (in vec2 st, float t)
 float bitValue(float byteValue, int bitIndex)
 {
 #if GL_EXT_gpu_shader4 == 1
-	return (int(byteValue * 255.0) >> bitIndex) & 1;
+	return (int(byteValue) >> bitIndex) & 1;
 #else
+	//FIXME: not right - the constants are scaled for normalized (0-1) values
 	return floor(fract(byteValue * BITWISE_FLOAT_DIVISORS[bitIndex]) * 2.0);
 #endif
 }

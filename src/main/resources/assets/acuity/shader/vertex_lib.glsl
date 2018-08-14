@@ -1,5 +1,4 @@
 //attribute vec4 in_normal_ao;
-//attribute vec4 in_lightmaps;
 attribute vec4 in_color_0;
 attribute vec2 in_uv_0;
 attribute vec4 in_lightmap;
@@ -25,6 +24,7 @@ void setupVertex()
     // the lightmap texture matrix is scaled to 1/256 and then offset + 8
     // it is also clamped to repeat and has linear min/mag
     v_light = texture2D(u_lightmap, (in_lightmap.rg * 0.00367647) + 0.03125);
+    v_flags =  in_lightmap.b;
 
     gl_FrontColor = in_color_0;
 

@@ -20,8 +20,8 @@ public class PipelineVertextFormatElement extends VertexFormatElement
      * Format varies by model.  <p>
      * 
      * In vanilla lighting model, Bytes 1-2 are sky and block lightmap coordinates<br>
-     * 3rd byte is pre-computed diffuse shading.<br>
-     * Last byte is glow bits.  bit 1 = layer 0, bits 2-7 = layer 1, bit 8 = layer 2.<p>
+     * 3rd byte is has control flags.  bits 0-2 are emissive flags, bit 3 controls mimmaping (1=off), bit 4 is cutout<br>
+     * bits 5-7 and the last byte are reserved
      * 
      * In enhanced lighting model, bytes 1-3 are rgb light color/glow  flag, and the last byte is amount of torch flicker.
      * The most significant bit of the rgb color bytes indicates if layers are emissive. 

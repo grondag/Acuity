@@ -108,8 +108,8 @@ public class Program
                     this.flags = 0;
                 else
                 {
-                    if(flags == 0)
-                        dirtyUniforms[dirtyCount++] = this;
+                    // dirty count will be reset to 0 before uniforms are loaded
+                    dirtyUniforms[dirtyCount++] = this;
                     this.flags = FLAG_NEEDS_INITIALIZATION | FLAG_NEEDS_UPLOAD;
                 }
             }
@@ -616,6 +616,9 @@ public class Program
     private final void load()
     {
         this.isErrored = true;
+        
+        // prevent accumulation of uniforms in programs that aren't activated after multiple reloads
+        this.dirtyCount = 0;
         try
         {
             if(this.progID > 0)

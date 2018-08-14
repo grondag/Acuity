@@ -1,9 +1,8 @@
 package grondag.acuity.core;
 
-import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IRenderPipeline;
-import net.minecraft.util.BlockRenderLayer;
+import grondag.acuity.api.RenderPipeline;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;
@@ -15,7 +14,6 @@ public class VanillaVertexLighter extends CompoundVertexLighter
 {
     private class ChildLighter extends PipelinedVertexLighter
     {
-        private boolean areAllLayersEmissive = false;
         private float combinedShade = 1f;
         
         protected ChildLighter(IRenderPipeline pipeline)
@@ -27,7 +25,6 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         protected void resetForNewQuad(IPipelinedQuad quad)
         {
             super.resetForNewQuad(quad);
-            this.areAllLayersEmissive = false;
         }
 
         @Override
@@ -49,63 +46,9 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         }
         
         @Override
-        public void setEmissive(int layerIndex, boolean isEmissive)
-        {
-            if(layerIndex < 0 || layerIndex > 2)
-                throw new IndexOutOfBoundsException();
-            
-            switch (layerIndex)
-            {
-            case 0:
-                if(isEmissive)
-                    this.glowFlags |= 0b00000001;
-                else
-                    this.glowFlags &= 0b11111110;
-                break;
-            case 1:
-                if(isEmissive)
-                    this.glowFlags |= 0b10000000;
-                else
-                    this.glowFlags &= 0b01111111;
-                break;
-            case 2:
-                if(isEmissive)
-                    this.glowFlags |= 0b01111110;
-                else
-                    this.glowFlags &= 0b10000001;
-                break;
-                
-            default:
-                assert false : "Bad layer count.";
-            }
-            
-            // store bits in the way we send to shader to avoid doing it later for each vertex
-            final int layerCount = this.pipeline.textureFormat.layerCount();
-            switch (layerCount)
-            {
-            case 1:
-                this.areAllLayersEmissive  = this.glowFlags == 1;
-                break;
-            case 2:
-                this.areAllLayersEmissive  = this.glowFlags == 127;
-                break;
-            case 3:
-                this.areAllLayersEmissive  = (this.glowFlags == 255);
-                break;
-                
-            default:
-                assert false : "Bad layer count.";
-            
-                this.areAllLayersEmissive = false;
-            }
-        }
-
-        
-        @Override
         public void setBlockLightMap(int blockLightRGBF)
         {
-            // convert to straight luminance value in vanilla lighting model
-            // and scale to 127
+            // convert to straight 0-255 luminance value for vanilla light map
             super.setBlockLightMap(Math.round(
                      (blockLightRGBF & 0xFF) * 0.2126f
                    + ((blockLightRGBF >> 8) & 0xFF) * 0.7152f
@@ -113,12 +56,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         }
 
         /**
-         * Compresses alpha value to low bits of alpha component
-         * and sets high bit of alpha to emissive indicator.
-         * If not glowing, multiplies rgb by current shade value.
-         * Swaps red and blue.<p>
-         * 
-         * Base layer alpha in solid render encodes flags for cutout and mipped handling.
+         * Encode flags for emissive rendering, cutout and mipped handling.
          * This allows MC CUTOUT and CUTOUT_MIPPED quads to be backed into a single buffer
          * and rendered in the same draw command.  If cutout is on, then any fragment in
          * the base layer with a (base) texture alpha value less than 0.5 will be discarded.<p>
@@ -130,42 +68,18 @@ public class VanillaVertexLighter extends CompoundVertexLighter
          * fully opaque.  (This could change in the future.)
          * 
          */
-        private int encodeColor(boolean isBaseLayer, boolean glowing, int rawColor)
+        private int encodeFlags()
         {
-            int blue = rawColor & 0xFF;
-            int green = (rawColor >> 8) & 0xFF;
-            int red = (rawColor >> 16) & 0xFF;
+            int result = this.glowFlags; // bits 0-2
+                    
+            // send cutout and mipped indicators
+            if(!this.isCurrentQuadMipped)
+                result |= 0b00001000;
             
-            // see above notes regarding base layer in solid render
-            int alpha = 0;
+            if(this.isCurrentQuadCutout)
+                result |= 0b00010000;
             
-            if(isBaseLayer && currentQuad.getRenderLayer() != BlockRenderLayer.TRANSLUCENT)
-            {
-                // send cutout and mipped indicators
-                if(this.isCurrentQuadCutout)
-                    alpha |= 1;
-                
-                if(!this.isCurrentQuadMipped)
-                    alpha |= 2;
-            }
-            else
-            {
-                // send actual alpha compressed to lower 7 bits
-                alpha = (rawColor >> 24) & 0xFF;
-                alpha = Math.round(alpha / 255f * 127f);
-            }
-            
-            if(glowing)
-                alpha |= 128;
-            else
-            {
-                final float combinedShade = this.combinedShade;
-                red = Math.round(red * combinedShade);
-                green = Math.round(green * combinedShade);
-                blue = Math.round(blue * combinedShade);
-            }
-            
-            return (alpha << 24) | (blue << 16) | (green << 8) | red;
+            return result;
         }
         
         @Override
@@ -192,9 +106,11 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             final BlockPos pos = blockInfo.getBlockPos();
     
             // Compute light
-            int blockLight = 0, skyLight = 0, ao = 255, shade = 255;
+            int blockLight = 0, skyLight = 0;
+            float shade = 1.0f;
             
-            if(this.areAllLayersEmissive)
+            // avoid computation if no shading
+            if(this.areAllLayersEmissive())
             {
                 blockLight = 255;
                 skyLight = 255;
@@ -206,11 +122,11 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                 final float lightZ = posZ - .5f + normZ * .5f;
                 
                 if(this.enableDiffuse)
-                    shade = Math.round(LightUtil.diffuseLight(normX, normY, normZ) * 255);
+                    shade = LightUtil.diffuseLight(normX, normY, normZ);
                 
                 if(this.enableAmbientOcclusion)
                 {
-                    ao = Math.round(getAo(blockInfo, lightX, lightY, lightZ) * 255);
+                    shade *= getAo(blockInfo, lightX, lightY, lightZ);
                     blockLight = Math.round(calcLightmap(blockInfo.getBlockLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
                     skyLight = Math.round(calcLightmap(blockInfo.getSkyLight(), lightX, lightY, lightZ) * LIGHTMAP_TO_255);
                 }
@@ -227,13 +143,14 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                 skyLight = Math.max(skyLight, this.skyLightMap);
             }
             
-            this.combinedShade = (float)shade * ao / 0xFFFF;
+            // save for other layers
+            this.combinedShade = shade;
             
             // POSITION_3F
             output.pos(pos, posX, posY, posZ);
             
             // BASE_RGBA_4UB
-            output.add(encodeColor(true, (this.glowFlags & 1) == 1, unlitColorARGB0));
+            output.add((this.glowFlags & 1) == 1 ? unlitColorARGB0 : AcuityColorHelper.shadeColorAndSwapRedBlue(unlitColorARGB0, shade));
             
             // BASE_TEX_2F
             output.add(u0);
@@ -248,20 +165,24 @@ public class VanillaVertexLighter extends CompoundVertexLighter
 //            output.add(normAo);
             
             //LIGHTMAP
-            output.add(blockLight | (skyLight << 8));
+            output.add(blockLight | (skyLight << 8) | (encodeFlags() << 16));
             return output;
         }
 
         @Override
         protected void addSecondaryLayer(VertexCollector target, int unlitColorARGB1, float u1, float v1)
         {
-            super.addSecondaryLayer(target, encodeColor(false, (this.glowFlags & 2) == 2, unlitColorARGB1), u1, v1);
+            super.addSecondaryLayer(target, 
+                    (this.glowFlags & 2) == 2 ? unlitColorARGB1 : AcuityColorHelper.shadeColorAndSwapRedBlue(unlitColorARGB1, combinedShade), 
+                    u1, v1);
         }
 
         @Override
         protected void addTertiaryLayer(VertexCollector target, int unlitColorARGB2, float u2, float v2)
         {
-            super.addTertiaryLayer(target, encodeColor(false, (this.glowFlags & 4) == 4, unlitColorARGB2), u2, v2);
+            super.addTertiaryLayer(target, 
+                    (this.glowFlags & 4) == 4 ? unlitColorARGB2 : AcuityColorHelper.shadeColorAndSwapRedBlue(unlitColorARGB2, combinedShade), 
+                    u2, v2);
         }
     }
 

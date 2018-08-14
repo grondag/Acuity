@@ -1,9 +1,9 @@
 package grondag.acuity.core;
 
-import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedVertexConsumer;
 import grondag.acuity.api.IRenderPipeline;
+import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -23,6 +23,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     protected final RenderPipeline pipeline;
     
     protected int glowFlags = 0;
+    private int glowMask = 0;
     protected int blockLightMap = 0;
     protected int skyLightMap = 0;
     
@@ -94,6 +95,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.enableAmbientOcclusion = enableAmbientOcclusion && Minecraft.isAmbientOcclusionEnabled();
     }
     
+    @SuppressWarnings("null")
     protected void resetForNewQuad(IPipelinedQuad quad)
     {
         //UGLY: keep less internal state and instead query the quad reference
@@ -121,12 +123,18 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.blockLightMap = 0;
         this.skyLightMap = 0;
         this.enableDiffuse = true;
+        this.glowMask = (2 << quad.getPipeline().textureFormat().layerCount()) - 1;
         this.enableAmbientOcclusion = Minecraft.isAmbientOcclusionEnabled();
     }
     
     public VertexFormat getVertexFormat()
     {
         return this.pipeline.vertexFormat();
+    }
+    
+    protected final boolean areAllLayersEmissive()
+    {
+        return this.glowFlags == this.glowMask;
     }
 
     public void acceptQuad(IPipelinedQuad quad)
