@@ -26,7 +26,7 @@ void setupVertex()
     v_light = texture2D(u_lightmap, (in_lightmap.rg * 0.00367647) + 0.03125);
     v_flags =  in_lightmap.b;
 
-    gl_FrontColor = in_color_0;
+    v_color_0 = in_color_0;
 
 #if LAYER_COUNT > 1
     v_color_1 = in_color_1; //vec4(in_color_1.rgb * shade, in_color_1.a);

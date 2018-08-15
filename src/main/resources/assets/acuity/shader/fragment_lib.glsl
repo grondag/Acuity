@@ -17,7 +17,7 @@ vec4 diffuseColor()
 		vec4 a = texture2D(u_textures, v_texcoord_0);
 #endif
 
-	vec4 shade = shadeColor(gl_Color, 0);
+	vec4 shade = shadeColor(v_color_0, 0);
 
 	a *= shade;
 
