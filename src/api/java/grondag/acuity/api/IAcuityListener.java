@@ -15,5 +15,12 @@ public interface IAcuityListener
      * infer the previous status is the opposite of the new status.
      */
     @SideOnly(Side.CLIENT)
-    public void onAcuityStatusChange(boolean newEnabledStatus);
+    public default void onAcuityStatusChange(boolean newEnabledStatus) {};
+    
+    /**
+     * Called when rendered chunks, shaders, etc. are reloaded, due to a
+     * configuration change, resource pack change, or user pressing F3 + A;
+     */
+    @SideOnly(Side.CLIENT)
+    public default void onRenderReload() {};
 }

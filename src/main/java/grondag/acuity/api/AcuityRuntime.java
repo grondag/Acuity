@@ -41,6 +41,7 @@ public final class AcuityRuntime implements IAcuityRuntime
         PipelineShaderManager.INSTANCE.forceReload();
         PipelineManager.INSTANCE.forceReload();
         PipelineHooks.forceReload();
+        AcuityRuntime.INSTANCE.forEachListener(c -> c.onRenderReload());
     }
 
     @Override
