@@ -150,7 +150,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             output.pos(pos, posX, posY, posZ);
             
             // BASE_RGBA_4UB
-            output.add((this.glowFlags & 1) == 1 ? unlitColorARGB0 : AcuityColorHelper.shadeColorAndSwapRedBlue(unlitColorARGB0, shade));
+            output.add((this.glowFlags & 1) == 1 ? AcuityColorHelper.swapRedBlue(unlitColorARGB0) : AcuityColorHelper.shadeColorAndSwapRedBlue(unlitColorARGB0, shade));
             
             // BASE_TEX_2F
             output.add(u0);
@@ -172,17 +172,17 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         @Override
         protected void addSecondaryLayer(VertexCollector target, int unlitColorARGB1, float u1, float v1)
         {
-            super.addSecondaryLayer(target, 
-                    (this.glowFlags & 2) == 2 ? unlitColorARGB1 : AcuityColorHelper.shadeColorAndSwapRedBlue(unlitColorARGB1, combinedShade), 
-                    u1, v1);
+            target.add((this.glowFlags & 2) == 2 ? AcuityColorHelper.swapRedBlue(unlitColorARGB1) : AcuityColorHelper.shadeColorAndSwapRedBlue(unlitColorARGB1, combinedShade));
+            target.add(u1);
+            target.add(v1);
         }
 
         @Override
         protected void addTertiaryLayer(VertexCollector target, int unlitColorARGB2, float u2, float v2)
         {
-            super.addTertiaryLayer(target, 
-                    (this.glowFlags & 4) == 4 ? unlitColorARGB2 : AcuityColorHelper.shadeColorAndSwapRedBlue(unlitColorARGB2, combinedShade), 
-                    u2, v2);
+            target.add((this.glowFlags & 4) == 4 ? AcuityColorHelper.swapRedBlue(unlitColorARGB2) : AcuityColorHelper.shadeColorAndSwapRedBlue(unlitColorARGB2, combinedShade));
+            target.add(u2);
+            target.add(v2);
         }
     }
 
