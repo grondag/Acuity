@@ -1,11 +1,11 @@
 # Introduction
 
-**Acuity** is a core mod modders can use to implement multi-layered textures, emissive rendering and fancy visual effects (shaders) for block rendering with good performance on moderate to high-end hardware, all without using TileEntitySpecialRenderer.  Future versions may also offer performance and aesthetic benefits for players.
+**Acuity** offers mod authors the ability to implement multi-layered textures, emissive rendering and fancy visual effects (shaders) for block rendering with good performance on moderate to high-end hardware, all without using TileEntitySpecialRenderer.  Future versions may also offer performance and aesthetic benefits for players.
 
 This mod is client-side only and can be quickly enabled and disabled at run time via configuration settings. When the mod is disabled, the game uses normal Minecraft rendering.
 
 # Why is this mod needed?
-I wanted an API targeted at Forge modders like myself - one that will provide a consistent framework to control the visual appearance of blocks in a lighting-consistent way. I also wanted it to be available on the Twitch launcher where most mods and packs are nowadays distributed.  Lastly, I didn't want to sacrifice performance to use shaders. Shaders are the modern way to program the graphics pipeline and peform well if employed correctly.
+I wanted an API targeted at Forge mod authors like myself - one that will provide a consistent framework to control the visual appearance of blocks in a lighting-consistent way. I also wanted it to be available on the Twitch launcher where most mods and packs are nowadays distributed.  Lastly, I didn't want to sacrifice performance to use shaders. Shaders are the modern way to program the graphics pipeline and peform well if employed correctly.
 
 # Current Features
 * Render blocks with multiple texture layers (for example, base color + decorative texture + border) in a single pass without transparency. (It's possible to do this in vanilla, but requires three quads and possibly one or more transparency sorts unless you can get by with cutout textures.)
@@ -13,9 +13,9 @@ I wanted an API targeted at Forge modders like myself - one that will provide a 
 * *Per-quad* emissive rendering, can also control per-texture layer within the same quad.
 
 # Permanent Limitations & Constraints
-* Don'create more shaders than you need - while the mod tries to be efficient, more pipelines mean more, smaller draw calls to the GPU, limiting performance
-* Modders have limited control over vertex formats. The mod will select a vertex format for you based on the number of texture layers you need (1 to 3). This is necessary to support enhanced lighting models and limit the number of GL state changes. (But you could put whatever data you want into the extra color/UV attributes of the multi-layer formats...)
-* Modders should rely on the provided lighting functions so that future enhanced lighting models "just work" with your block - unless your block really is meant to look different and thus doesn't need standard lighting.
+* Don't create more shaders than you need - while the mod tries to be efficient, more pipelines mean more, smaller draw calls to the GPU, limiting performance
+* Mod authors have limited control over vertex formats. The mod will select a vertex format for you based on the number of texture layers you need (1 to 3). This is necessary to support enhanced lighting models and limit the number of GL state changes. (But you could put whatever data you want into the extra color/UV attributes of the multi-layer formats...)
+* Mod authors should rely on the provided glsl library functions so that future enhanced lighting models "just work" with your block - unless your block really is meant to look different and thus doesn't need standard lighting.
 * Avoid excessive variation when rendering transparency. Ideally, use the single-layer vertex format and the default pipeline or only one or two custom pipelines. You *can* have multiple vertex formats and pipelines in the transparency layer, and the mod will automatically sort quads across formats and pipelines and then interleave draw calls based on the correct ordering. But it will mean more GL state changes and could thus impact peformance. (It should still be more efficient than TESRs because it can still render from a static VBO.)
 
 # Current Limitations 
