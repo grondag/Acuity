@@ -191,11 +191,19 @@ public class CompoundVertexBuffer extends VertexBuffer
         this.vertexPackingList = new VertexPackingList();
     }
 
+//    private static int maxSize = 0;
+    
     public final void upload(ByteBuffer buffer, VertexPackingList packing)
     {
         this.vertexPackingList = packing;
         this.vertexPackingConsumer.vaoBindingFlags = 0;
         buffer.position(0);
+//        int newMax = Math.max(maxSize, buffer.limit());
+//        if(newMax > maxSize)
+//        {
+//            System.out.println("new max buffer size: " + newMax);
+//            maxSize = newMax;
+//        }
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         OpenGlHelper.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
