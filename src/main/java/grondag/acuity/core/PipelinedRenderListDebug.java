@@ -15,6 +15,8 @@ public class PipelinedRenderListDebug extends AbstractPipelinedRenderList
     protected int chunkCounter;
     protected int drawCounter;
     protected int quadCounter;
+    protected long minNanos = Long.MAX_VALUE;
+    protected long maxNanos = 0;
     
     @Override
     public final void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
@@ -36,18 +38,25 @@ public class PipelinedRenderListDebug extends AbstractPipelinedRenderList
         
         super.renderChunkLayer(layer);
         
-        totalNanos += (System.nanoTime() - startNanos);
+        long duration = (System.nanoTime() - startNanos);
+        minNanos = Math.min(minNanos, duration);
+        maxNanos = Math.max(maxNanos, duration);
+        totalNanos += duration;
         if(frameCounter >= 600)
         {
             final double ms = totalNanos / 1000000.0;
             String msg = this.isAcuityEnabled ? "ENABLED" : "Disabled";
             Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %d frames / %d chunks / %d draws / %d quads (Acuity API %s)", frameCounter, chunkCounter, drawCounter, quadCounter, msg));
             Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer %f ms / %f ms / %f ms / %f ns", ms / frameCounter, ms / chunkCounter, ms / drawCounter, (double)totalNanos / quadCounter));
+            Acuity.INSTANCE.getLog().info(String.format("renderChunkLayer min = %f ms, max = %f ms", minNanos / 1000000.0, maxNanos / 1000000.0));
+            
             totalNanos = 0;
             frameCounter = 0;
             chunkCounter = 0;
             drawCounter = 0;
             quadCounter = 0;
+            minNanos = Long.MAX_VALUE;
+            maxNanos = 0;
         }
     }
 }
