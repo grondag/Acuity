@@ -10,7 +10,6 @@ import grondag.acuity.Acuity;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
-import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
@@ -242,7 +241,7 @@ public class CompoundBufferBuilder extends BufferBuilder
 
     private static final int[] EMPTY_STARTS = new int[PipelineManager.MAX_PIPELINES];
     
-    private final class Consumer extends VertexPackingConsumer
+    private final class Consumer extends AbstractVertexPackingRenderer
     {
         // tracks current position within vertex collectors
         // necessary in transparency layer when splitting pipelines

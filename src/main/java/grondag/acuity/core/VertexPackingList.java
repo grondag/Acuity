@@ -67,12 +67,7 @@ public class VertexPackingList
         this.size++;
     }
     
-    public static abstract class VertexPackingConsumer
-    {
-        abstract public void accept(RenderPipeline pipeline, int vertexCount);
-    }
-    
-    public final void forEach(VertexPackingConsumer consumer)
+    public final void forEach(AbstractVertexPackingRenderer consumer)
     {
         final int size = this.size;
         for(int i = 0; i < size; i++)
