@@ -2,12 +2,8 @@ package grondag.acuity.core;
 
 import java.nio.ByteBuffer;
 
-import grondag.acuity.api.RenderPipeline;
-
-public abstract class AbstractVertexPackingRenderer
+public abstract class AbstractVertexPackingRenderer implements IVertexPackingConsumer
 {
-    abstract public void accept(RenderPipeline pipeline, int vertexCount);
-    
     abstract public int size();
 
     abstract public int quadCount();

@@ -241,7 +241,7 @@ public class CompoundBufferBuilder extends BufferBuilder
 
     private static final int[] EMPTY_STARTS = new int[PipelineManager.MAX_PIPELINES];
     
-    private final class Consumer extends AbstractVertexPackingRenderer
+    private final class Consumer implements IVertexPackingConsumer
     {
         // tracks current position within vertex collectors
         // necessary in transparency layer when splitting pipelines

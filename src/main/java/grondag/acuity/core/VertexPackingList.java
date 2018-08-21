@@ -67,7 +67,7 @@ public class VertexPackingList
         this.size++;
     }
     
-    public final void forEach(AbstractVertexPackingRenderer consumer)
+    public final void forEach(IVertexPackingConsumer consumer)
     {
         final int size = this.size;
         for(int i = 0; i < size; i++)
