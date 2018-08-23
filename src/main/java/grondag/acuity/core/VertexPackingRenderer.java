@@ -6,6 +6,7 @@ import java.nio.IntBuffer;
 import javax.annotation.Nullable;
 
 import org.lwjgl.BufferUtils;
+import org.lwjgl.opengl.APPLEFence;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
@@ -18,6 +19,9 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 public class VertexPackingRenderer extends AbstractVertexPackingRenderer
 {
+    //TODO - make buffer size configurable?
+    private static final int BUFFER_SIZE = 1572864;
+    
     private final int glBufferId;
     private int bufferOffset = 0;
     private int vertexOffset = 0;
@@ -26,6 +30,8 @@ public class VertexPackingRenderer extends AbstractVertexPackingRenderer
 
     @Nullable PipelineVertexFormat lastFormat = null;
 
+    private final int glFenceId;
+    
     /**
      * Holds VAO buffer names.  Null if VAO not available.
      */
@@ -45,16 +51,18 @@ public class VertexPackingRenderer extends AbstractVertexPackingRenderer
 
     VertexPackingRenderer()
     {
-        this.glBufferId = OpenGlHelper.glGenBuffers();
         this.vertexPackingList = new VertexPackingList();
+        this.glBufferId = OpenGlHelper.glGenBuffers();
+        this.glFenceId = APPLEFence.glGenFencesAPPLE();
+        
+        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+        OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, BUFFER_SIZE, GL15.GL_STATIC_DRAW);
         if(OpenGlHelperExt.isVaoEnabled()) try
         {
             IntBuffer vao = BufferUtils.createIntBuffer(TextureFormat.values().length);
             OpenGlHelperExt.glGenVertexArrays(vao);
             this.vaoNames = vao;
             int[] vaoBufferId = new int[TextureFormat.values().length];
-
-            OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, glBufferId);
 
             for(TextureFormat format : TextureFormat.values())
             {
@@ -81,13 +89,13 @@ public class VertexPackingRenderer extends AbstractVertexPackingRenderer
             }
 
             OpenGlHelperExt.glBindVertexArray(0);
-            OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
             this.vaoBufferId = vaoBufferId;
         }
         catch(Exception e)
         {
             // noop
         }
+        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
     }
 
     @Override
@@ -132,6 +140,9 @@ public class VertexPackingRenderer extends AbstractVertexPackingRenderer
     @Override
     public final void upload(ByteBuffer buffer, VertexPackingList packing)
     {
+        //TODO: better runtime handling - what if not?
+        assert packing.totalBytes() <=  BUFFER_SIZE;
+        
         this.vaoBindingFlags = 0;
         this.vertexPackingList = packing;
         buffer.position(0);
@@ -142,10 +153,18 @@ public class VertexPackingRenderer extends AbstractVertexPackingRenderer
         //          maxSize = newMax;
         //      }
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        OpenGlHelper.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+        OpenGlHelperExt.glBufferSubData(OpenGlHelper.GL_ARRAY_BUFFER, 0, buffer);
+//        OpenGlHelper.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
+        APPLEFence.glSetFenceAPPLE(this.glFenceId);
     }
 
+    @Override
+    public boolean isReady()
+    {
+        return APPLEFence.glTestFenceAPPLE(glFenceId);
+    }
+    
     @SuppressWarnings("null")
     @Override
     public final void accept(RenderPipeline pipeline, int vertexCount)

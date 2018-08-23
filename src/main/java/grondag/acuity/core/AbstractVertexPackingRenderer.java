@@ -13,4 +13,9 @@ public abstract class AbstractVertexPackingRenderer implements IVertexPackingCon
     public abstract void deleteGlResources();
 
     public abstract void render(boolean isSolidLayer);
+
+    public boolean isReady()
+    {
+        return false;
+    }
 }
