@@ -4,11 +4,11 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAccumulator;
 
-import grondag.acuity.Configurator;
 import grondag.acuity.Acuity;
+import grondag.acuity.Configurator;
+import grondag.acuity.api.IPipelinedBakedModel;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
-import grondag.acuity.api.IPipelinedBakedModel;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
@@ -286,4 +286,6 @@ public class PipelineHooks
     {
         return Acuity.isModEnabled() || (OpenGlHelper.vboSupported && Minecraft.getMinecraft().gameSettings.useVbo);
     }
+    
+
 }
