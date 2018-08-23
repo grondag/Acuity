@@ -160,6 +160,7 @@ public class ASMTransformer implements IClassTransformer
         Iterator<MethodNode> methods = classNode.methods.iterator();
         boolean newWorked = false;
         boolean invokedWorked = false;
+        boolean visibilityWorked = false;
         
         while (methods.hasNext())
         {
@@ -195,8 +196,31 @@ public class ASMTransformer implements IClassTransformer
                     }
                 }
             }
+            else if (m.name.equals("func_178581_b") || m.name.equals("rebuildChunk")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    // public, so will always be INVOKEVIRTUAL
+                    if(next.getOpcode() == INVOKEVIRTUAL)
+                    {
+                        MethodInsnNode op = (MethodInsnNode)next;
+                        if(op.owner.equals("net/minecraft/client/renderer/chunk/VisGraph")
+                                && (op.name.equals("func_178607_a") || op.name.equals("computeVisibility")))
+                        {
+                            op.setOpcode(INVOKESTATIC);
+                            op.owner = "grondag/acuity/core/VisiblityHooks";
+                            op.name = "computeVisiblity";
+                            op.desc = "(Lnet/minecraft/client/renderer/chunk/VisGraph;)Lnet/minecraft/client/renderer/chunk/SetVisibility;";
+                            visibilityWorked = true;
+                            break;
+                        }
+                    }
+                }
+            }
         }
-        if(!newWorked || !invokedWorked)
+        if(!(newWorked && invokedWorked && visibilityWorked))
         {
             Acuity.INSTANCE.getLog().error(msg_fail_patch_render_chunk);
             allPatchesSuccessful = false;
@@ -329,6 +353,7 @@ public class ASMTransformer implements IClassTransformer
         Iterator<MethodNode> methods = classNode.methods.iterator();
         int newCount = 0;
         int invokeCount = 0;
+        boolean visibilityWorked = false;
         
         final String listClass = Configurator.enableRenderStats
                 ? "grondag/acuity/core/PipelinedRenderListDebug"
@@ -367,8 +392,48 @@ public class ASMTransformer implements IClassTransformer
                     }
                 }
             }
+            else if (m.name.equals("func_174970_a") || m.name.equals("setupTerrain")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    // should look like this pre-ASM
+//                    mv.visitVarInsn(ALOAD, 0);
+//                    mv.visitVarInsn(ALOAD, 19);
+//                    mv.visitMethodInsn(INVOKEVIRTUAL, "net/minecraft/client/renderer/RenderGlobal", "getVisibleFacings", "(Lnet/minecraft/util/math/BlockPos;)Ljava/util/Set;", false);
+
+                    // and we want it to be this
+//                    mv.visitVarInsn(ALOAD, 20);
+//                    mv.visitVarInsn(ALOAD, 19);
+//                    mv.visitMethodInsn(INVOKESTATIC, "grondag/acuity/core/VisiblityHooks", "getVisibleFacings", "(Lnet/minecraft/client/renderer/chunk/RenderChunk;Lnet/minecraft/util/math/BlockPos;)Ljava/util/Set;", false);
+                    
+                    // public, so will always be INVOKEVIRTUAL
+                    if(next.getOpcode() == INVOKEVIRTUAL)
+                    {
+                        MethodInsnNode op = (MethodInsnNode)next;
+                        
+                        if(op.owner.equals("net/minecraft/client/renderer/RenderGlobal")
+                                && (op.name.equals("func_174978_c") || op.name.equals("getVisibleFacings")))
+                        {
+                            AbstractInsnNode twoBack = m.instructions.get(i - 2);
+                            if(twoBack.getOpcode() == ALOAD && ((VarInsnNode)twoBack).var == 0)
+                            {
+                                // UGLY - will be borked if any local renumbering happens - fix in 1.13 with new ASM framework
+                                ((VarInsnNode)twoBack).var = 20;
+                                op.setOpcode(INVOKESTATIC);
+                                op.owner = "grondag/acuity/core/VisiblityHooks";
+                                op.name = "getVisibleFacings";
+                                op.desc = "(Lnet/minecraft/client/renderer/chunk/RenderChunk;Lnet/minecraft/util/math/BlockPos;)Ljava/util/Set;";
+                                visibilityWorked = true;
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
         }
-        if(newCount != 2 || invokeCount != 2)
+        if(!(newCount == 2 && invokeCount == 2 && visibilityWorked))
         {
             Acuity.INSTANCE.getLog().error(msg_fail_patch_render_global);
             allPatchesSuccessful = false;
