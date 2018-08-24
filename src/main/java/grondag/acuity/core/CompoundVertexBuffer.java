@@ -56,8 +56,8 @@ public class CompoundVertexBuffer extends VertexBuffer
         }
         else
         {
-            if(renderer.isReady())
-//            if(this.frameWaits-- == 0)
+//            if(renderer.isReady())
+            if(this.frameWaits-- == 0)
             {
                 releaseRenderer(this.currentRenderer);
                 this.currentRenderer = renderer;

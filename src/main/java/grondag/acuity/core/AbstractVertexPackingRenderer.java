@@ -14,8 +14,8 @@ public abstract class AbstractVertexPackingRenderer implements IVertexPackingCon
 
     public abstract void render(boolean isSolidLayer);
 
-    public boolean isReady()
-    {
-        return false;
-    }
+//    public boolean isReady()
+//    {
+//        return false;
+//    }
 }

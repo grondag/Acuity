@@ -20,7 +20,7 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement;
 public class VertexPackingRenderer extends AbstractVertexPackingRenderer
 {
     //TODO - make buffer size configurable?
-    private static final int BUFFER_SIZE = 1572864;
+//    private static final int BUFFER_SIZE = 1572864;
     
     private final int glBufferId;
     private int bufferOffset = 0;
@@ -30,7 +30,7 @@ public class VertexPackingRenderer extends AbstractVertexPackingRenderer
 
     @Nullable PipelineVertexFormat lastFormat = null;
 
-    private final int glFenceId;
+//    private final int glFenceId;
     
     /**
      * Holds VAO buffer names.  Null if VAO not available.
@@ -53,10 +53,10 @@ public class VertexPackingRenderer extends AbstractVertexPackingRenderer
     {
         this.vertexPackingList = new VertexPackingList();
         this.glBufferId = OpenGlHelper.glGenBuffers();
-        this.glFenceId = APPLEFence.glGenFencesAPPLE();
+//        this.glFenceId = APPLEFence.glGenFencesAPPLE();
         
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, BUFFER_SIZE, GL15.GL_STATIC_DRAW);
+//        OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, BUFFER_SIZE, GL15.GL_STATIC_DRAW);
         if(OpenGlHelperExt.isVaoEnabled()) try
         {
             IntBuffer vao = BufferUtils.createIntBuffer(TextureFormat.values().length);
@@ -141,7 +141,7 @@ public class VertexPackingRenderer extends AbstractVertexPackingRenderer
     public final void upload(ByteBuffer buffer, VertexPackingList packing)
     {
         //TODO: better runtime handling - what if not?
-        assert packing.totalBytes() <=  BUFFER_SIZE;
+//        assert packing.totalBytes() <=  BUFFER_SIZE;
         
         this.vaoBindingFlags = 0;
         this.vertexPackingList = packing;
@@ -153,17 +153,17 @@ public class VertexPackingRenderer extends AbstractVertexPackingRenderer
         //          maxSize = newMax;
         //      }
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        OpenGlHelperExt.glBufferSubData(OpenGlHelper.GL_ARRAY_BUFFER, 0, buffer);
-//        OpenGlHelper.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
+//        OpenGlHelperExt.glBufferSubData(OpenGlHelper.GL_ARRAY_BUFFER, 0, buffer);
+        OpenGlHelper.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, buffer, GL15.GL_STATIC_DRAW);
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
-        APPLEFence.glSetFenceAPPLE(this.glFenceId);
+//        APPLEFence.glSetFenceAPPLE(this.glFenceId);
     }
 
-    @Override
-    public boolean isReady()
-    {
-        return APPLEFence.glTestFenceAPPLE(glFenceId);
-    }
+//    @Override
+//    public boolean isReady()
+//    {
+//        return APPLEFence.glTestFenceAPPLE(glFenceId);
+//    }
     
     @SuppressWarnings("null")
     @Override
