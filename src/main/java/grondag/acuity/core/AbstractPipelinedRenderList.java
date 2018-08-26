@@ -10,6 +10,7 @@ import grondag.acuity.Acuity;
 import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.IAcuityListener;
 import grondag.acuity.api.PipelineManager;
+import grondag.acuity.api.RenderPipeline;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.GlStateManager;
@@ -169,38 +170,15 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         if(PipelineManager.INSTANCE.beforeRenderChunks())
             downloadModelViewMatrix();
         
-        final int chunkCount = chunks.size();
-
-        if (chunkCount == 0) 
+        if (this.chunks.isEmpty()) 
             return; 
         
         preRenderSetup();
         
-        final ObjectArrayList<CompoundVertexBuffer> solidBuffers = this.solidBuffers;
-        final LongArrayList[] solidRenderLists = this.solidRenderLists;
-        
-        for (int i = 0; i < chunkCount; i++)
-        {
-            final RenderChunk renderchunk =  chunks.get(i);
-            final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(SOLID_ORDINAL);
-            vertexbuffer.chunkPositionTransientDoNotUseExceptInSolidRenderSeriouslyIMeanIt = renderchunk.getPosition();
-            vertexbuffer.prepareSolidRender();
-            solidBuffers.add(vertexbuffer);
-            VertexPackingList packingList = vertexbuffer.packingList();
-            final int pipelineCount = packingList.size();
-            if(pipelineCount == 1)
-            {
-                solidRenderLists[packingList.getPipeline(0).getIndex()].add(((long)i << 32));
-            }
-            else for(int p = 0; p < pipelineCount; p++)
-            {   
-                solidRenderLists[packingList.getPipeline(p).getIndex()].add(((long)i << 32) | p);
-            }
-        }
+        final int lastPipelineIndex = populateSolidRenderLists();
         
         //TODO: precompute render cube and sort buffers by render cube also
-        //TODO: handle single pipeline special case and shortcut to max pipeline #
-        for(int n = 0; n < PipelineManager.MAX_PIPELINES; n++)
+        for(int n = 0; n <= lastPipelineIndex; n++)
         {
             final LongArrayList renderList = solidRenderLists[n];
             
@@ -223,6 +201,39 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         postRenderCleanup();
     }
     
+    /**
+     * Returns the highest populated pipeline index - inclusive
+     */
+    private int populateSolidRenderLists()
+    {
+        final ObjectArrayList<RenderChunk> chunks = this.chunks;
+        final int chunkCount = chunks.size();
+        final ObjectArrayList<CompoundVertexBuffer> solidBuffers = this.solidBuffers;
+        final LongArrayList[] solidRenderLists = this.solidRenderLists;
+        
+        int result = -1;
+        
+        for (int i = 0; i < chunkCount; i++)
+        {
+            final RenderChunk renderchunk =  chunks.get(i);
+            final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(SOLID_ORDINAL);
+            vertexbuffer.chunkPositionTransientDoNotUseExceptInSolidRenderSeriouslyIMeanIt = renderchunk.getPosition();
+            vertexbuffer.prepareSolidRender();
+            solidBuffers.add(vertexbuffer);
+            VertexPackingList packingList = vertexbuffer.packingList();
+            final int pCount = packingList.size();
+            for(int j = 0; j < pCount; j++)
+            {
+                RenderPipeline p = packingList.getPipeline(j);
+                final int pIndex = p.getIndex();
+                solidRenderLists[pIndex].add(((long)i << 32) | pIndex);
+                if(pIndex > result)
+                    result = pIndex;
+            }
+        }
+        
+        return result;
+    }
     
     final private static int TRANSLUCENT_ORDINAL = BlockRenderLayer.TRANSLUCENT.ordinal();
     protected final void renderChunkLayerTranslucent()
