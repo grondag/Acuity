@@ -337,7 +337,6 @@ public class CompoundBufferBuilder extends BufferBuilder
       final float relativeY = RenderCube.renderCubeRelative(y);
       final float relativeZ = RenderCube.renderCubeRelative(z);
         VertexPackingList packing = new VertexPackingList();
-        packing = new VertexPackingList();
 
         final PriorityQueue<VertexCollector> sorter = sorters.get();
         
