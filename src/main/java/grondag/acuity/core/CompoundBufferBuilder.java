@@ -31,12 +31,10 @@ public class CompoundBufferBuilder extends BufferBuilder
      */
     private final ObjectArrayFIFOQueue<VertexCollector> collectors = new ObjectArrayFIFOQueue<>();
     
-    
-    //TODO: make this be null in CUTOUT buffers?
     /**
-     * Fast lookup of buffers by pipeline index.
+     * Fast lookup of buffers by pipeline index. Null in CUTOUT layer buffers.
      */
-    private final VertexCollector[] pipelineArray = new VertexCollector[PipelineManager.MAX_PIPELINES];
+    private VertexCollector[] pipelineArray;
     
     /**
      * Holds vertex data ready for upload if we have it.
@@ -71,6 +69,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         }
     }
     
+    @SuppressWarnings("null")
     public CompoundBufferBuilder(int bufferSizeIn)
     {
         super(limitBufferSize(bufferSizeIn));
@@ -79,14 +78,18 @@ public class CompoundBufferBuilder extends BufferBuilder
     /**
      * Called at end of RegionRenderCacheBuilder init via ASM.
      */
+    @SuppressWarnings("null")
     public void setupLinks(RegionRenderCacheBuilder owner, BlockRenderLayer layer)
     {
         this.layer = layer;
         
         if(this.layer == BlockRenderLayer.CUTOUT || this.layer == BlockRenderLayer.CUTOUT_MIPPED)
         {
+            this.pipelineArray = null;
             this.proxy = (CompoundBufferBuilder) owner.getWorldRendererByLayer(BlockRenderLayer.SOLID);
         }
+        else
+            this.pipelineArray = new VertexCollector[PipelineManager.MAX_PIPELINES];
     }
     
     /**
