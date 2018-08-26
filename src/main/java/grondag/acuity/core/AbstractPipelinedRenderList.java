@@ -226,7 +226,7 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
             {
                 RenderPipeline p = packingList.getPipeline(j);
                 final int pIndex = p.getIndex();
-                solidRenderLists[pIndex].add(((long)i << 32) | pIndex);
+                solidRenderLists[pIndex].add(((long)i << 32) | j);
                 if(pIndex > result)
                     result = pIndex;
             }
