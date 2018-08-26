@@ -3,6 +3,7 @@ package grondag.acuity.core;
 import java.nio.IntBuffer;
 import java.util.Comparator;
 import java.util.PriorityQueue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.Nullable;
 
@@ -11,7 +12,6 @@ import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
-import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -24,12 +24,10 @@ public class CompoundBufferBuilder extends BufferBuilder
 {
     private static final VertexCollector[] EMPTY_ARRAY = new VertexCollector[PipelineManager.MAX_PIPELINES];
     
-    
-    //TODO: consider making this static / concurrent
     /**
      * Cache instantiated buffers for reuse.<p>
      */
-    private final ObjectArrayFIFOQueue<VertexCollector> collectors = new ObjectArrayFIFOQueue<>();
+    private static final ConcurrentLinkedQueue<VertexCollector> collectors = new ConcurrentLinkedQueue<>();
     
     /**
      * Fast lookup of buffers by pipeline index. Null in CUTOUT layer buffers.
@@ -163,7 +161,9 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     private VertexCollector getInitializedCollector(RenderPipeline pipeline)
     {
-        VertexCollector result = this.collectors.isEmpty() ? new VertexCollector(1024) : this.collectors.dequeue();
+        VertexCollector result = collectors.poll();
+        if(result == null)
+            result = new VertexCollector(1024);
         result.prepare(pipeline);
         return result;
     }
@@ -211,7 +211,7 @@ public class CompoundBufferBuilder extends BufferBuilder
                             
                             // Collectors used in non-transparency layers can be reused.
                             // (Transparency collectors are retained in compiled chunk for resorting.)
-                            this.collectors.enqueue(b);
+                            collectors.offer(b);
                         }
                     }
                     this.uploadPackingList = packing;
