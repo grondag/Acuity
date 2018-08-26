@@ -36,6 +36,14 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class Program
 {
+    private static @Nullable Program activeProgram;
+    
+    public static void deactivate()
+    {
+        activeProgram = null;
+        OpenGlHelperExt.glUseProgramFast(0);
+    }
+    
     private int progID = -1;
     private boolean isErrored = false;
 
@@ -508,19 +516,23 @@ public class Program
         if(this.isErrored)
             return;
         
-        OpenGlHelperExt.glUseProgramFast(this.progID);
+        if(activeProgram != this)
+        {
+            activeProgram = this;
+            OpenGlHelperExt.glUseProgramFast(this.progID);
+    
+            final int count = this.dirtyCount;
+            if(count != 0)
+            {            
+                for(int i = 0; i < count; i++)
+                {
+                    this.dirtyUniforms[i].upload();
+                }
+                this.dirtyCount = 0;
+            }
+        }
         
         this.updateModelUniforms();
-        
-        final int count = this.dirtyCount;
-        if(count == 0)
-            return;
-        
-        for(int i = 0; i < count; i++)
-        {
-            this.dirtyUniforms[i].upload();
-        }
-        this.dirtyCount = 0;
     }
     
     public class UniformMatrix4f extends Uniform<IUniformMatrix4f> implements IUniformMatrix4f
@@ -603,14 +615,6 @@ public class Program
     public UniformMatrix4f uniformMatrix4f(String name, UniformUpdateFrequency frequency, FloatBuffer floatBuffer, Consumer<IUniformMatrix4f> initializer)
     {
         return addUniform(new UniformMatrix4f(name, initializer, frequency, floatBuffer));
-    }
-    
-    /**
-     * NB: Not necessary to call if going to activate a different shader.
-     */
-    public final void deactivate()
-    {
-        OpenGlHelper.glUseProgram(0);
     }
     
     private final void load()

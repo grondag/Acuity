@@ -141,7 +141,7 @@ public final class PipelineManager implements IPipelineManager
         return result;
     }
     
-    public final IRenderPipeline getPipeline(int pipelineIndex)
+    public final RenderPipeline getPipeline(int pipelineIndex)
     {
         return pipelines[pipelineIndex];
     }

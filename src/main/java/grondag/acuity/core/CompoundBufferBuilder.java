@@ -12,7 +12,6 @@ import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -25,19 +24,17 @@ public class CompoundBufferBuilder extends BufferBuilder
 {
     private static final VertexCollector[] EMPTY_ARRAY = new VertexCollector[PipelineManager.MAX_PIPELINES];
     
+    
+    //TODO: consider making this static / concurrent
     /**
      * Cache instantiated buffers for reuse.<p>
      */
     private final ObjectArrayFIFOQueue<VertexCollector> collectors = new ObjectArrayFIFOQueue<>();
     
-    /**
-     * Track pipelines in use as list for fast upload 
-     * and to know if we ned to allocate more.  Never includes the vanilla pipeline.
-     */
-    private final ObjectArrayList<RenderPipeline> pipelineList = new ObjectArrayList<>();
     
+    //TODO: make this be null in CUTOUT buffers?
     /**
-     * Fast lookup of buffers by pipeline index.  Element 0 will always be this.
+     * Fast lookup of buffers by pipeline index.
      */
     private final VertexCollector[] pipelineArray = new VertexCollector[PipelineManager.MAX_PIPELINES];
     
@@ -66,11 +63,8 @@ public class CompoundBufferBuilder extends BufferBuilder
     private class CompoundState extends State
     {
         @SuppressWarnings("hiding")
-        private ObjectArrayList<RenderPipeline> pipelineList;
-        @SuppressWarnings("hiding")
         private VertexCollector[] pipelineArray = new VertexCollector[PipelineManager.MAX_PIPELINES];
         
-        @SuppressWarnings("null")
         public CompoundState(int[] buffer, VertexFormat format)
         {
             super(buffer, format);
@@ -119,7 +113,6 @@ public class CompoundBufferBuilder extends BufferBuilder
         {
             State inner = super.getVertexState();
             CompoundState result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat());
-            result.pipelineList = this.pipelineList.clone();
             System.arraycopy(this.pipelineArray, 0, result.pipelineArray, 0, PipelineManager.MAX_PIPELINES);
             return result;
         }
@@ -134,8 +127,6 @@ public class CompoundBufferBuilder extends BufferBuilder
         if(Acuity.isModEnabled())
         {
             CompoundState compState = (CompoundState)state;
-            this.pipelineList.clear();
-            this.pipelineList.addAll(compState.pipelineList);
             System.arraycopy(compState.pipelineArray, 0, this.pipelineArray, 0, this.pipelineArray.length);
         }
     }
@@ -147,7 +138,6 @@ public class CompoundBufferBuilder extends BufferBuilder
         if(Acuity.isModEnabled())
         {
             System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, PipelineManager.MAX_PIPELINES);
-            this.pipelineList.clear();
             this.uploadBuffer = null;
             this.uploadPackingList = null;
         }
@@ -164,7 +154,6 @@ public class CompoundBufferBuilder extends BufferBuilder
         {
             result = getInitializedCollector(pipeline);
             pipelineArray[i] = result;
-            pipelineList.add(pipeline);
         }
         return result;
     }
@@ -206,14 +195,16 @@ public class CompoundBufferBuilder extends BufferBuilder
                 if(packing == null)
                 {
                     packing = new VertexPackingList();
-                    if(!pipelineList.isEmpty())
+                    
+                    // NB: for solid render, relying on pipelines being added to packing in numerical order so that
+                    // all chunks can iterate pipelines independently while maintaining same pipeline order within chunk
+                    for(VertexCollector b : pipelineArray)
                     {
-                        for(RenderPipeline p : pipelineList)
+                        if(b != null)
                         {
-                            final VertexCollector b = pipelineArray[p.getIndex()];
                             final int vertexCount = b.vertexCount();
                             if(vertexCount != 0)
-                                packing.addPacking(p, vertexCount);
+                                packing.addPacking(b.pipeline(), vertexCount);
                             
                             // Collectors used in non-transparency layers can be reused.
                             // (Transparency collectors are retained in compiled chunk for resorting.)
@@ -345,27 +336,25 @@ public class CompoundBufferBuilder extends BufferBuilder
         VertexPackingList packing = new VertexPackingList();
         packing = new VertexPackingList();
 
-        // Exploit special case when there is only one transparent pipeline in this renderchunk
-        if(pipelineList.size() == 1)
+        final PriorityQueue<VertexCollector> sorter = sorters.get();
+        
+        for(VertexCollector collector : pipelineArray)
         {
-            RenderPipeline p = pipelineList.get(0);
-            final VertexCollector collector = pipelineArray[p.getIndex()];
-            collector.sortQuads(relativeX, relativeY, relativeZ);
-            final int vertexCount = collector.vertexCount();
-            if(vertexCount != 0)
-                packing.addPacking(p, vertexCount);
-        }
-        else if(!pipelineList.isEmpty())
-        {
-            final PriorityQueue<VertexCollector> sorter = sorters.get();
-            
-            for(RenderPipeline p : this.pipelineList)
+            if(collector != null)
             {
-                final VertexCollector collector = pipelineArray[p.getIndex()];
                 collector.sortQuads(relativeX, relativeY, relativeZ);
                 sorter.add(collector);
             }
-            
+        }
+        
+        // exploit special case when only one transparent pipeline in this render chunk
+        if(sorter.size() == 1)
+        {
+            VertexCollector only = sorter.poll();
+            packing.addPacking(only.pipeline(), only.vertexCount());
+        }
+        else if(sorter.size() != 0)
+        {
             VertexCollector first = sorter.poll();
             VertexCollector second = sorter.poll();
             do

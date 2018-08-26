@@ -80,4 +80,14 @@ public class VertexPackingList
             consumer.accept(this.pipelines[i], this.counts[i]);
         }
     }
+    
+    public final RenderPipeline getPipeline(int index)
+    {
+        return this.pipelines[index];
+    }
+    
+    public final int getCount(int index)
+    {
+        return this.counts[index];
+    }
 }

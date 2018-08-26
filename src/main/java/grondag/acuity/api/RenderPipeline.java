@@ -33,6 +33,7 @@ public final class RenderPipeline implements IRenderPipeline
     private PipelineVertexFormat pipelineVertexFormat;
     private VertexFormat vertexFormat;
     
+    
     @SuppressWarnings("null")
     RenderPipeline(int index, String vertexShader, String fragmentShader, TextureFormat textureFormat)
     {

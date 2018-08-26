@@ -19,6 +19,7 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
+import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -31,6 +32,12 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundVertexBuffer extends VertexBuffer
 {
+    
+    /**
+     * Used during rendering of solid layer as a fast/convenient place to stash the current render chunk position.
+     * SHOULD NOT EVER BE USED IN ANY OTHER CONTEXT
+     */
+    public @Nullable BlockPos chunkPositionTransientDoNotUseExceptInSolidRenderSeriouslyIMeanIt;
     
     private VertexPackingList vertexPackingList;
     
@@ -133,6 +140,11 @@ public class CompoundVertexBuffer extends VertexBuffer
                 lastFormat = pipeline.piplineVertexFormat();
                 setupAttributes(lastFormat, bufferOffset);
             }
+            // Always necessary to rebind attributes in solid because calls to accept are interleaved with calls to other buffers
+            // Not needed in translucent because all pipelines in buffer are rendered before moving to next buffer.
+            else if(isSolidLayer)
+                setupAttributes(lastFormat, bufferOffset);
+            
             
             OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, vertexOffset, vertexCount);
             
@@ -219,14 +231,31 @@ public class CompoundVertexBuffer extends VertexBuffer
     /**
      * Renders all uploaded vbos.
      */
-    public final void renderChunk(boolean isSolidLayer)
+    public final void renderChunkTranslucent()
     {
         final VertexPackingList packing = this.vertexPackingList;
         if(packing.size() == 0) return;
         
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        vertexPackingConsumer.reset(isSolidLayer);
+        vertexPackingConsumer.reset(false);
         
         packing.forEach(vertexPackingConsumer);
+    }
+    
+    public final void prepareSolidRender()
+    {
+        vertexPackingConsumer.reset(true);
+    }
+    
+    public VertexPackingList packingList()
+    {
+        return this.vertexPackingList;
+    }
+    
+    public final void renderSolid(int index)
+    {
+        final VertexPackingList packing = this.vertexPackingList;
+        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+        vertexPackingConsumer.accept(packing.getPipeline(index), packing.getCount(index));
     }
 }

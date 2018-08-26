@@ -10,6 +10,8 @@ import grondag.acuity.Acuity;
 import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.IAcuityListener;
 import grondag.acuity.api.PipelineManager;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
+import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.VboRenderList;
@@ -24,12 +26,10 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
 {
     protected boolean isAcuityEnabled = Acuity.isModEnabled();
     
-    /**
-     * Faster than array list - enough to make a difference.
-     * The fixed size is sloppy & risky - but <em>should</em> be enough to hold all visible in any reasonable scenario.
-     */
-    protected final RenderChunk[] chunks = new RenderChunk[64000];
-    protected int chunkCount = 0;
+    protected final ObjectArrayList<RenderChunk> chunks = new ObjectArrayList<RenderChunk>();
+    private final ObjectArrayList<CompoundVertexBuffer> solidBuffers = new ObjectArrayList<CompoundVertexBuffer>();
+    private final LongArrayList[] solidRenderLists;
+    
     
     /**
      * Will hold the modelViewMatrix that was in GL context before first call to block render layer this pass.
@@ -62,6 +62,12 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         mvChunk.m23 = 0.0000076293945f;
         mvChunk.m33 = 1.0f;
         
+        solidRenderLists = new LongArrayList[PipelineManager.MAX_PIPELINES];
+        for(int i = 0; i < PipelineManager.MAX_PIPELINES; i++)
+        {
+            solidRenderLists[i] = new LongArrayList();
+        }
+        
         AcuityRuntime.INSTANCE.registerListener(this);
     }
 
@@ -69,16 +75,23 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     public void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
     {
         if(isAcuityEnabled)
-            this.chunks[this.chunkCount++] = renderChunkIn;
+        {
+            this.chunks.add(renderChunkIn);
+        }
         else
             super.addRenderChunk(renderChunkIn, layer);
     }
-
+    
     @Override
     public void renderChunkLayer(BlockRenderLayer layer)
     {
         if(isAcuityEnabled)
-            renderChunkLayerAcuity(layer);
+        {
+            if(layer == BlockRenderLayer.SOLID)
+                renderChunkLayerSolid();
+            else
+                renderChunkLayerTranslucent();
+        }
         else
             super.renderChunkLayer(layer);
     }
@@ -126,12 +139,6 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         // Not a problem to disable them because MC disables the when we return.
         if(!OpenGlHelperExt.isVaoEnabled())
             disableUnusedAttributes();
-        
-        // Forge doesn't give us a hook in the render loop that comes
-        // after camera transform is set up - so call out event handler
-        // here as a workaround. Our event handler will only act 1x/frame.
-        if(PipelineManager.INSTANCE.beforeRenderChunks())
-            downloadModelViewMatrix();
     }
     
     private final void disableUnusedAttributes()
@@ -152,33 +159,94 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         OpenGlHelperExt.loadTransposeQuickly(modelViewMatrixBuffer, mvMatrix);
     }
     
-    protected final void renderChunkLayerAcuity(BlockRenderLayer layer)
+    final private static int SOLID_ORDINAL = BlockRenderLayer.SOLID.ordinal();
+    @SuppressWarnings("null")
+    protected final void renderChunkLayerSolid()
     {
-        final int chunkCount = this.chunkCount;
+        // Forge doesn't give us a hook in the render loop that comes
+        // after camera transform is set up - so call out event handler
+        // here as a workaround. Our event handler will only act 1x/frame.
+        if(PipelineManager.INSTANCE.beforeRenderChunks())
+            downloadModelViewMatrix();
+        
+        final int chunkCount = chunks.size();
+
         if (chunkCount == 0) 
-            return;
+            return; 
         
         preRenderSetup();
         
-        final int layerOrdinal = layer.ordinal();
-        final RenderChunk[] chunks = this.chunks;
+        final ObjectArrayList<CompoundVertexBuffer> solidBuffers = this.solidBuffers;
+        final LongArrayList[] solidRenderLists = this.solidRenderLists;
         
         for (int i = 0; i < chunkCount; i++)
         {
-            renderTheChunk(chunks[i], layerOrdinal);
+            final RenderChunk renderchunk =  chunks.get(i);
+            final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(SOLID_ORDINAL);
+            vertexbuffer.chunkPositionTransientDoNotUseExceptInSolidRenderSeriouslyIMeanIt = renderchunk.getPosition();
+            vertexbuffer.prepareSolidRender();
+            solidBuffers.add(vertexbuffer);
+            VertexPackingList packingList = vertexbuffer.packingList();
+            final int pipelineCount = packingList.size();
+            if(pipelineCount == 1)
+            {
+                solidRenderLists[packingList.getPipeline(0).getIndex()].add(((long)i << 32));
+            }
+            else for(int p = 0; p < pipelineCount; p++)
+            {   
+                solidRenderLists[packingList.getPipeline(p).getIndex()].add(((long)i << 32) | p);
+            }
         }
         
+        //TODO: precompute render cube and sort buffers by render cube also
+        //TODO: handle single pipeline special case and shortcut to max pipeline #
+        for(int n = 0; n < PipelineManager.MAX_PIPELINES; n++)
+        {
+            final LongArrayList renderList = solidRenderLists[n];
+            
+            if(renderList.isEmpty())
+                continue;
+            
+            final int bufferCount = renderList.size();
+            for(int i = 0; i < bufferCount; i++)
+            {
+                final long val = renderList.getLong(i);
+                final CompoundVertexBuffer vertexbuffer = solidBuffers.get((int) (val >> 32));
+                
+                updateViewMatrix(vertexbuffer.chunkPositionTransientDoNotUseExceptInSolidRenderSeriouslyIMeanIt);
+                vertexbuffer.renderSolid((int)(val & 0xFFFFFFFF));
+            }
+            renderList.clear();
+        }
+        
+        solidBuffers.clear();
         postRenderCleanup();
     }
     
-    final private static int TRANSLUCENT_ORDINAL = BlockRenderLayer.TRANSLUCENT.ordinal();
     
-    private final void renderTheChunk(final RenderChunk renderchunk, int layerOrdinal)
+    final private static int TRANSLUCENT_ORDINAL = BlockRenderLayer.TRANSLUCENT.ordinal();
+    protected final void renderChunkLayerTranslucent()
     {
-        final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(layerOrdinal);
-        updateViewMatrix(renderchunk.getPosition());
-        vertexbuffer.renderChunk(layerOrdinal != TRANSLUCENT_ORDINAL);
+        final ObjectArrayList<RenderChunk> chunks = this.chunks;
+        final int chunkCount = chunks.size();
+
+        if (chunkCount == 0) 
+            return;  
+        
+        preRenderSetup();
+        
+        for (int i = 0; i < chunkCount; i++)
+        {
+            final RenderChunk renderchunk =  chunks.get(i);
+            final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(TRANSLUCENT_ORDINAL);
+            updateViewMatrix(renderchunk.getPosition());
+            vertexbuffer.renderChunkTranslucent();
+        }
+
+        postRenderCleanup();
     }
+    
+    
     
     private final void postRenderCleanup()
     {
@@ -187,9 +255,9 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         
         OpenGlHelperExt.resetAttributes();
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
-        OpenGlHelperExt.glUseProgramFast(0);
+        Program.deactivate();
         GlStateManager.resetColor();
-        this.chunkCount = 0;
+        this.chunks.clear();
     }
 
     @Override

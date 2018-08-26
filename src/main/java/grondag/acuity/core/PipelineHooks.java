@@ -20,6 +20,7 @@ import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.crash.CrashReport;
@@ -285,6 +286,14 @@ public class PipelineHooks
     public static boolean useVbo()
     {
         return Acuity.isModEnabled() || (OpenGlHelper.vboSupported && Minecraft.getMinecraft().gameSettings.useVbo);
+    }
+
+    public static void renderChunkInitModelViewMatrix(RenderChunk renderChunk)
+    {
+        if(Acuity.isModEnabled())
+            return;
+        else
+            renderChunk.initModelviewMatrix();
     }
     
 
