@@ -10,6 +10,7 @@ import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.FieldNode;
+import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
 import org.objectweb.asm.tree.TypeInsnNode;
@@ -37,7 +38,7 @@ public class ASMTransformer implements IClassTransformer
     private static final String msg_patching_fail_warning_1 = "Acuity Rendering API will be disabled and partial patches may cause problems.";
     private static final String msg_patching_fail_warning_2 = "Acuity Rendering API or a conflicting mod should be removed to prevent strangeness or crashing.";
     private static final String msg_field_already_exists = "Unable to add field %s to class %s - field already exists.";
-    
+    private static final String msg_fail_patch_gameloop_yield = "Unable to remove call to Thread.yield() in Minecraft game loop.  This error does not prevent Acuity from operating.";
     public static final boolean allPatchesSuccessful()
     {
         return allPatchesSuccessful;
@@ -525,6 +526,41 @@ public class ASMTransformer implements IClassTransformer
         }
     };
 
+    private Consumer<ClassNode> patchMinecraft = classNode ->
+    {
+        if(!Configurator.disableYieldInGameLoop)
+            return;
+        
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+        boolean worked = false;
+        
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            if (m.name.equals("func_71411_J") || m.name.equals("runGameLoop")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    if(next.getOpcode() == INVOKESTATIC && ((MethodInsnNode)next).name.equals("yield"))
+                    {
+                        m.instructions.set(next, new InsnNode(NOP));
+                        worked = true;
+                        break;
+                    }
+                }
+                break;
+            }
+            
+        }
+        if(!worked)
+        {
+            Acuity.INSTANCE.getLog().error(msg_fail_patch_gameloop_yield);
+        }
+    };
+    
     
     @SuppressWarnings("null")
     @Override
@@ -558,6 +594,9 @@ public class ASMTransformer implements IClassTransformer
         
         if (transformedName.equals("net.minecraft.client.renderer.OpenGlHelper"))
             return patch(transformedName, basicClass, obfuscated, patchOpenGlHelper, ClassWriter.COMPUTE_FRAMES); 
+        
+        if (transformedName.equals("net.minecraft.client.Minecraft"))
+            return patch(transformedName, basicClass, obfuscated, patchMinecraft); 
         
         return basicClass;
     }

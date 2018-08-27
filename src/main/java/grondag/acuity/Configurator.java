@@ -72,6 +72,15 @@ public class Configurator
         " Has a small performance impact. Useful only for testing."})
     public static boolean enableFluidStats = false;
 
+    @LangKey("config.disable_yield")
+    @RequiresMcRestart
+    @Comment({"When enabled, disables the call to Thread.yield() in the main game loop ",
+        " that normally occurs right after display update. The call is probably meant",
+        " to give the OpenGL drivers time to process the command buffer, but in the multi-threaded game ",
+        " Minecraft has become, and with modern drivers, this basically invites other tasks to step on your framerate.",
+        " This patch is purely a performance optimization and is not required for Acuity to operate."})
+    public static boolean disableYieldInGameLoop = true;
+    
     public static void handleChange(PostConfigChangedEvent event)
     {
         LightingModel oldModel = lightingModel;

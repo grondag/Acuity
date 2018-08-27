@@ -30,3 +30,4 @@ config.acuity_fancy_fluids=Fancy Water and Lava (WIP)
 config.enable_render_stats=Enabled Render Stats
 config.enable_block_stats=Enabled Block Stats
 config.enable_fluid_stats=Enabled Fluid Stats
+config.disable_yield=Disable Yield in Game Loop
