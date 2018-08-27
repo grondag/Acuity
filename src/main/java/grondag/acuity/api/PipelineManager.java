@@ -170,6 +170,14 @@ public final class PipelineManager implements IPipelineManager
         return this.pipelines[index];
     }
     
+    /**
+     * The number of pipelines currently registered.
+     */
+    public final int pipelineCount()
+    {
+        return this.pipelineCount;
+    }
+    
     private void addStandardUniforms(RenderPipeline pipeline)
     {
         pipeline.uniform1f("u_time", UniformUpdateFrequency.PER_FRAME, u -> u.set(this.worldTime));

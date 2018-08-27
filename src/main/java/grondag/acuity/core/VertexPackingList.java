@@ -18,6 +18,11 @@ public class VertexPackingList
     private int size = 0;
     private int totalBytes = 0;
     
+    /**
+     * For iteration.
+     */
+    private int nextIndex = 0;
+    
     public void clear()
     {
         this.size = 0;
@@ -83,6 +88,23 @@ public class VertexPackingList
         }
     }
     
+    /**
+     * Resets to first packing before using  {@link #renderNext(VertexPackingConsumer)}
+     */
+    public void reset()
+    {
+        this.nextIndex = 0;
+    }
+    
+    /**
+     * Renders the next pipeline in sequence after calling {@link #reset()}
+     * No bounds checking - will probably throw NPE or out of bounds exception.
+     */
+    public void renderNext(VertexPackingConsumer consumer)
+    {
+        final int i = this.nextIndex++;
+        consumer.accept(this.pipelines[i], this.counts[i]);
+    }
     
     public final void forEachPipeline(Consumer<RenderPipeline> consumer)
     {

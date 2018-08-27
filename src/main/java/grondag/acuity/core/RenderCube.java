@@ -1,5 +1,6 @@
 package grondag.acuity.core;
 
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 
 public class RenderCube
@@ -28,5 +29,29 @@ public class RenderCube
     public static final float renderCubeRelative(float worldCoord)
     {
         return worldCoord - renderCubeOrigin(MathHelper.floor(worldCoord));
+    }
+
+    /**
+     * Packs cube position corresponding with the given position into a single long value.
+     * For now, assume Y coordinates are limited to 0-255.
+     */
+    public static long getPackedKey(BlockPos position)
+    {
+        return ((long)renderCubeOrigin(position.getX()) & 0xFFFFFFFFL) | ((long)renderCubeOrigin(position.getZ()) << 32);
+    }
+    
+    public static int getPackedKeyOriginX(long packedKey)
+    {
+        return (int)(packedKey & 0xFFFFFFFFL);
+    }
+    
+    public static int getPackedKeyOriginZ(long packedKey)
+    {
+        return (int)((packedKey >> 32) & 0xFFFFFFFFL);
+    }
+    
+    public static int getPackedKeyOriginY(long packedKey)
+    {
+        return 0;
     }
 }

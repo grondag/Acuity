@@ -19,7 +19,6 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -32,13 +31,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundVertexBuffer extends VertexBuffer
 {
-    
-    /**
-     * Used during rendering of solid layer as a fast/convenient place to stash the current render chunk position.
-     * SHOULD NOT EVER BE USED IN ANY OTHER CONTEXT
-     */
-    public @Nullable BlockPos chunkPositionTransientDoNotUseExceptInSolidRenderSeriouslyIMeanIt;
-    
     private VertexPackingList vertexPackingList;
     
     public int drawCount()
@@ -197,7 +189,7 @@ public class CompoundVertexBuffer extends VertexBuffer
     
     private final VertexPackingRenderer vertexPackingConsumer = new VertexPackingRenderer();
     
-    public CompoundVertexBuffer(VertexFormat     vertexFormatIn)
+    public CompoundVertexBuffer(VertexFormat vertexFormatIn)
     {
         super(vertexFormatIn);
         this.vertexPackingList = new VertexPackingList();
@@ -245,6 +237,7 @@ public class CompoundVertexBuffer extends VertexBuffer
     public final void prepareSolidRender()
     {
         vertexPackingConsumer.reset(true);
+        vertexPackingList.reset();
     }
     
     public VertexPackingList packingList()
@@ -252,10 +245,9 @@ public class CompoundVertexBuffer extends VertexBuffer
         return this.vertexPackingList;
     }
     
-    public final void renderSolid(int index)
+    public final void renderSolidNext()
     {
-        final VertexPackingList packing = this.vertexPackingList;
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        vertexPackingConsumer.accept(packing.getPipeline(index), packing.getCount(index));
+        vertexPackingList.renderNext(vertexPackingConsumer);
     }
 }
