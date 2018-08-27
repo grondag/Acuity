@@ -1,6 +1,7 @@
 package grondag.acuity.core;
 
 import java.nio.FloatBuffer;
+import java.util.ArrayDeque;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -39,6 +40,10 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
      */
     private final Long2ObjectOpenHashMap<ObjectArrayList<CompoundVertexBuffer>[]> solidCubes = new Long2ObjectOpenHashMap<>();
     
+    /**
+     * Cache and reuse cube data stuctures.
+     */
+    private final ArrayDeque<ObjectArrayList<CompoundVertexBuffer>[]> cubeStore = new ArrayDeque<>();
     
     /**
      * Will hold the modelViewMatrix that was in GL context before first call to block render layer this pass.
@@ -89,6 +94,21 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     }
     
     @SuppressWarnings("unchecked")
+    private ObjectArrayList<CompoundVertexBuffer>[] makeCube()
+    {
+        ObjectArrayList<CompoundVertexBuffer>[] result = cubeStore.poll();
+        if(result == null)
+        {
+            final int size = PipelineManager.INSTANCE.pipelineCount();
+            result = new ObjectArrayList[size];
+            for(int i = 0; i < size; i++)
+            {
+                result[i] = new ObjectArrayList<CompoundVertexBuffer>();
+            }
+        }
+        return result;
+    }
+    
     private void addSolidChunk(RenderChunk renderChunkIn)
     {
         final long cubeKey = RenderCube.getPackedKey(renderChunkIn.getPosition());
@@ -96,7 +116,7 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         ObjectArrayList<CompoundVertexBuffer>[] buffers = solidCubes.get(cubeKey);
         if(buffers == null)
         {
-            buffers = new ObjectArrayList[PipelineManager.INSTANCE.pipelineCount()];
+            buffers = makeCube();
             solidCubes.put(cubeKey, buffers);
         }
         addChunkToBufferArray(renderChunkIn, buffers);
@@ -106,20 +126,7 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     {
         final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderChunkIn.getVertexBufferByLayer(SOLID_ORDINAL);
         vertexbuffer.prepareSolidRender();
-        
-        final VertexPackingList packingList = vertexbuffer.packingList();
-        final int pCount = packingList.size();
-        for(int j = 0; j < pCount; j++)
-        {
-            final int p = packingList.getPipeline(j).getIndex();
-            ObjectArrayList<CompoundVertexBuffer> list = buffers[p];
-            if(list == null)
-            {
-                list = new ObjectArrayList<CompoundVertexBuffer>();
-                buffers[p] = list;
-            }
-            list.add(vertexbuffer);
-        }
+        vertexbuffer.packingList().forEachPipeline(p -> buffers[p.getIndex()].add(vertexbuffer));
     }
     
     @Override
@@ -243,9 +250,16 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     private void renderSolidArray(ObjectArrayList<CompoundVertexBuffer>[] array)
     {
         for(ObjectArrayList<CompoundVertexBuffer> list : array)
-            if(list != null)
-                for(CompoundVertexBuffer b : list)
-                    b.renderSolidNext();
+            renderSolidList(list);
+        cubeStore.offer(array);
+    }
+    
+    private void renderSolidList(ObjectArrayList<CompoundVertexBuffer> list)
+    {
+        if(list.isEmpty())
+            return;
+        list.forEach(b -> b.renderSolidNext());
+        list.clear();
     }
     
     final private static int TRANSLUCENT_ORDINAL = BlockRenderLayer.TRANSLUCENT.ordinal();

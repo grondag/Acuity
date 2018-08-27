@@ -109,11 +109,8 @@ public class VertexPackingList
     public final void forEachPipeline(Consumer<RenderPipeline> consumer)
     {
         final int size = this.size;
-        if(size == 1)
-            consumer.accept(this.pipelines[0]);
-        else if (size != 0) 
-            for(int i = 0; i < size; i++)
-                consumer.accept(this.pipelines[i]);
+        for(int i = 0; i < size; i++)
+            consumer.accept(this.pipelines[i]);
     }
     
     public final RenderPipeline getPipeline(int index)
