@@ -31,3 +31,4 @@ config.enable_render_stats=Enabled Render Stats
 config.enable_block_stats=Enabled Block Stats
 config.enable_fluid_stats=Enabled Fluid Stats
 config.disable_yield=Disable Yield in Game Loop
+config.max_uploads=Max Chunk Uploads per Frame
