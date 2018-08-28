@@ -288,6 +288,10 @@ public class PipelineHooks
         return Acuity.isModEnabled() || (OpenGlHelper.vboSupported && Minecraft.getMinecraft().gameSettings.useVbo);
     }
 
+    /**
+     * When Acuity is enabled the per-chunk matrix is never used, so is wasteful to update when frustum moves.
+     * Matters more when lots of block updates or other high-throughput because adds to contention.
+     */
     public static void renderChunkInitModelViewMatrix(RenderChunk renderChunk)
     {
         if(Acuity.isModEnabled())
