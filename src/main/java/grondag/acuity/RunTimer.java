@@ -50,13 +50,15 @@ public class RunTimer
         System.out.println("");
     }
     
+    final String label;
     final long[] data;
     final int size;
     int counter;
     long start;
     
-    public RunTimer(int sampleCount)
+    public RunTimer(String label, int sampleCount)
     {
+        this.label = label;
         size = sampleCount;
         data = new long[sampleCount];
     }
@@ -71,15 +73,51 @@ public class RunTimer
         data[counter++] = (System.nanoTime() - start);
         if(counter == size)
         {
+            System.out.println("Run Timer Result for " + label);
             stats(data);
             counter = 0;
         }
     }
     
-    public static RunTimer TIMER_200 = new RunTimer(200);
+    public static RunTimer TIMER_200 = new RunTimer("GENERIC 200", 200);
     
-    public static RunTimer TIMER_2400 = new RunTimer(2400);
+    public static RunTimer TIMER_2400 = new RunTimer("GENERIC 2400", 2400);
     
-    public static RunTimer TIMER_100000 = new RunTimer(100000);
+    public static RunTimer TIMER_100000 = new RunTimer("GENERIC 100000", 100000);
+
+    public static class ThreadSafeRunTimer
+    {
+        final String label;
+        final int size;
+        
+        public ThreadSafeRunTimer(String label, int sampleCount)
+        {
+            this.label = label;
+            this.size = sampleCount;
+        }
+        
+        private ThreadLocal<RunTimer> timers = new ThreadLocal<RunTimer>()
+        {
+            @Override
+            protected RunTimer initialValue()
+            {
+                return new RunTimer(ThreadSafeRunTimer.this.label, ThreadSafeRunTimer.this.size);
+            }
+        };
+        
+        public final void start()
+        {
+            timers.get().start();
+        }
+        
+        public final void finish()
+        {
+            timers.get().finish();
+        }
+    }
     
+    public static final ThreadSafeRunTimer THREADED_5000 = new ThreadSafeRunTimer("THREADED 5000", 5000);
+    
+    public static final ThreadSafeRunTimer THREADED_50K = new ThreadSafeRunTimer("THREADED 50K", 50000);
+            
 }
