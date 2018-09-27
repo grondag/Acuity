@@ -52,11 +52,6 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     protected final Matrix4f mvPos = new Matrix4f();
     protected final Matrix4f xlatMatrix = new Matrix4f();
     
-    /**
-     * Mimics what is in every render chunk. They all have the same matrix. 
-     */
-    protected final Matrix4f mvChunk = new Matrix4f();    
-
     protected final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
     
     private int originX = Integer.MIN_VALUE;
@@ -67,15 +62,6 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     {
         super();
         xlatMatrix.setIdentity();
-        
-        mvChunk.m00 = 1.000001f;
-        mvChunk.m11 = 1.000001f;
-        mvChunk.m22 = 1.000001f;
-        mvChunk.m03 = 0.0000076293945f;
-        mvChunk.m13 = 0.0000076293945f;
-        mvChunk.m23 = 0.0000076293945f;
-        mvChunk.m33 = 1.0f;
-        
         AcuityRuntime.INSTANCE.registerListener(this);
     }
 
