@@ -81,18 +81,6 @@ public class Configurator
         " This patch is purely a performance optimization and is not required for Acuity to operate."})
     public static boolean disableYieldInGameLoop = true;
 
-    @LangKey("config.max_uploads")
-    @Comment({"Maximum number of render chunks that can be uploaded to GPU each frame. ",
-        " Minecraft normally throttles uploads by duration (based on desired frame rate). ",
-        " However, GPU uploads will be asynchronous on many systems (depends on driver) and ",
-        " we can easly saturate the GPU memory transfer capacity by sending too much data in ",
-        " a single frame, causing stuttering and inconsistent frame rates. Smaller values may ",
-        " cause visible lag in display of world updates when many chunks are updated at once. ",
-        " Nearby chunks are given preference, so if a near chunk is receiving many updates, more ",
-        " distant chunks may be slow to show changes. So this is a tradeoff between smooth FPS and realism."})
-    @RangeInt(min = 1, max = 64)
-    public static int maxChunkUploadsPerFrame = 4;
-    
     public static void handleChange(PostConfigChangedEvent event)
     {
         LightingModel oldModel = lightingModel;

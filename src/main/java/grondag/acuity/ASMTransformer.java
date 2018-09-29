@@ -33,7 +33,6 @@ public class ASMTransformer implements IClassTransformer
     private static final String msg_fail_patch_render_chunk_set_position = "Unable to patch RenderChunk.setPosition. This is a performance-only patch and will not prevent Acuity from operating correctly.";
     private static final String msg_fail_patch_compiled_chunk = "Unable to locate and patch setVisibility in CompiledChunk";
     private static final String msg_fail_patch_render_global = "Unable to locate and patch all VBORenderList instances in RenderGlobal";
-    private static final String msg_fail_patch_render_global_update_chunk = "Unable to patch RenderGlobal.updateChunks. This is a performance-only patch and will not prevent Acuity from operating correctly.";
     private static final String msg_fail_patch_vertex_format_element = "Unable to locate and patch isFirstOrUV() reference in VertexFormatElement.<init>";
     private static final String msg_patching_notice = "Patching %s";
     private static final String msg_patching_fail = "Unable to patch %s due to unexpected error ";
@@ -379,7 +378,6 @@ public class ASMTransformer implements IClassTransformer
         int newCount = 0;
         int invokeCount = 0;
         boolean visibilityWorked = false;
-        boolean updateChunksWorked = false;
         
         final String listClass = Configurator.enableRenderStats
                 ? "grondag/acuity/core/PipelinedRenderListDebug"
@@ -458,33 +456,11 @@ public class ASMTransformer implements IClassTransformer
                     }
                 }
             }
-            else if (m.name.equals("func_174967_a") || m.name.equals("updateChunks")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    if(next instanceof MethodInsnNode && isStringOneOf(((MethodInsnNode)next).name, "func_178516_a", "runChunkUploads"))
-                    {
-                        MethodInsnNode op = (MethodInsnNode)next;
-                        
-                        op.setOpcode(INVOKESTATIC);
-                        op.owner = "grondag/acuity/core/PipelineHooks";
-                        op.name = "runChunkUploads";
-                        op.desc = "(Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher;J)Z";
-                        updateChunksWorked = true;
-                        break;
-                    }
-                }
-            }
         }
         if(!(newCount == 2 && invokeCount == 2 && visibilityWorked))
         {
             Acuity.INSTANCE.getLog().error(msg_fail_patch_render_global);
             allPatchesSuccessful = false;
-        }
-        if(!updateChunksWorked)
-        {
-            Acuity.INSTANCE.getLog().warn(msg_fail_patch_render_global_update_chunk);
         }
     };
     

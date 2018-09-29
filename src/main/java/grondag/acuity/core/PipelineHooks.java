@@ -19,8 +19,6 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher.PendingUpload;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
@@ -300,45 +298,5 @@ public class PipelineHooks
             return;
         else
             renderChunk.initModelviewMatrix();
-    }
-    
-    /**
-     * Throttle chunk uploads by count in addition to time. The uploads are
-     * probably asynch from our perspective and we could easily saturate the GPU memory
-     * transfer capacity and cause an over-long frame.  Uses default functionality
-     * if on a single-threaded potato (shouldn't be using Acuity in that case anyway)
-     * or if Acuity is disabled.
-     */
-    public static boolean runChunkUploads(ChunkRenderDispatcher dispatch, long finishTimeNano)
-    {
-        return Acuity.isModEnabled() && !dispatch.listWorkerThreads.isEmpty()
-                ? runChunkUploadsImpl(dispatch, finishTimeNano)
-                : dispatch.runChunkUploads(finishTimeNano);
-    }
-    
-    /**
-     * Assumes worker threads are handling chunk updates. Skips checking for them.
-     */
-    private static boolean runChunkUploadsImpl(ChunkRenderDispatcher dispatch, long finishTimeNano)
-    {
-        int allowance = Configurator.maxChunkUploadsPerFrame;
-        do
-        {
-            PendingUpload up;
-            synchronized (dispatch.queueChunkUploads)
-            {
-                up = dispatch.queueChunkUploads.poll();
-            }
-            if(up == null)
-                break;
-            else 
-            {
-                up.uploadTask.run();
-                allowance--;
-            }
-
-        } while(allowance != 0 && finishTimeNano < System.nanoTime());
-
-        return allowance != Configurator.maxChunkUploadsPerFrame;
     }
 }
