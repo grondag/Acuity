@@ -1,9 +1,8 @@
 package grondag.acuity.core;
 
-import javax.annotation.Nullable;
-
 import grondag.acuity.Acuity;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
+import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraftforge.fml.relauncher.Side;
@@ -19,28 +18,41 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class CompoundVertexBuffer extends VertexBuffer
 {
     private VertexBufferInner inner = VertexBufferInner.claim();
-    private @Nullable VertexBufferInner nextInner;
+    private ObjectArrayFIFOQueue<VertexBufferInner> nextInner = new ObjectArrayFIFOQueue<VertexBufferInner>();
     
     private void checkInner()
     {
-        VertexBufferInner next = nextInner;
-        if(next != null && next.isReady())
+        while(tryAdvance()) {}
+    }
+    
+    private boolean tryAdvance()
+    {
+        if(nextInner.isEmpty()) return false;
+        
+        VertexBufferInner next = nextInner.first();
+        if(next.isReady())
         {
+            nextInner.dequeue();
             VertexBufferInner swap = inner;
             inner = next;
             VertexBufferInner.release(swap);
-            nextInner = null;
+            return true;
         }
+        return false;
     }
     
     public int drawCount()
     {
-        return Acuity.isModEnabled() ?  this.inner.packingList().size() : 1;
+        return Acuity.isModEnabled() 
+                ? (this.inner.isReady() ? this.inner.packingList().size() : 0)
+                : 1;
     }
     
     public int quadCount()
     {
-        return Acuity.isModEnabled() ? this.inner.packingList().quadCount() : this.count / 4;
+        return Acuity.isModEnabled() 
+                ? (this.inner.isReady() ? this.inner.packingList().quadCount() : 0)
+                : this.count / 4;
     }
     
     public CompoundVertexBuffer(VertexFormat vertexFormatIn)
@@ -52,14 +64,9 @@ public class CompoundVertexBuffer extends VertexBuffer
     
     public final void upload(ExpandableByteBuffer uploadBuffer, VertexPackingList packing)
     {
-        checkInner();
-        VertexBufferInner next = this.nextInner;
-        if(next == null)
-        {
-            next = VertexBufferInner.claim();
-            nextInner = next;
-        }
+        VertexBufferInner next = VertexBufferInner.claim();
         next.upload(uploadBuffer, packing);
+        nextInner.enqueue(next);
     }
     
     @SuppressWarnings("null")
@@ -69,13 +76,11 @@ public class CompoundVertexBuffer extends VertexBuffer
         super.deleteGlBuffers();
         if(this.inner != null)
         {
-            VertexBufferInner.release(inner);
-            this.inner = null;
+            this.inner.deleteGlBuffers();
         }
-        if(this.nextInner != null)
+        while(!nextInner.isEmpty())
         {
-            VertexBufferInner.release(nextInner);
-            this.nextInner = null;
+            nextInner.dequeue().deleteGlBuffers();
         }
     }
 
@@ -97,7 +102,7 @@ public class CompoundVertexBuffer extends VertexBuffer
     public VertexPackingList packingList()
     {
         checkInner();
-        return inner.packingList();
+        return inner.isReady() ? inner.packingList() : DummyPackingList.INSTANCE;
     }
     
     public final void renderSolidNext()

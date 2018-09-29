@@ -27,7 +27,13 @@ public class VertexBufferInner extends VertexPackingConsumer
     public static VertexBufferInner claim()
     {
         VertexBufferInner result =  store.poll();
-        return result == null ? new VertexBufferInner() : result;
+        
+        if(result == null)
+            result = new VertexBufferInner();
+        else
+            result.isNew = true;
+        
+        return result;
     }
     
     public static void release(VertexBufferInner buffer)
@@ -38,6 +44,9 @@ public class VertexBufferInner extends VertexPackingConsumer
     int bufferOffset = 0;
     int vertexOffset = 0;
     boolean isSolidLayer;
+    
+    // TODO: remove or improve
+    boolean isNew = true;
     
     @Nullable PipelineVertexFormat lastFormat = null;
     
@@ -60,7 +69,7 @@ public class VertexBufferInner extends VertexPackingConsumer
     
     protected int glBufferId;
     private VertexPackingList vertexPackingList;
-    private final int glFenceId;
+    private int glFenceId;
     private boolean awaitingFence = false;
     private @Nullable ExpandableByteBuffer loadingBuffer;
     
@@ -126,17 +135,19 @@ public class VertexBufferInner extends VertexPackingConsumer
                 awaitingFence = false;
                 BufferStore.release(this.loadingBuffer);
                 loadingBuffer = null;
+                isNew = false;
         }
-        return !awaitingFence;
+        return !(isNew || awaitingFence);
     }
     
     public final void upload(ExpandableByteBuffer uploadBuffer, VertexPackingList packing)
     {
+        assert this.isNew;
+        assert !this.awaitingFence; 
+        assert this.loadingBuffer == null;
+        
         this.vertexPackingList = packing;
         this.vaoBindingFlags = 0;
-        ExpandableByteBuffer oldBuffer = this.loadingBuffer;
-        if(oldBuffer != null)
-            BufferStore.release(oldBuffer);
         
         this.loadingBuffer = uploadBuffer;
         ByteBuffer byteBuffer = uploadBuffer.byteBuffer();
@@ -159,6 +170,12 @@ public class VertexBufferInner extends VertexPackingConsumer
      */
     public final void renderChunkTranslucent()
     {
+        if(this.isNew)
+        {
+            System.out.println("Rendering buffer (translucent) before load");
+            return;
+        }
+        
         final VertexPackingList packing = this.vertexPackingList;
         if(packing.size() == 0) return;
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
@@ -168,6 +185,13 @@ public class VertexBufferInner extends VertexPackingConsumer
     
     public final void prepareSolidRender()
     {
+        //TODO: remove or make assertion
+        if(this.isNew)
+        {
+            System.out.println("Rendering buffer (solid) before load");
+            return;
+        }
+        
         reset(true);
         vertexPackingList.reset();
     }
@@ -182,6 +206,9 @@ public class VertexBufferInner extends VertexPackingConsumer
     
     public final void renderSolidNext()
     {
+        if(this.isNew)
+            return;
+        
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         vertexPackingList.renderNext(this);
     }
@@ -254,6 +281,11 @@ public class VertexBufferInner extends VertexPackingConsumer
         {
             OpenGlHelper.glDeleteBuffers(this.glBufferId);
             this.glBufferId = -1;
+        }
+        if(this.glFenceId >= 0)
+        {
+            APPLEFence.glDeleteFencesAPPLE(glFenceId);
+            this.glFenceId = -1;
         }
     }
 }
