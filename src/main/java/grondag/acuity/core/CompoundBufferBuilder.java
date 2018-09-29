@@ -285,9 +285,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         if(uploadBuffer != null)
         {
             if(packingList != null)
-                target.upload(uploadBuffer.byteBuffer(), packingList);
-            
-            BufferStore.release(uploadBuffer);
+                target.upload(uploadBuffer, packingList);
         }
         this.uploadBuffer = null;
         this.uploadPackingList = null;
