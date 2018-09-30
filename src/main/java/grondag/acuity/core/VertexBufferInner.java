@@ -7,7 +7,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import javax.annotation.Nullable;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.opengl.APPLEFence;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
@@ -15,6 +14,7 @@ import grondag.acuity.Configurator;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
+import grondag.acuity.core.OpenGlFenceExt.Fence;
 import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -45,7 +45,6 @@ public class VertexBufferInner implements VertexPackingConsumer
     int vertexOffset = 0;
     boolean isSolidLayer;
     
-    // TODO: remove or improve
     boolean isNew = true;
     
     @Nullable PipelineVertexFormat lastFormat = null;
@@ -69,14 +68,14 @@ public class VertexBufferInner implements VertexPackingConsumer
     
     protected int glBufferId;
     private VertexPackingList vertexPackingList;
-    private int glFenceId;
+    private Fence fence;
     private boolean awaitingFence = false;
     private @Nullable ExpandableByteBuffer loadingBuffer;
     
     private VertexBufferInner()
     {
         this.vertexPackingList = new VertexPackingList();
-        this.glFenceId = APPLEFence.glGenFencesAPPLE();
+        this.fence = OpenGlFenceExt.create();
         this.glBufferId = OpenGlHelper.glGenBuffers();
         
         if(OpenGlHelperExt.isVaoEnabled()) try
@@ -130,7 +129,7 @@ public class VertexBufferInner implements VertexPackingConsumer
     @SuppressWarnings("null")
     public boolean isReady()
     {
-        if(awaitingFence && APPLEFence.glTestFenceAPPLE(glFenceId))
+        if(awaitingFence && fence.isReached())
         {
                 awaitingFence = false;
                 BufferStore.release(this.loadingBuffer);
@@ -161,7 +160,7 @@ public class VertexBufferInner implements VertexPackingConsumer
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
         OpenGlHelper.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, byteBuffer, GL15.GL_STATIC_DRAW);
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
-        APPLEFence.glSetFenceAPPLE(this.glFenceId);
+        fence.set();
         awaitingFence = true;
     }
     
@@ -171,10 +170,7 @@ public class VertexBufferInner implements VertexPackingConsumer
     public final void renderChunkTranslucent()
     {
         if(this.isNew)
-        {
-//            System.out.println("Rendering buffer (translucent) before load");
             return;
-        }
         
         final VertexPackingList packing = this.vertexPackingList;
         if(packing.size() == 0) return;
@@ -185,12 +181,8 @@ public class VertexBufferInner implements VertexPackingConsumer
     
     public final void prepareSolidRender()
     {
-        //TODO: remove or make assertion
         if(this.isNew)
-        {
-//            System.out.println("Rendering buffer (solid) before load");
             return;
-        }
         
         reset(true);
         vertexPackingList.reset();
@@ -264,6 +256,7 @@ public class VertexBufferInner implements VertexPackingConsumer
         format.enableAndBindAttributes(bufferOffset);
     }
 
+    @SuppressWarnings("null")
     public final void deleteGlBuffers()
     {
         IntBuffer vao = this.vaoNames;
@@ -282,10 +275,7 @@ public class VertexBufferInner implements VertexPackingConsumer
             OpenGlHelper.glDeleteBuffers(this.glBufferId);
             this.glBufferId = -1;
         }
-        if(this.glFenceId >= 0)
-        {
-            APPLEFence.glDeleteFencesAPPLE(glFenceId);
-            this.glFenceId = -1;
-        }
+        // finalize will cleanup
+        this.fence = null;
     }
 }

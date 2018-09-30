@@ -151,7 +151,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     {
         if(!this.isDrawing)
         {
-            assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
+            assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT || !Acuity.isModEnabled();
             
             // NB: this calls reset which initializes collector list
             super.begin(glMode, format);
