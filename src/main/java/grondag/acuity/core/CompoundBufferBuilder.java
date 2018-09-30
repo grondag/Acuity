@@ -1,6 +1,5 @@
 package grondag.acuity.core;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
@@ -20,27 +19,16 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundBufferBuilder extends BufferBuilder
 {
-    
     /**
      * Holds vertex data and packing data for next upload if we have it.
      * Buffer is obtained from BufferStore and will be released back to store by upload.
      */
     private AtomicReference<Pair<ExpandableByteBuffer, VertexPackingList>>  uploadState  = new AtomicReference<>();
     
-    //TODO: remove
-    private AtomicInteger callCount = new AtomicInteger();
-    
-    //TODO: remove
-    private boolean hadDraw = false;
-    
     /**
      * During drawing collects vertex info. Should be null other times.
      */
     @Nullable VertexCollectorList collectors;
-    
-    float sortX;
-    float sortY;
-    float sortZ;
     
     /**
      * Tells us which block layer we are buffering.
@@ -147,7 +135,6 @@ public class CompoundBufferBuilder extends BufferBuilder
         {
             assert this.collectors == null : "CompoundBufferBuilder reset before vertex collector list consumed";
             this.collectors = VertexCollectorList.claim();
-            this.hadDraw = false;
         }
     }
     
@@ -157,8 +144,6 @@ public class CompoundBufferBuilder extends BufferBuilder
         if(Acuity.isModEnabled() && this.proxy != null)
             return this.proxy.getVertexCollector(pipeline);
         
-        hadDraw = true;
-        
         return this.collectors.getOrCreate(pipeline);
     }
     
@@ -167,10 +152,6 @@ public class CompoundBufferBuilder extends BufferBuilder
         if(!this.isDrawing)
         {
             assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
-            
-            final int c = callCount.incrementAndGet();
-            if(c > 1)
-                System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Concurrent draw count = " + c);
             
             // NB: this calls reset which initializes collector list
             super.begin(glMode, format);
@@ -195,15 +176,11 @@ public class CompoundBufferBuilder extends BufferBuilder
             
             if(Acuity.isModEnabled())
             {
-                callCount.decrementAndGet();
-                
                 switch(this.layer)
                 {
                     case SOLID:
                     {
-                        Pair<ExpandableByteBuffer, VertexPackingList> pair = VertexPacker.packUpload(collectors);
-                        
-                        assert pair != null || !hadDraw;
+                        Pair<ExpandableByteBuffer, VertexPackingList> pair = collectors.packUpload();
                         
                         if(this.uploadState.getAndSet(pair) != null)
                             System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Solid) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
@@ -216,17 +193,14 @@ public class CompoundBufferBuilder extends BufferBuilder
                     
                     case TRANSLUCENT:
                     {
-                        Pair<ExpandableByteBuffer, VertexPackingList> pair = VertexPacker.packUploadSorted(collectors, this.sortX, this.sortY, this.sortZ);
+                        Pair<ExpandableByteBuffer, VertexPackingList> pair = collectors.packUploadSorted();
 
-                        assert pair != null || !hadDraw;
-                        
                         if(this.uploadState.getAndSet(pair) != null)
                             System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Translucent) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
                         
                         // can't release collector list because retained in vertex state
                         // but remove reference to prevent mishap
                         this.collectors = null;
-                        
     
                         return;
                     }
@@ -269,23 +243,14 @@ public class CompoundBufferBuilder extends BufferBuilder
         target.upload(pair.getLeft(), pair.getRight());
     }
     
+    @SuppressWarnings("null")
     @Override
     public void sortVertexData(float x, float y, float z)
     {
         if(Acuity.isModEnabled())
-            sortCompondVertexData(x, y, z);
+            // save sort perspective coordinate for use during packing.  Actual sort occurs then.
+            collectors.setSortCoordinates(x, y, z);
         else
             super.sortVertexData(x, y, z);
-    }
-    
-    /**
-     * Saves sort perspective coordinate for use during packing.  Actual sort occurs then.
-     */
-    private void sortCompondVertexData(float x, float y, float z)
-    {
-          hadDraw = true;
-          sortX = RenderCube.renderCubeRelative(x);
-          sortY = RenderCube.renderCubeRelative(y);
-          sortZ = RenderCube.renderCubeRelative(z);
     }
 }
