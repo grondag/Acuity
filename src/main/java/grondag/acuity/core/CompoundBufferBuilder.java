@@ -182,8 +182,8 @@ public class CompoundBufferBuilder extends BufferBuilder
                     {
                         Pair<ExpandableByteBuffer, VertexPackingList> pair = collectors.packUpload();
                         
-                        if(this.uploadState.getAndSet(pair) != null)
-                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Solid) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
+//                        if(this.uploadState.getAndSet(pair) != null)
+//                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Solid) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
                         
                         VertexCollectorList.release(this.collectors);
                         this.collectors = null;
@@ -195,8 +195,8 @@ public class CompoundBufferBuilder extends BufferBuilder
                     {
                         Pair<ExpandableByteBuffer, VertexPackingList> pair = collectors.packUploadSorted();
 
-                        if(this.uploadState.getAndSet(pair) != null)
-                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Translucent) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
+//                        if(this.uploadState.getAndSet(pair) != null)
+//                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Translucent) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
                         
                         // can't release collector list because retained in vertex state
                         // but remove reference to prevent mishap
