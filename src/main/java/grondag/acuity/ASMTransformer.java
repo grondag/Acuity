@@ -100,6 +100,47 @@ public class ASMTransformer implements IClassTransformer
         }
     };
     
+    private Consumer<ClassNode> patchChunkRenderWorker = classNode ->
+    {
+        Iterator<MethodNode> methods = classNode.methods.iterator();
+        boolean worked = false;
+        
+        while (methods.hasNext())
+        {
+            MethodNode m = methods.next();
+            
+            if (m.name.equals("func_178474_a") || m.name.equals("processTask"))
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    // public, so will always be INVOKEVIRTUAL
+                    if(next.getOpcode() == INVOKEVIRTUAL)
+                    {
+                        MethodInsnNode op = (MethodInsnNode)next;
+                        
+                        if(op.owner.equals("net/minecraft/client/renderer/chunk/CompiledChunk")
+                                && (op.name.equals("func_178492_d") || op.name.equals("isLayerStarted")))
+                        {
+                            op.setOpcode(INVOKESTATIC);
+                            op.owner = "grondag/acuity/core/PipelineHooks";
+                            op.name = "shouldUploadLayer";
+                            op.desc = "(Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/BlockRenderLayer;)Z";
+                            worked = true;
+                            break;
+                        }
+                    }
+                }
+                break;
+            }
+        }
+        if(!worked)
+        {
+            Acuity.INSTANCE.getLog().error(String.format(msg_fail_patch_locate, "net/minecraft/client/renderer/chunk/ChunkRenderWorker.processTask"));
+            allPatchesSuccessful = false;
+        }
+    };
+    
     private Consumer<ClassNode> patchRegionRenderCacheBuilder = classNode ->
     {
         Iterator<MethodNode> methods = classNode.methods.iterator();
@@ -378,6 +419,7 @@ public class ASMTransformer implements IClassTransformer
         int newCount = 0;
         int invokeCount = 0;
         boolean visibilityWorked = false;
+        boolean shouldUploadWorked = false;
         
         final String listClass = Configurator.enableRenderStats
                 ? "grondag/acuity/core/PipelinedRenderListDebug"
@@ -456,8 +498,33 @@ public class ASMTransformer implements IClassTransformer
                     }
                 }
             }
+            else if ((m.name.equals("func_174977_a") || m.name.equals("renderBlockLayer"))
+                    && m.desc.equals("(Lnet/minecraft/util/BlockRenderLayer;DILnet/minecraft/entity/Entity;)I")) 
+            {
+                for (int i = 0; i < m.instructions.size(); i++)
+                {
+                    AbstractInsnNode next = m.instructions.get(i);
+                    
+                    // public, so will always be INVOKEVIRTUAL
+                    if(next.getOpcode() == INVOKEVIRTUAL)
+                    {
+                        MethodInsnNode op = (MethodInsnNode)next;
+                        
+                        if(op.owner.equals("net/minecraft/client/renderer/chunk/CompiledChunk")
+                                && (op.name.equals("func_178492_d") || op.name.equals("isLayerStarted")))
+                        {
+                            op.setOpcode(INVOKESTATIC);
+                            op.owner = "grondag/acuity/core/PipelineHooks";
+                            op.name = "shouldUploadLayer";
+                            op.desc = "(Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/BlockRenderLayer;)Z";
+                            shouldUploadWorked = true;
+                            break;
+                        }
+                    }
+                }
+            }
         }
-        if(!(newCount == 2 && invokeCount == 2 && visibilityWorked))
+        if(!(newCount == 2 && invokeCount == 2 && visibilityWorked && shouldUploadWorked))
         {
             Acuity.INSTANCE.getLog().error(msg_fail_patch_render_global);
             allPatchesSuccessful = false;
@@ -608,6 +675,9 @@ public class ASMTransformer implements IClassTransformer
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher"))
             return patch(transformedName, basicClass, obfuscated, patchChunkRenderDispatcher, ClassWriter.COMPUTE_FRAMES); 
+        
+        if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderWorker"))
+            return patch(transformedName, basicClass, obfuscated, patchChunkRenderWorker); 
         
         if (transformedName.equals("net.minecraft.client.renderer.RenderGlobal"))
             return patch(transformedName, basicClass, obfuscated, patchRenderGlobal); 

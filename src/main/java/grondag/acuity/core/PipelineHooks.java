@@ -299,4 +299,11 @@ public class PipelineHooks
         else
             renderChunk.initModelviewMatrix();
     }
+
+    public static boolean shouldUploadLayer(CompiledChunk compiledchunk, BlockRenderLayer blockrenderlayer)
+    {
+        return Acuity.isModEnabled()
+            ? compiledchunk.isLayerStarted(blockrenderlayer) && !compiledchunk.isLayerEmpty(blockrenderlayer)
+            : compiledchunk.isLayerStarted(blockrenderlayer);
+    }
 }
