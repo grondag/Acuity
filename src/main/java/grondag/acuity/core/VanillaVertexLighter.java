@@ -34,7 +34,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         }
         
         @Override
-        public final VertexCollector getPipelineBuffer()
+        public final VertexCollector getVertexCollector()
         {
             return target.getVertexCollector(this.pipeline);
         }
@@ -102,7 +102,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
             posY += blockInfo.getShy();
             posZ += blockInfo.getShz();
             
-            final VertexCollector output = getPipelineBuffer();
+            final VertexCollector output = getVertexCollector();
             final BlockPos pos = blockInfo.getBlockPos();
     
             // Compute light

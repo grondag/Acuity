@@ -43,7 +43,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     @Override
     public abstract BlockInfo getBlockInfo();
     
-    public abstract VertexCollector getPipelineBuffer();
+    public abstract VertexCollector getVertexCollector();
     
     protected abstract void reportOutput();
     

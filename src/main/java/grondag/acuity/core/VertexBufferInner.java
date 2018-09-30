@@ -20,7 +20,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
-public class VertexBufferInner extends VertexPackingConsumer
+public class VertexBufferInner implements VertexPackingConsumer
 {
     private static final ConcurrentLinkedQueue<VertexBufferInner> store = new ConcurrentLinkedQueue<VertexBufferInner>();
     
@@ -172,7 +172,7 @@ public class VertexBufferInner extends VertexPackingConsumer
     {
         if(this.isNew)
         {
-            System.out.println("Rendering buffer (translucent) before load");
+//            System.out.println("Rendering buffer (translucent) before load");
             return;
         }
         
@@ -188,7 +188,7 @@ public class VertexBufferInner extends VertexPackingConsumer
         //TODO: remove or make assertion
         if(this.isNew)
         {
-            System.out.println("Rendering buffer (solid) before load");
+//            System.out.println("Rendering buffer (solid) before load");
             return;
         }
         

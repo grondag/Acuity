@@ -1,5 +1,7 @@
 package grondag.acuity.core;
 
+import java.util.concurrent.ConcurrentLinkedQueue;
+
 import javax.annotation.Nullable;
 
 import com.google.common.primitives.Floats;
@@ -15,6 +17,25 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class VertexCollector
 {
+    /**
+     * Cache instantiated buffers for reuse.<p>
+     */
+    private static final ConcurrentLinkedQueue<VertexCollector> collectors = new ConcurrentLinkedQueue<>();
+
+    public static VertexCollector claimAndPrepare(RenderPipeline pipeline)
+    {
+        VertexCollector result = collectors.poll();
+        if(result == null)
+            result = new VertexCollector(1024);
+        result.prepare(pipeline);
+        return result;
+    }
+    
+    public static void release(VertexCollector collector)
+    {
+        collectors.offer(collector);
+    }
+    
     private int[] data;
     private int integerSize = 0;
     private RenderPipeline pipeline;

@@ -1,5 +1,7 @@
 package grondag.acuity.core;
 
+import java.nio.ByteBuffer;
+
 import grondag.acuity.Acuity;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
@@ -110,4 +112,34 @@ public class CompoundVertexBuffer extends VertexBuffer
         // note no call to checkInner() cuz render is stateful, don't want to switch after prep
         inner.renderSolidNext();
     }
+
+    @Override
+    public void bindBuffer()
+    {
+        assert !Acuity.isModEnabled();
+        super.bindBuffer();
+    }
+
+    @Override
+    public void bufferData(ByteBuffer data)
+    {
+        assert !Acuity.isModEnabled();
+        super.bufferData(data);
+    }
+
+    @Override
+    public void drawArrays(int mode)
+    {
+        assert !Acuity.isModEnabled();
+        super.drawArrays(mode);
+    }
+
+    @Override
+    public void unbindBuffer()
+    {
+        assert !Acuity.isModEnabled();
+        super.unbindBuffer();
+    }
+    
+    
 }

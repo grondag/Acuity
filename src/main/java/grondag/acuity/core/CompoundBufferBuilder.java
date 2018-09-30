@@ -1,17 +1,15 @@
 package grondag.acuity.core;
 
-import java.nio.IntBuffer;
-import java.util.Comparator;
-import java.util.PriorityQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import grondag.acuity.Acuity;
-import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
-import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -22,30 +20,27 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundBufferBuilder extends BufferBuilder
 {
-    private static final VertexCollector[] EMPTY_ARRAY = new VertexCollector[PipelineManager.MAX_PIPELINES];
     
     /**
-     * Cache instantiated buffers for reuse.<p>
+     * Holds vertex data and packing data for next upload if we have it.
+     * Buffer is obtained from BufferStore and will be released back to store by upload.
      */
-    private static final ConcurrentLinkedQueue<VertexCollector> collectors = new ConcurrentLinkedQueue<>();
+    private AtomicReference<Pair<ExpandableByteBuffer, VertexPackingList>>  uploadState  = new AtomicReference<>();
+    
+    //TODO: remove
+    private AtomicInteger callCount = new AtomicInteger();
+    
+    //TODO: remove
+    private boolean hadDraw = false;
     
     /**
-     * Fast lookup of buffers by pipeline index. Null in CUTOUT layer buffers.
+     * During drawing collects vertex info. Should be null other times.
      */
-    private VertexCollector[] pipelineArray;
+    @Nullable VertexCollectorList collectors;
     
-    /**
-     * Holds vertex data ready for upload if we have it.
-     * Obtained from BufferStore and released back to store when uploads are complete.
-     */
-    @Nullable ExpandableByteBuffer uploadBuffer  = null;
-    
-    /**
-     * Describes vertex packing in {@link #uploadBuffer}.
-     * Must be a new instance each time because will be
-     * passed on to rendering to control vertex draw batches.
-     */
-    @Nullable VertexPackingList uploadPackingList = null;
+    float sortX;
+    float sortY;
+    float sortZ;
     
     /**
      * Tells us which block layer we are buffering.
@@ -58,16 +53,15 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     private class CompoundState extends State
     {
-        @SuppressWarnings("hiding")
-        private VertexCollector[] pipelineArray = new VertexCollector[PipelineManager.MAX_PIPELINES];
+        private final VertexCollectorList stateCollectors;
         
-        public CompoundState(int[] buffer, VertexFormat format)
+        public CompoundState(int[] buffer, VertexFormat format, VertexCollectorList collectors)
         {
             super(buffer, format);
+            this.stateCollectors = collectors;
         }
     }
     
-    @SuppressWarnings("null")
     public CompoundBufferBuilder(int bufferSizeIn)
     {
         super(limitBufferSize(bufferSizeIn));
@@ -76,18 +70,14 @@ public class CompoundBufferBuilder extends BufferBuilder
     /**
      * Called at end of RegionRenderCacheBuilder init via ASM.
      */
-    @SuppressWarnings("null")
     public void setupLinks(RegionRenderCacheBuilder owner, BlockRenderLayer layer)
     {
         this.layer = layer;
         
         if(this.layer == BlockRenderLayer.CUTOUT || this.layer == BlockRenderLayer.CUTOUT_MIPPED)
         {
-            this.pipelineArray = null;
             this.proxy = (CompoundBufferBuilder) owner.getWorldRendererByLayer(BlockRenderLayer.SOLID);
         }
-        else
-            this.pipelineArray = new VertexCollector[PipelineManager.MAX_PIPELINES];
     }
     
     /**
@@ -107,28 +97,45 @@ public class CompoundBufferBuilder extends BufferBuilder
         return bufferSizeIn;
     }
     
+    /**
+     * Used to retrieve and save collector state for later resorting of translucency.<p>
+     * 
+     * Temporarily means we have a reference to state in two places but reference in 
+     * this instance will be removed during {@link #finishDrawingIfNotAlreadyFinished()}.
+     */
     @Override
     public State getVertexState()
     {
         if(Acuity.isModEnabled())
         {
+            assert this.collectors != null : "getVertexState called more than one for same collector state.";
+            assert this.proxy == null;
+            assert this.layer == BlockRenderLayer.TRANSLUCENT;
+            
             State inner = super.getVertexState();
-            CompoundState result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat());
-            System.arraycopy(this.pipelineArray, 0, result.pipelineArray, 0, PipelineManager.MAX_PIPELINES);
+            @SuppressWarnings("null")
+            CompoundState result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat(), this.collectors);
             return result;
         }
         else
             return super.getVertexState();
     }
 
+    @SuppressWarnings("null")
     @Override
     public void setVertexState(State state)
     {
         super.setVertexState(state);
         if(Acuity.isModEnabled())
         {
-            CompoundState compState = (CompoundState)state;
-            System.arraycopy(compState.pipelineArray, 0, this.pipelineArray, 0, this.pipelineArray.length);
+            assert this.proxy == null;
+            assert this.layer == BlockRenderLayer.TRANSLUCENT;
+            assert this.collectors.isEmpty() : "Non-empty collector state when restoring vertex state.";
+            
+            VertexCollectorList.release(this.collectors);
+            this.collectors = ((CompoundState)state).stateCollectors;
+            
+            assert this.collectors != null;
         }
     }
 
@@ -138,40 +145,36 @@ public class CompoundBufferBuilder extends BufferBuilder
         super.reset();
         if(Acuity.isModEnabled())
         {
-            System.arraycopy(EMPTY_ARRAY, 0, pipelineArray, 0, PipelineManager.MAX_PIPELINES);
-            this.uploadBuffer = null;
-            this.uploadPackingList = null;
+            assert this.collectors == null : "CompoundBufferBuilder reset before vertex collector list consumed";
+            this.collectors = VertexCollectorList.claim();
+            this.hadDraw = false;
         }
     }
     
+    @SuppressWarnings("null")
     public VertexCollector getVertexCollector(RenderPipeline pipeline)
     {
         if(Acuity.isModEnabled() && this.proxy != null)
             return this.proxy.getVertexCollector(pipeline);
         
-        final int i = pipeline.getIndex();
-        VertexCollector result = pipelineArray[i];
-        if(result == null)
-        {
-            result = getInitializedCollector(pipeline);
-            pipelineArray[i] = result;
-        }
-        return result;
+        hadDraw = true;
+        
+        return this.collectors.getOrCreate(pipeline);
     }
     
-    private VertexCollector getInitializedCollector(RenderPipeline pipeline)
-    {
-        VertexCollector result = collectors.poll();
-        if(result == null)
-            result = new VertexCollector(1024);
-        result.prepare(pipeline);
-        return result;
-    }
-
     public void beginIfNotAlreadyDrawing(int glMode, VertexFormat format)
     {
         if(!this.isDrawing)
+        {
+            assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
+            
+            final int c = callCount.incrementAndGet();
+            if(c > 1)
+                System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Concurrent draw count = " + c);
+            
+            // NB: this calls reset which initializes collector list
             super.begin(glMode, format);
+        }
     }
     
     @Override
@@ -183,6 +186,7 @@ public class CompoundBufferBuilder extends BufferBuilder
             beginIfNotAlreadyDrawing(glMode, format);
     }
     
+    @SuppressWarnings("null")
     public void finishDrawingIfNotAlreadyFinished()
     {
         if(this.isDrawing)
@@ -191,32 +195,49 @@ public class CompoundBufferBuilder extends BufferBuilder
             
             if(Acuity.isModEnabled())
             {
-                // In transparency layer, packing list will already
-                // have been built via vertex sort.  
-                // If it is null, assume is non-transparent layer and build it now.
-                VertexPackingList packing = this.uploadPackingList;
-                if(packing == null)
+                callCount.decrementAndGet();
+                
+                switch(this.layer)
                 {
-                    packing = new VertexPackingList();
-                    
-                    // NB: for solid render, relying on pipelines being added to packing in numerical order so that
-                    // all chunks can iterate pipelines independently while maintaining same pipeline order within chunk
-                    for(VertexCollector b : pipelineArray)
+                    case SOLID:
                     {
-                        if(b != null)
-                        {
-                            final int vertexCount = b.vertexCount();
-                            if(vertexCount != 0)
-                                packing.addPacking(b.pipeline(), vertexCount);
-                            
-                            // Collectors used in non-transparency layers can be reused.
-                            // (Transparency collectors are retained in compiled chunk for resorting.)
-                            collectors.offer(b);
-                        }
+                        Pair<ExpandableByteBuffer, VertexPackingList> pair = VertexPacker.packUpload(collectors);
+                        
+                        assert pair != null || !hadDraw;
+                        
+                        if(this.uploadState.getAndSet(pair) != null)
+                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Solid) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
+                        
+                        VertexCollectorList.release(this.collectors);
+                        this.collectors = null;
+                        
+                        return;
                     }
-                    this.uploadPackingList = packing;
+                    
+                    case TRANSLUCENT:
+                    {
+                        Pair<ExpandableByteBuffer, VertexPackingList> pair = VertexPacker.packUploadSorted(collectors, this.sortX, this.sortY, this.sortZ);
+
+                        assert pair != null || !hadDraw;
+                        
+                        if(this.uploadState.getAndSet(pair) != null)
+                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Translucent) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
+                        
+                        // can't release collector list because retained in vertex state
+                        // but remove reference to prevent mishap
+                        this.collectors = null;
+                        
+    
+                        return;
+                    }
+                    
+                    case CUTOUT:
+                    case CUTOUT_MIPPED:
+                    default:
+                        assert false : "Bad render layer in compound buffer builder finish";
+                        break;
+                
                 }
-                this.packingConsumer.packUpload();
             }
         }
     }
@@ -234,61 +255,18 @@ public class CompoundBufferBuilder extends BufferBuilder
        
     }
 
-    private static final int[] EMPTY_STARTS = new int[PipelineManager.MAX_PIPELINES];
-    
-    private final class Consumer extends VertexPackingConsumer
-    {
-        // tracks current position within vertex collectors
-        // necessary in transparency layer when splitting pipelines
-        final int[] pipelineStarts = new int[PipelineManager.MAX_PIPELINES];
-        
-        @SuppressWarnings("null")
-        IntBuffer intBuffer;
-        
-        private final void packUpload()
-        {
-            final VertexPackingList packing = uploadPackingList;
-            if(packing == null)
-                return;
-            
-            System.arraycopy(EMPTY_STARTS, 0, pipelineStarts, 0, PipelineManager.MAX_PIPELINES);
-            
-            final ExpandableByteBuffer buffer = BufferStore.claim();
-            buffer.expand(packing.totalBytes());
-            intBuffer = buffer.intBuffer();
-            intBuffer.position(0);
-            
-            packing.forEach(this);
-            
-            buffer.byteBuffer().limit(packing.totalBytes());
-            uploadBuffer = buffer;
-        }
-        
-        @Override
-        public final void accept(RenderPipeline pipeline, int vertexCount)
-        {
-            final int pipelineIndex = pipeline.getIndex();
-            final int startInt = pipelineStarts[pipelineIndex];
-            final int intLength = vertexCount * pipeline.piplineVertexFormat().stride / 4;
-            intBuffer.put(pipelineArray[pipelineIndex].rawData(), startInt, intLength);
-            pipelineStarts[pipelineIndex] = startInt + intLength;
-        }            
-
-    }
-    
-    private final Consumer packingConsumer = new Consumer();
-    
     public void uploadTo(CompoundVertexBuffer target)
     {   
-        final ExpandableByteBuffer uploadBuffer = this.uploadBuffer;
-        final VertexPackingList packingList = this.uploadPackingList;
-        if(uploadBuffer != null)
+        assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
+        
+        Pair<ExpandableByteBuffer, VertexPackingList> pair = this.uploadState.getAndSet(null);
+        if(pair == null)
         {
-            if(packingList != null)
-                target.upload(uploadBuffer, packingList);
+//            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Ignoring upload request due to missing upload state in Compound Vertex Buffer (" + layer.toString() + ") - must have been loaded earlier");
+            return;
         }
-        this.uploadBuffer = null;
-        this.uploadPackingList = null;
+
+        target.upload(pair.getLeft(), pair.getRight());
     }
     
     @Override
@@ -300,79 +278,14 @@ public class CompoundBufferBuilder extends BufferBuilder
             super.sortVertexData(x, y, z);
     }
     
-    private static final Comparator<VertexCollector> vertexCollectionComparator = new Comparator<VertexCollector>() 
-    {
-        @SuppressWarnings("null")
-        @Override
-        public int compare(VertexCollector o1, VertexCollector o2)
-        {
-            // note reverse order - take most distant first
-            return Float.compare(o2.firstUnpackedDistance(), o1.firstUnpackedDistance());
-        }
-    };
-    
-    private static final ThreadLocal<PriorityQueue<VertexCollector>> sorters = new ThreadLocal<PriorityQueue<VertexCollector>>()
-    {
-        @Override
-        protected PriorityQueue<VertexCollector> initialValue()
-        {
-            return new PriorityQueue<VertexCollector>(vertexCollectionComparator);
-        }
-
-        @Override
-        public PriorityQueue<VertexCollector> get()
-        {
-            PriorityQueue<VertexCollector> result = super.get();
-            result.clear();
-            return result;
-        }
-    };
-    
+    /**
+     * Saves sort perspective coordinate for use during packing.  Actual sort occurs then.
+     */
     private void sortCompondVertexData(float x, float y, float z)
     {
-        // First sort quads within each pipeline
-      final float relativeX = RenderCube.renderCubeRelative(x);
-      final float relativeY = RenderCube.renderCubeRelative(y);
-      final float relativeZ = RenderCube.renderCubeRelative(z);
-        VertexPackingList packing = new VertexPackingList();
-
-        final PriorityQueue<VertexCollector> sorter = sorters.get();
-        
-        for(VertexCollector collector : pipelineArray)
-        {
-            if(collector != null)
-            {
-                collector.sortQuads(relativeX, relativeY, relativeZ);
-                sorter.add(collector);
-            }
-        }
-        
-        // exploit special case when only one transparent pipeline in this render chunk
-        if(sorter.size() == 1)
-        {
-            VertexCollector only = sorter.poll();
-            packing.addPacking(only.pipeline(), only.vertexCount());
-        }
-        else if(sorter.size() != 0)
-        {
-            VertexCollector first = sorter.poll();
-            VertexCollector second = sorter.poll();
-            do
-            {   
-                // x4 because packing is vertices vs quads
-                packing.addPacking(first.pipeline(), 4 * first.unpackUntilDistance(second.firstUnpackedDistance()));
-                
-                if(first.hasUnpackedSortedQuads())
-                    sorter.add(first);
-                
-                first = second;
-                second = sorter.poll();
-                
-            } while(second != null);
-            
-            packing.addPacking(first.pipeline(), 4 * first.unpackUntilDistance(Float.MIN_VALUE));
-        }
-        
-        this.uploadPackingList = packing;
+          hadDraw = true;
+          sortX = RenderCube.renderCubeRelative(x);
+          sortY = RenderCube.renderCubeRelative(y);
+          sortZ = RenderCube.renderCubeRelative(z);
     }
 }
