@@ -14,6 +14,7 @@ import com.google.common.io.CharStreams;
 import grondag.acuity.Acuity;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
+import grondag.acuity.opengl.OpenGlHelperExt;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;

@@ -20,6 +20,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 public class CompoundVertexBuffer extends VertexBuffer
 {
     private VertexBufferInner inner = VertexBufferInner.claim();
+    
+    // UGLY: keeping a queue of inner buffers and using fences is overwrought when using new glBuffers each time
+    // theoretically, glBufferData should have no dependency on our byte buffer after it returns, but doing it this
+    // way eliminated remaining rendering artifacts likely due to concurrency and will probably need the fences later
+    // on when using memory-mapped buffers but won't mess with that until LWJGL3 so leaving it for now.  
     private ObjectArrayFIFOQueue<VertexBufferInner> nextInner = new ObjectArrayFIFOQueue<VertexBufferInner>();
     
     private void checkInner()

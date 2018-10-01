@@ -24,6 +24,7 @@ import grondag.acuity.api.IUniform.IUniform3i;
 import grondag.acuity.api.IUniform.IUniform4f;
 import grondag.acuity.api.IUniform.IUniform4i;
 import grondag.acuity.api.IUniform.IUniformMatrix4f;
+import grondag.acuity.opengl.OpenGlHelperExt;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.api.UniformUpdateFrequency;

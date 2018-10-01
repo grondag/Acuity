@@ -6,6 +6,7 @@ misc.hardware_ok=Acuity Rendering API can run on this hardware. VBOs, shaders an
 misc.vao_on=Vertex Array Objects (VAO) are enabled and will be used to improve performance.
 misc.vao_off=Vertex Array Objects (VAO) are unavailable.
 misc.fail_imc=Error in inter-mod communication request for Acuity Rendering API runtime.
+misc.fail_opengl_fence=Unable to find supported fence API. Acuity Rendering API will be disabled.
 
 misc.fail_create_shader=Unable to create shader %s (texture format %s) due to unexpected error %s
 misc.info_reloading=Acuity Rendering API is reloading

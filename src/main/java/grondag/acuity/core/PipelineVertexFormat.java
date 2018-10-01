@@ -12,6 +12,7 @@ import static grondag.acuity.core.PipelineVertextFormatElement.TERTIARY_TEX_2F;
 
 import org.lwjgl.opengl.GL20;
 
+import grondag.acuity.opengl.OpenGlHelperExt;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;

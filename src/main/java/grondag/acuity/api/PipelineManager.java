@@ -11,8 +11,8 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Configurator;
-import grondag.acuity.core.OpenGlHelperExt;
 import grondag.acuity.core.PipelineShaderManager;
+import grondag.acuity.opengl.OpenGlHelperExt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.GlStateManager;

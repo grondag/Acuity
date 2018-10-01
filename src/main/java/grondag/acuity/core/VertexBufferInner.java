@@ -14,7 +14,9 @@ import grondag.acuity.Configurator;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
-import grondag.acuity.core.OpenGlFenceExt.Fence;
+import grondag.acuity.opengl.Fence;
+import grondag.acuity.opengl.OpenGlFenceExt;
+import grondag.acuity.opengl.OpenGlHelperExt;
 import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -256,7 +258,6 @@ public class VertexBufferInner implements VertexPackingConsumer
         format.enableAndBindAttributes(bufferOffset);
     }
 
-    @SuppressWarnings("null")
     public final void deleteGlBuffers()
     {
         IntBuffer vao = this.vaoNames;
@@ -275,7 +276,7 @@ public class VertexBufferInner implements VertexPackingConsumer
             OpenGlHelper.glDeleteBuffers(this.glBufferId);
             this.glBufferId = -1;
         }
-        // finalize will cleanup
-        this.fence = null;
+        
+        this.fence.deleteGlResources();
     }
 }
