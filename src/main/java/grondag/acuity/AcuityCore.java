@@ -11,7 +11,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 @IFMLLoadingPlugin.MCVersion("1.12.2")
 @IFMLLoadingPlugin.SortingIndex(Integer.MAX_VALUE)
-public class FMLPlugin implements IFMLLoadingPlugin
+public class AcuityCore implements IFMLLoadingPlugin
 {
     @Override
     public String[] getASMTransformerClass()

@@ -74,7 +74,7 @@ minecraft {
 
 jar.manifest {
 	attributes 'FMLAT': 'acuity_at.cfg'
-    attributes 'FMLCorePlugin': 'grondag.acuity.FMLPlugin'
+    attributes 'FMLCorePlugin': 'grondag.acuity.AcuityCore'
 	attributes 'FMLCorePluginContainsFMLMod': 'true'
 }
 
