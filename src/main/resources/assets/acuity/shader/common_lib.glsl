@@ -16,7 +16,7 @@ uniform mat4 u_modelViewProjection;
 varying vec4 v_color_0;
 varying vec2 v_texcoord_0;
 varying vec4 v_light;
-varying float v_flags;
+invariant varying float v_flags;
 
 #if LAYER_COUNT > 1
 varying vec4 v_color_1;
@@ -76,10 +76,7 @@ float tnoise (in vec2 st, float t)
             (d - b) * f.x * f.y;
 }
 
-#if GL_EXT_gpu_shader4 == 0
-	const float[8] BITWISE_FLOAT_DIVISORS = float[8](127.5, 63.75, 31.875, 15.9375, 7.96875, 3.984375, 1.9921875, 0.99609375);
-	const float[8] BITWISE_INT_DIVISORS = float[8](0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625);
-#endif
+const float[8] BITWISE_DIVISORS = float[8](0.5, 0.25, 0.125, 0.0625, 0.03125, 0.015625, 0.0078125, 0.00390625);
 
 /**
  * Returns the value (0-1) of the indexed bit (0-7)
@@ -90,26 +87,5 @@ float tnoise (in vec2 st, float t)
  */
 float bitValue(float byteValue, int bitIndex)
 {
-#if GL_EXT_gpu_shader4 == 1
-	return (int(byteValue) >> bitIndex) & 1;
-#else
-	//FIXME: not right - the constants are scaled for normalized (0-1) values
-	return floor(fract(byteValue * BITWISE_FLOAT_DIVISORS[bitIndex]) * 2.0);
-#endif
-}
-
-/**
- * Returns the value (0-1) of the indexed bit (0-7)
- * within the given integer.
- *
- * GLSL 120 unfortunately lacks bitwise operations
- * so we need to emulate them unless the extension is active.
- */
-float bitValue(int flags, int bitIndex)
-{
-#if GL_EXT_gpu_shader4 == 1
-	return (flags >> bitIndex) & 1;
-#else
-	return floor(fract(float(flags) * BITWISE_INT_DIVISORS[bitIndex]) * 2.0);
-#endif
+	return floor(fract(byteValue * BITWISE_DIVISORS[bitIndex]) * 2.0);
 }
