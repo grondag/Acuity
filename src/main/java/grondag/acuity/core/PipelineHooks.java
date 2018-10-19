@@ -295,7 +295,12 @@ public class PipelineHooks
     public static void renderChunkInitModelViewMatrix(RenderChunk renderChunk)
     {
         if(Acuity.isModEnabled())
-            return;
+        {
+            // this is called right after setting chunk position because it was moved in the frustum
+            // let buffers in the chunk know they are no longer valid and should not render
+            ((CompoundVertexBuffer)renderChunk.getVertexBufferByLayer(BlockRenderLayer.SOLID.ordinal())).clear();
+            ((CompoundVertexBuffer)renderChunk.getVertexBufferByLayer(BlockRenderLayer.TRANSLUCENT.ordinal())).clear();
+        }
         else
             renderChunk.initModelviewMatrix();
     }

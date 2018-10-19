@@ -27,6 +27,12 @@ public class CompoundVertexBuffer extends VertexBuffer
     // on when using memory-mapped buffers but won't mess with that until LWJGL3 so leaving it for now.  
     private ObjectArrayFIFOQueue<VertexBufferInner> nextInner = new ObjectArrayFIFOQueue<VertexBufferInner>();
     
+    public void clear()
+    {
+        inner = VertexBufferInner.claim();
+        nextInner.clear();
+    }
+    
     private void checkInner()
     {
         while(tryAdvance()) {}
