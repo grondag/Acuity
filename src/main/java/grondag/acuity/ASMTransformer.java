@@ -576,7 +576,9 @@ public class ASMTransformer implements IClassTransformer
     private Consumer<ClassNode> patchOpenGlHelper = classNode ->
     {
         Iterator<MethodNode> methods = classNode.methods.iterator();
-        boolean worked = false;
+        boolean didVbo = false;
+        boolean didGen = false;
+        boolean didDel = false;
         
         while (methods.hasNext())
         {
@@ -601,15 +603,34 @@ public class ASMTransformer implements IClassTransformer
                         {
                             // insert call to our hook before return statement
                             m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/core/PipelineHooks", "useVbo", "()Z", false));
-                            worked = true;
+                            didVbo = true;
                         }
                         break;
                     }
                 }
-                break;
             }
+            else if (m.name.equals("func_176073_e") || m.name.equals("glGenBuffers")) 
+            {
+                m.instructions.clear();
+                m.instructions.add(new MethodInsnNode(INVOKESTATIC, "grondag/acuity/opengl/GLBufferStore", "glGenBuffers", "()I", false));
+                m.instructions.add(new InsnNode(IRETURN));
+                didGen = true;
+            }
+            else if (m.name.equals("func_176074_g") || m.name.equals("glDeleteBuffers")) 
+            {
+                m.instructions.clear();
+                m.instructions.add(new VarInsnNode(ILOAD, 0));
+                m.instructions.add(new MethodInsnNode(INVOKESTATIC, "grondag/acuity/opengl/GLBufferStore", "glDeleteBuffers", "(I)V", false));
+                m.instructions.add(new InsnNode(RETURN));
+                didDel = true;
+            }
+            
+            if(didVbo && didGen && didDel)
+                break;
         }
-        if(!worked)
+        
+        
+        if(!didVbo)
         {
             Acuity.INSTANCE.getLog().error(String.format(msg_fail_patch_locate, "OpenGlHelper.useVbo()"));
             allPatchesSuccessful = false;

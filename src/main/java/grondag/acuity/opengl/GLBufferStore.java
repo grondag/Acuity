@@ -39,4 +39,21 @@ public class GLBufferStore
     {
         queue.enqueue(buffer);
     }
+    
+    // should not be needed - Gl resources are destroyed when the context is destroyed
+//    public static void deleteAll()
+//    {
+//        while(!queue.isEmpty())
+//        {
+//            while(!queue.isEmpty() && buff.position() < 128)
+//                buff.put(queue.dequeueInt());
+//            
+//            if(OpenGlHelper.arbVbo)
+//                ARBVertexBufferObject.glDeleteBuffersARB(buff);
+//            else
+//                GL15.glDeleteBuffers(buff);
+//            
+//            buff.clear();
+//        }
+//    }
 }
