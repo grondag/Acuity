@@ -29,8 +29,10 @@ public class CompoundVertexBuffer extends VertexBuffer
     
     public void clear()
     {
+        VertexBufferInner.release(inner);
         inner = VertexBufferInner.claim();
-        nextInner.clear();
+        while(!nextInner.isEmpty())
+            VertexBufferInner.release(nextInner.dequeue());
     }
     
     private void checkInner()
@@ -87,14 +89,7 @@ public class CompoundVertexBuffer extends VertexBuffer
     public void deleteGlBuffers()
     {
         super.deleteGlBuffers();
-        if(this.inner != null)
-        {
-            this.inner.deleteGlBuffers();
-        }
-        while(!nextInner.isEmpty())
-        {
-            nextInner.dequeue().deleteGlBuffers();
-        }
+        this.clear();
     }
 
     /**

@@ -38,9 +38,13 @@ public class VertexBufferInner implements VertexPackingConsumer
         return result;
     }
     
-    public static void release(VertexBufferInner buffer)
+    /**
+     * Handles (ignores) nulls to avoid checking in every call location
+     */
+    public static void release(@Nullable VertexBufferInner buffer)
     {
-        store.offer(buffer);
+        if(buffer != null)
+            store.offer(buffer);
     }
     
     int bufferOffset = 0;
