@@ -40,7 +40,3 @@ logs
 discarded textures
 *.nps
 /.apt_generated/
-.idea/*
-*.iml
-
-.idea/gradle.xml
