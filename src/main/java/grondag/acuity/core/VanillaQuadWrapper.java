@@ -123,7 +123,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
                 vertexLighter.setBlockLightMap(blockLight, blockLight, blockLight, 0xFF);
             }
             
-            int rawColor = data[(i * format.getNextOffset() + format.getColorOffset()) / 4];
+            int rawColor = data[(i * format.getSize() + format.getColorOffset()) / 4];
             rawColor = AcuityColorHelper.multiplyColor(rawColor, blockColor);
                     
             LightUtil.unpack(data, unpack, format, i, uvIndex);

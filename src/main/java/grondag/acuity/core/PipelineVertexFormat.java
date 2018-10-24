@@ -95,7 +95,7 @@ public enum PipelineVertexFormat
     {
         this.layerIndex = layerIndex;
         this.vertexFormat = vertexFormat;
-        this.stride = vertexFormat.getNextOffset();
+        this.stride = vertexFormat.getSize();
         this.elements = vertexFormat.getElements().toArray(new PipelineVertextFormatElement[vertexFormat.getElementCount()]);
         int count = 0;
         for(PipelineVertextFormatElement e : elements)

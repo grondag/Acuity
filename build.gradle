@@ -1,6 +1,7 @@
 buildscript {
     repositories {
         mavenCentral()
+        jcenter()
 		
 	    maven {
             name = "forge"
@@ -11,11 +12,18 @@ buildscript {
             name = "sonatype"
             url = "https://oss.sonatype.org/content/repositories/snapshots/"
         }
+
+        maven {
+            name = 'SpongePowered'
+            url = 'http://repo.spongepowered.org/maven'
+        }
     }
-    
+
     dependencies {
         classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
         classpath 'org.ajoberstar:gradle-git:0.10.1'
+        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
+        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
     }
 }
 
@@ -36,6 +44,7 @@ ext.gitVersioner = [
         }
 ]
 
+
 // import the script which runs the version generation
 apply from: 'https://raw.githubusercontent.com/passsy/gradle-GitVersioner/master/git-versioner.gradle'
 
@@ -43,17 +52,37 @@ apply from: 'https://raw.githubusercontent.com/passsy/gradle-GitVersioner/master
 println("versionName: $gitVersionName") // output: "versionName: 1083-dm4(6)-SNAPSHOT"
 
 apply plugin: 'net.minecraftforge.gradle.forge'
-apply plugin: 'maven-publish'
+apply plugin: 'org.spongepowered.mixin'
+apply plugin: 'com.github.johnrengelman.shadow'
 apply plugin: 'java'
 apply plugin: 'maven'
+apply plugin: 'maven-publish'
 
 version = "mc${minecraft_version}-${mod_version}.${gitVersionName}-${release_type}"
 group= "grondag" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
 archivesBaseName = "acuity"
 
-
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
+
+repositories {
+    maven {
+        name = 'spongepowered-repo'
+        url = 'http://repo.spongepowered.org/maven/'
+    }
+}
+
+dependencies {
+compile("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+        exclude module: "asm-commons"
+        exclude module: "asm-tree"
+        exclude module: "launchwrapper"
+        exclude module: "guava"
+        exclude module: "log4j-core"
+        exclude module: "gson"
+        exclude module: "commons-io"
+    }
+}
 
 // Need this here so eclipse task generates correctly.
 compileJava {
@@ -63,19 +92,27 @@ compileJava {
 minecraft {
     version = "${minecraft_version}-${forge_version}"
     runDir = "run"
-    mappings = "snapshot_20171003"
+    mappings = "stable_39"
     useDepAts = false
     
-    clientJvmArgs += '-Dfml.coreMods.load=grondag.acuity.FMLPlugin'
+    clientJvmArgs += '-Dfml.coreMods.load=grondag.acuity.AcuityCore'
     
     replaceIn "Reference.java"
     replace "@VERSION@", project.version
 }
 
-jar.manifest {
-	attributes 'FMLAT': 'acuity_at.cfg'
-    attributes 'FMLCorePlugin': 'grondag.acuity.AcuityCore'
-	attributes 'FMLCorePluginContainsFMLMod': 'true'
+mixin {
+    add sourceSets.main, "mixins.acuity.refmap.json"
+}
+
+jar {
+    manifest.attributes(
+            'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
+            'MixinConfigs': 'mixins.acuity.json',
+            'FMLCorePluginContainsFMLMod': 'true',
+            'FMLCorePlugin': 'grondag.acuity.AcuityCore',
+            'FMLAT': 'acuity_at.cfg'
+    )
 }
 
 jar {
