@@ -1,4 +1,4 @@
-package grondag.acuity.core;
+package grondag.acuity.hooks;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -9,6 +9,11 @@ import grondag.acuity.Configurator;
 import grondag.acuity.api.IPipelinedBakedModel;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.core.CompoundBufferBuilder;
+import grondag.acuity.core.CompoundVertexBuffer;
+import grondag.acuity.core.CompoundVertexLighter;
+import grondag.acuity.core.FluidBuilder;
+import grondag.acuity.core.VanillaQuadWrapper;
 import net.minecraft.block.material.Material;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;

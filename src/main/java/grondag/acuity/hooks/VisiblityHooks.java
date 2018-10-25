@@ -1,4 +1,4 @@
-package grondag.acuity.core;
+package grondag.acuity.hooks;
 
 import java.util.BitSet;
 import java.util.EnumSet;
@@ -6,14 +6,11 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import grondag.acuity.Acuity;
+import grondag.acuity.core.SetVisibilityExt;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntListIterator;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.chunk.SetVisibility;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.util.EnumFacing;
@@ -21,51 +18,26 @@ import net.minecraft.util.math.BlockPos;
 
 public class VisiblityHooks
 {
-    /**
-     * Called from {@link RenderGlobal#setupTerrain(net.minecraft.entity.Entity, double, net.minecraft.client.renderer.culling.ICamera, int, boolean)}.
-     * Relies on pre-computed visibility stored during render chunk rebuild vs computing on fly each time.
-     */
-    public static Set<EnumFacing> getVisibleFacings(RenderChunk renderchunk, BlockPos eyePos)
-    {
-        return Acuity.isModEnabled() ? getVisibleFacingsExt(renderchunk, eyePos) : Minecraft.getMinecraft().renderGlobal.getVisibleFacings(eyePos);
-    }
-    
     @SuppressWarnings("unchecked")
-    private static Set<EnumFacing> getVisibleFacingsExt(RenderChunk renderchunk, BlockPos eyePos)
+    public static Set<EnumFacing> getVisibleFacingsExt(SetVisibilityExt rawVis, BlockPos eyePos)
     {
-        // unbuilt chunks won't have extended info
-        SetVisibility rawVis = renderchunk.compiledChunk.setVisibility;
-        if(rawVis instanceof SetVisibilityExt)
-        {
-            final Object facings = ((SetVisibilityExt)rawVis).visibility;
-            EnumSet<EnumFacing> result;
-            
-            if(facings instanceof EnumSet)
-                result = (EnumSet<EnumFacing>)facings;
-            else
-            {
-                Int2ObjectOpenHashMap<EnumSet<EnumFacing>> facingMap = (Int2ObjectOpenHashMap<EnumSet<EnumFacing>>)facings;
-                result = facingMap.get(VisGraph.getIndex(eyePos));
-                if(result == null)
-                    result = EnumSet.<EnumFacing>noneOf(EnumFacing.class);
-            }
-            
-            return result;
-        }
+        final Object facings = ((SetVisibilityExt)rawVis).visibility;
+        EnumSet<EnumFacing> result;
+        
+        if(facings instanceof EnumSet)
+            result = (EnumSet<EnumFacing>)facings;
         else
-            return EnumSet.<EnumFacing>noneOf(EnumFacing.class);
-    }
-
-    /**
-     * Called from {@link RenderChunk#rebuildChunk(float, float, float, net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator)} to
-     * store pre-computed visibility for use during render as a performance optimization.
-     */
-    public static SetVisibility computeVisiblity(VisGraph visgraph)
-    {
-        return Acuity.isModEnabled() ? computeVisiblityExt(visgraph) : visgraph.computeVisibility();
+        {
+            Int2ObjectOpenHashMap<EnumSet<EnumFacing>> facingMap = (Int2ObjectOpenHashMap<EnumSet<EnumFacing>>)facings;
+            result = facingMap.get(VisGraph.getIndex(eyePos));
+            if(result == null)
+                result = EnumSet.<EnumFacing>noneOf(EnumFacing.class);
+        }
+        
+        return result;
     }
     
-    private static SetVisibility computeVisiblityExt(VisGraph visgraph)
+    public static SetVisibility computeVisiblityExt(VisGraph visgraph)
     {
         SetVisibilityExt setvisibility = new SetVisibilityExt();
 

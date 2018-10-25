@@ -1,0 +1,11 @@
+{
+  "required": true,
+  "compatibilityLevel": "JAVA_8",
+  "package": "grondag.acuity.mixin",
+  "refmap": "mixins.acuity.refmap.json",
+  "client": [
+    "MixinRenderGlobal",
+    "MixinRenderChunk",
+    "MixinVisGraph"
+  ]
+}

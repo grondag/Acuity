@@ -2,6 +2,7 @@ package grondag.acuity;
 
 import static org.objectweb.asm.Opcodes.*;
 
+import java.io.File;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
@@ -17,6 +18,7 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import net.minecraft.launchwrapper.IClassTransformer;
+import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -40,6 +42,14 @@ public class ASMTransformer implements IClassTransformer
     private static final String msg_patching_fail_warning_2 = "Acuity Rendering API or a conflicting mod should be removed to prevent strangeness or crashing.";
     private static final String msg_field_already_exists = "Unable to add field %s to class %s - field already exists.";
     private static final String msg_fail_patch_gameloop_yield = "Unable to remove call to Thread.yield() in Minecraft game loop.  This error does not prevent Acuity from operating.";
+    
+    public static LoadingConfig config;
+    
+    static
+    {
+        config = new LoadingConfig(new File(Launch.minecraftHome, "config/vanillafix.cfg"));
+    }
+    
     public static final boolean allPatchesSuccessful()
     {
         return allPatchesSuccessful;
@@ -69,8 +79,8 @@ public class ASMTransformer implements IClassTransformer
                                 && (op.name.equals("func_178267_a") || op.name.equals("renderModel")))
                         {
                             op.setOpcode(INVOKESTATIC);
-                            op.owner = "grondag/acuity/core/PipelineHooks";
-                            op.name = Configurator.enableBlockStats ? "renderModelDebug" : "renderModel";
+                            op.owner = "grondag/acuity/hooks/PipelineHooks";
+                            op.name = config.enableBlockStats ? "renderModelDebug" : "renderModel";
                             op.desc = "(Lnet/minecraft/client/renderer/BlockModelRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/client/renderer/block/model/IBakedModel;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;Z)Z";
                             op.itf = false;
                             blockWorked = true;
@@ -79,8 +89,8 @@ public class ASMTransformer implements IClassTransformer
                                 && (op.name.equals("func_178270_a") || op.name.equals("renderFluid")))
                         {
                             op.setOpcode(INVOKESTATIC);
-                            op.owner = "grondag/acuity/core/PipelineHooks";
-                            op.name = Configurator.enableFluidStats ? "renderFluidDebug" : "renderFluid";
+                            op.owner = "grondag/acuity/hooks/PipelineHooks";
+                            op.name = config.enableFluidStats ? "renderFluidDebug" : "renderFluid";
                             op.desc = "(Lnet/minecraft/client/renderer/BlockFluidRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;)Z";
                             op.itf = false;
                             fluidWorked = true;
@@ -123,7 +133,7 @@ public class ASMTransformer implements IClassTransformer
                                 && (op.name.equals("func_178492_d") || op.name.equals("isLayerStarted")))
                         {
                             op.setOpcode(INVOKESTATIC);
-                            op.owner = "grondag/acuity/core/PipelineHooks";
+                            op.owner = "grondag/acuity/hooks/PipelineHooks";
                             op.name = "shouldUploadLayer";
                             op.desc = "(Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/BlockRenderLayer;)Z";
                             worked = true;
@@ -182,7 +192,7 @@ public class ASMTransformer implements IClassTransformer
                     else if(next.getOpcode() == RETURN)
                     {
                         m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
-                        m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/core/PipelineHooks", "linkBuilders", "(Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;)V", false));
+                        m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/hooks/PipelineHooks", "linkBuilders", "(Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;)V", false));
                         linkHookDone = true;
                         // necessary so that we don't loop infinitely
                         break;
@@ -203,7 +213,6 @@ public class ASMTransformer implements IClassTransformer
         Iterator<MethodNode> methods = classNode.methods.iterator();
         boolean newWorked = false;
         boolean invokedWorked = false;
-        boolean visibilityWorked = false;
         boolean setPositionWorked = false;
         
         while (methods.hasNext())
@@ -240,29 +249,6 @@ public class ASMTransformer implements IClassTransformer
                     }
                 }
             }
-            else if (m.name.equals("func_178581_b") || m.name.equals("rebuildChunk")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    
-                    // public, so will always be INVOKEVIRTUAL
-                    if(next.getOpcode() == INVOKEVIRTUAL)
-                    {
-                        MethodInsnNode op = (MethodInsnNode)next;
-                        if(op.owner.equals("net/minecraft/client/renderer/chunk/VisGraph")
-                                && (op.name.equals("func_178607_a") || op.name.equals("computeVisibility")))
-                        {
-                            op.setOpcode(INVOKESTATIC);
-                            op.owner = "grondag/acuity/core/VisiblityHooks";
-                            op.name = "computeVisiblity";
-                            op.desc = "(Lnet/minecraft/client/renderer/chunk/VisGraph;)Lnet/minecraft/client/renderer/chunk/SetVisibility;";
-                            visibilityWorked = true;
-                            break;
-                        }
-                    }
-                }
-            }
             else if (m.name.equals("func_189562_a") || m.name.equals("setPosition")) 
             {
                 for (int i = 0; i < m.instructions.size(); i++)
@@ -274,7 +260,7 @@ public class ASMTransformer implements IClassTransformer
                     {
                         MethodInsnNode op = (MethodInsnNode)next;
                         op.setOpcode(INVOKESTATIC);
-                        op.owner = "grondag/acuity/core/PipelineHooks";
+                        op.owner = "grondag/acuity/hooks/PipelineHooks";
                         op.name = "renderChunkInitModelViewMatrix";
                         op.desc = "(Lnet/minecraft/client/renderer/chunk/RenderChunk;)V";
                         setPositionWorked = true;
@@ -283,7 +269,7 @@ public class ASMTransformer implements IClassTransformer
                 }
             }
         }
-        if(!(newWorked && invokedWorked && visibilityWorked))
+        if(!(newWorked && invokedWorked))
         {
             Acuity.INSTANCE.getLog().error(msg_fail_patch_render_chunk);
             allPatchesSuccessful = false;
@@ -310,7 +296,7 @@ public class ASMTransformer implements IClassTransformer
                     if(next.getOpcode() == RETURN)
                     {
                         m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
-                        m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/core/PipelineHooks", "mergeRenderLayers", "(Lnet/minecraft/client/renderer/chunk/CompiledChunk;)V", false));
+                        m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/hooks/PipelineHooks", "mergeRenderLayers", "(Lnet/minecraft/client/renderer/chunk/CompiledChunk;)V", false));
                         worked = true;
                         break;
                     }
@@ -387,7 +373,7 @@ public class ASMTransformer implements IClassTransformer
                                             && ins.desc.equals("(Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/client/renderer/vertex/VertexBuffer;)V"))
                                     {
                                         ins.setOpcode(INVOKESTATIC);
-                                        ins.owner = "grondag/acuity/core/PipelineHooks";
+                                        ins.owner = "grondag/acuity/hooks/PipelineHooks";
                                         ins.name = "uploadVertexBuffer";
                                         ins.itf = false;
                                         looking = false;
@@ -418,10 +404,10 @@ public class ASMTransformer implements IClassTransformer
         Iterator<MethodNode> methods = classNode.methods.iterator();
         int newCount = 0;
         int invokeCount = 0;
-        boolean visibilityWorked = false;
+//        boolean visibilityWorked = false;
         boolean shouldUploadWorked = false;
         
-        final String listClass = Configurator.enableRenderStats
+        final String listClass = config.enableRenderStats
                 ? "grondag/acuity/core/PipelinedRenderListDebug"
                 : "grondag/acuity/core/PipelinedRenderList";
         
@@ -458,46 +444,6 @@ public class ASMTransformer implements IClassTransformer
                     }
                 }
             }
-            else if (m.name.equals("func_174970_a") || m.name.equals("setupTerrain")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    
-                    // should look like this pre-ASM
-//                    mv.visitVarInsn(ALOAD, 0);
-//                    mv.visitVarInsn(ALOAD, 19);
-//                    mv.visitMethodInsn(INVOKEVIRTUAL, "net/minecraft/client/renderer/RenderGlobal", "getVisibleFacings", "(Lnet/minecraft/util/math/BlockPos;)Ljava/util/Set;", false);
-
-                    // and we want it to be this
-//                    mv.visitVarInsn(ALOAD, 20);
-//                    mv.visitVarInsn(ALOAD, 19);
-//                    mv.visitMethodInsn(INVOKESTATIC, "grondag/acuity/core/VisiblityHooks", "getVisibleFacings", "(Lnet/minecraft/client/renderer/chunk/RenderChunk;Lnet/minecraft/util/math/BlockPos;)Ljava/util/Set;", false);
-                    
-                    // public, so will always be INVOKEVIRTUAL
-                    if(next.getOpcode() == INVOKEVIRTUAL)
-                    {
-                        MethodInsnNode op = (MethodInsnNode)next;
-                        
-                        if(op.owner.equals("net/minecraft/client/renderer/RenderGlobal")
-                                && (op.name.equals("func_174978_c") || op.name.equals("getVisibleFacings")))
-                        {
-                            AbstractInsnNode twoBack = m.instructions.get(i - 2);
-                            if(twoBack.getOpcode() == ALOAD && ((VarInsnNode)twoBack).var == 0)
-                            {
-                                // UGLY - will be borked if any local renumbering happens - fix in 1.13 with new ASM framework
-                                ((VarInsnNode)twoBack).var = 20;
-                                op.setOpcode(INVOKESTATIC);
-                                op.owner = "grondag/acuity/core/VisiblityHooks";
-                                op.name = "getVisibleFacings";
-                                op.desc = "(Lnet/minecraft/client/renderer/chunk/RenderChunk;Lnet/minecraft/util/math/BlockPos;)Ljava/util/Set;";
-                                visibilityWorked = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
             else if ((m.name.equals("func_174977_a") || m.name.equals("renderBlockLayer"))
                     && m.desc.equals("(Lnet/minecraft/util/BlockRenderLayer;DILnet/minecraft/entity/Entity;)I")) 
             {
@@ -514,7 +460,7 @@ public class ASMTransformer implements IClassTransformer
                                 && (op.name.equals("func_178492_d") || op.name.equals("isLayerStarted")))
                         {
                             op.setOpcode(INVOKESTATIC);
-                            op.owner = "grondag/acuity/core/PipelineHooks";
+                            op.owner = "grondag/acuity/hooks/PipelineHooks";
                             op.name = "shouldUploadLayer";
                             op.desc = "(Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/BlockRenderLayer;)Z";
                             shouldUploadWorked = true;
@@ -524,7 +470,7 @@ public class ASMTransformer implements IClassTransformer
                 }
             }
         }
-        if(!(newCount == 2 && invokeCount == 2 && visibilityWorked && shouldUploadWorked))
+        if(!(newCount == 2 && invokeCount == 2 && shouldUploadWorked))
         {
             Acuity.INSTANCE.getLog().error(msg_fail_patch_render_global);
             allPatchesSuccessful = false;
@@ -555,7 +501,7 @@ public class ASMTransformer implements IClassTransformer
                                 && ins.desc.equals("(ILnet/minecraft/client/renderer/vertex/VertexFormatElement$EnumUsage;)Z"))
                         {
                             ins.setOpcode(INVOKESTATIC);
-                            ins.owner = "grondag/acuity/core/PipelineHooks";
+                            ins.owner = "grondag/acuity/hooks/PipelineHooks";
                             ins.desc = "(Ljava/lang/Object;ILnet/minecraft/client/renderer/vertex/VertexFormatElement$EnumUsage;)Z";
                             ins.name = "isFirstOrUV";
                             ins.itf = false;
@@ -602,7 +548,7 @@ public class ASMTransformer implements IClassTransformer
                         if(next.getOpcode() == IRETURN)
                         {
                             // insert call to our hook before return statement
-                            m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/core/PipelineHooks", "useVbo", "()Z", false));
+                            m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/hooks/PipelineHooks", "useVbo", "()Z", false));
                             didVbo = true;
                         }
                         break;
@@ -639,7 +585,7 @@ public class ASMTransformer implements IClassTransformer
 
     private Consumer<ClassNode> patchMinecraft = classNode ->
     {
-        if(!Configurator.disableYieldInGameLoop)
+        if(!config.disableYieldInGameLoop)
             return;
         
         Iterator<MethodNode> methods = classNode.methods.iterator();
