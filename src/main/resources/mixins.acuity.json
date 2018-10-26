@@ -4,6 +4,7 @@
   "package": "grondag.acuity.mixin",
   "refmap": "mixins.acuity.refmap.json",
   "client": [
+  	"MixinVboRenderList",
     "MixinRenderGlobal",
     "MixinRenderChunk",
     "MixinVisGraph"

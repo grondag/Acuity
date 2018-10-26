@@ -1,8 +1,17 @@
 package grondag.acuity;
 
-import static org.objectweb.asm.Opcodes.*;
+import static org.objectweb.asm.Opcodes.ALOAD;
+import static org.objectweb.asm.Opcodes.GETSTATIC;
+import static org.objectweb.asm.Opcodes.IFEQ;
+import static org.objectweb.asm.Opcodes.ILOAD;
+import static org.objectweb.asm.Opcodes.INVOKESPECIAL;
+import static org.objectweb.asm.Opcodes.INVOKESTATIC;
+import static org.objectweb.asm.Opcodes.INVOKEVIRTUAL;
+import static org.objectweb.asm.Opcodes.IRETURN;
+import static org.objectweb.asm.Opcodes.NEW;
+import static org.objectweb.asm.Opcodes.NOP;
+import static org.objectweb.asm.Opcodes.RETURN;
 
-import java.io.File;
 import java.util.Iterator;
 import java.util.function.Consumer;
 
@@ -18,7 +27,6 @@ import org.objectweb.asm.tree.TypeInsnNode;
 import org.objectweb.asm.tree.VarInsnNode;
 
 import net.minecraft.launchwrapper.IClassTransformer;
-import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -42,13 +50,6 @@ public class ASMTransformer implements IClassTransformer
     private static final String msg_patching_fail_warning_2 = "Acuity Rendering API or a conflicting mod should be removed to prevent strangeness or crashing.";
     private static final String msg_field_already_exists = "Unable to add field %s to class %s - field already exists.";
     private static final String msg_fail_patch_gameloop_yield = "Unable to remove call to Thread.yield() in Minecraft game loop.  This error does not prevent Acuity from operating.";
-    
-    public static LoadingConfig config;
-    
-    static
-    {
-        config = new LoadingConfig(new File(Launch.minecraftHome, "config/vanillafix.cfg"));
-    }
     
     public static final boolean allPatchesSuccessful()
     {
@@ -80,7 +81,7 @@ public class ASMTransformer implements IClassTransformer
                         {
                             op.setOpcode(INVOKESTATIC);
                             op.owner = "grondag/acuity/hooks/PipelineHooks";
-                            op.name = config.enableBlockStats ? "renderModelDebug" : "renderModel";
+                            op.name = AcuityCore.config.enableBlockStats ? "renderModelDebug" : "renderModel";
                             op.desc = "(Lnet/minecraft/client/renderer/BlockModelRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/client/renderer/block/model/IBakedModel;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;Z)Z";
                             op.itf = false;
                             blockWorked = true;
@@ -90,7 +91,7 @@ public class ASMTransformer implements IClassTransformer
                         {
                             op.setOpcode(INVOKESTATIC);
                             op.owner = "grondag/acuity/hooks/PipelineHooks";
-                            op.name = config.enableFluidStats ? "renderFluidDebug" : "renderFluid";
+                            op.name = AcuityCore.config.enableFluidStats ? "renderFluidDebug" : "renderFluid";
                             op.desc = "(Lnet/minecraft/client/renderer/BlockFluidRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;)Z";
                             op.itf = false;
                             fluidWorked = true;
@@ -402,49 +403,13 @@ public class ASMTransformer implements IClassTransformer
     private Consumer<ClassNode> patchRenderGlobal = classNode ->
     {
         Iterator<MethodNode> methods = classNode.methods.iterator();
-        int newCount = 0;
-        int invokeCount = 0;
-//        boolean visibilityWorked = false;
         boolean shouldUploadWorked = false;
-        
-        final String listClass = config.enableRenderStats
-                ? "grondag/acuity/core/PipelinedRenderListDebug"
-                : "grondag/acuity/core/PipelinedRenderList";
         
         while (methods.hasNext())
         {
             MethodNode m = methods.next();
             
-            // patching two different locations
-            if (m.name.equals("func_72712_a") || m.name.equals("loadRenderers") || m.name.equals("<init>")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    
-                    if(next.getOpcode() == NEW)
-                    {
-                        TypeInsnNode op = (TypeInsnNode)next;
-                        if(op.desc.equals("net/minecraft/client/renderer/VboRenderList"))
-                        {
-                            op.desc = listClass;
-                            newCount++;
-                        }
-                    }
-                    // constructors are always INVOKESPECIAL
-                    else if(next.getOpcode() == INVOKESPECIAL)
-                    {
-                        MethodInsnNode op = (MethodInsnNode)next;
-                        if(op.owner.equals("net/minecraft/client/renderer/VboRenderList") && op.name.equals("<init>"))
-                        {
-                            op.owner = listClass;
-                            op.itf = false;
-                            invokeCount++;
-                        }
-                    }
-                }
-            }
-            else if ((m.name.equals("func_174977_a") || m.name.equals("renderBlockLayer"))
+            if ((m.name.equals("func_174977_a") || m.name.equals("renderBlockLayer"))
                     && m.desc.equals("(Lnet/minecraft/util/BlockRenderLayer;DILnet/minecraft/entity/Entity;)I")) 
             {
                 for (int i = 0; i < m.instructions.size(); i++)
@@ -470,7 +435,7 @@ public class ASMTransformer implements IClassTransformer
                 }
             }
         }
-        if(!(newCount == 2 && invokeCount == 2 && shouldUploadWorked))
+        if(!(shouldUploadWorked))
         {
             Acuity.INSTANCE.getLog().error(msg_fail_patch_render_global);
             allPatchesSuccessful = false;
@@ -585,7 +550,7 @@ public class ASMTransformer implements IClassTransformer
 
     private Consumer<ClassNode> patchMinecraft = classNode ->
     {
-        if(!config.disableYieldInGameLoop)
+        if(!AcuityCore.config.disableYieldInGameLoop)
             return;
         
         Iterator<MethodNode> methods = classNode.methods.iterator();

@@ -26,9 +26,11 @@ import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
-public class AbstractPipelinedRenderList extends VboRenderList implements IAcuityListener
+public class AbstractPipelinedRenderList implements IAcuityListener
 {
-    protected boolean isAcuityEnabled = Acuity.isModEnabled();
+    protected final VboRenderList parent;
+    
+    public boolean isAcuityEnabled = Acuity.isModEnabled();
     
     protected final ObjectArrayList<RenderChunk> chunks = new ObjectArrayList<RenderChunk>();
     
@@ -59,14 +61,13 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
     private int originY = Integer.MIN_VALUE;
     private int originZ = Integer.MIN_VALUE;
   
-    public AbstractPipelinedRenderList()
+    public AbstractPipelinedRenderList(VboRenderList parent)
     {
-        super();
+        this.parent = parent;
         xlatMatrix.setIdentity();
         AcuityRuntime.INSTANCE.registerListener(this);
     }
 
-    @Override
     public void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
     {
         if(isAcuityEnabled)
@@ -77,7 +78,7 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
                 this.addSolidChunk(renderChunkIn);
         }
         else
-            super.addRenderChunk(renderChunkIn, layer);
+            parent.addRenderChunk(renderChunkIn, layer);
     }
     
     @SuppressWarnings("unchecked")
@@ -116,7 +117,6 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         vertexbuffer.packingList().forEachPipeline(p -> buffers[p.getIndex()].add(vertexbuffer));
     }
     
-    @Override
     public void renderChunkLayer(BlockRenderLayer layer)
     {
         if(isAcuityEnabled)
@@ -127,7 +127,7 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
                 renderChunkLayerTranslucent();
         }
         else
-            super.renderChunkLayer(layer);
+            parent.renderChunkLayer(layer);
     }
     
     private final void updateViewMatrix(long packedRenderCubeKey)
@@ -162,9 +162,9 @@ public class AbstractPipelinedRenderList extends VboRenderList implements IAcuit
         final Matrix4f mvPos = this.mvPos;
         
         // note row-major order in the matrix library we are using
-        xlatMatrix.m03 = (float)(ox -viewEntityX);
-        xlatMatrix.m13 = (float)(oy -viewEntityY);
-        xlatMatrix.m23 = (float)(oz - viewEntityZ);
+        xlatMatrix.m03 = (float)(ox -parent.viewEntityX);
+        xlatMatrix.m13 = (float)(oy -parent.viewEntityY);
+        xlatMatrix.m23 = (float)(oz -parent.viewEntityZ);
 
         Matrix4f.mul(xlatMatrix, mvMatrix, mvPos);
         

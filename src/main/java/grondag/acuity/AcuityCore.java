@@ -1,5 +1,6 @@
 package grondag.acuity;
 
+import java.io.File;
 import java.util.Map;
 
 import javax.annotation.Nullable;
@@ -8,6 +9,7 @@ import org.spongepowered.asm.launch.MixinBootstrap;
 import org.spongepowered.asm.mixin.MixinEnvironment;
 import org.spongepowered.asm.mixin.Mixins;
 
+import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.fml.relauncher.IFMLLoadingPlugin;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -17,8 +19,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @IFMLLoadingPlugin.SortingIndex(Integer.MAX_VALUE)
 public class AcuityCore implements IFMLLoadingPlugin
 {
+    public static LoadingConfig config = new LoadingConfig(new File(Launch.minecraftHome, "config/vanillafix.cfg"));
+    
     public AcuityCore()
     {
+//        System.setProperty("mixin.debug.export", "true");
         MixinBootstrap.init();
         Mixins.addConfiguration("mixins.acuity.json");
         MixinEnvironment.getDefaultEnvironment().setObfuscationContext("searge");

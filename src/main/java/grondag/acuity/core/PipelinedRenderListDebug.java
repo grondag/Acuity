@@ -1,6 +1,7 @@
 package grondag.acuity.core;
 
 import grondag.acuity.Acuity;
+import net.minecraft.client.renderer.VboRenderList;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.fml.relauncher.Side;
@@ -9,6 +10,11 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class PipelinedRenderListDebug extends AbstractPipelinedRenderList
 {
+    public PipelinedRenderListDebug(VboRenderList parent)
+    {
+        super(parent);
+    }
+
     protected long startNanos;
     protected long totalNanos;
     protected int frameCounter;
