@@ -10,8 +10,7 @@ import net.minecraft.client.Minecraft;
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft
 {
-    //TODO: change to expect
-    @Redirect(method = "runGameLoop", require = 1,
+    @Redirect(method = "runGameLoop", expect = 1,
             at = @At(value = "INVOKE", target = "Ljava/lang/Thread;yield()V"))
     private void onYield()
     {

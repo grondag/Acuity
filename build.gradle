@@ -76,7 +76,6 @@ dependencies {
 compile("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         exclude module: "asm-commons"
         exclude module: "asm-tree"
-        exclude module: "launchwrapper"
         exclude module: "guava"
         exclude module: "log4j-core"
         exclude module: "gson"
@@ -94,9 +93,35 @@ minecraft {
     runDir = "run"
     mappings = "stable_39"
     useDepAts = false
+    makeObfSourceJar = false
     
     replaceIn "Reference.java"
     replace "@VERSION@", project.version
+}
+
+sourceSets {
+	main {
+	        java {
+	            include 'grondag/**/*'
+	            exclude '*.DS_Store'
+	        }
+	        resources
+	        {
+	        	include '**/*'
+	        	exclude '*.DS_Store'
+	        }
+    }
+	api {
+		java {
+	            include 'grondag/**'
+	            exclude '*.DS_Store'
+	        }
+	}
+    test {
+        java {
+            exclude 'grondag/**'
+        }
+    }
 }
 
 mixin {
@@ -104,17 +129,29 @@ mixin {
 }
 
 jar {
+	classifier "thin"
     manifest.attributes(
             'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
             'TweakOrder': 0,
             'MixinConfigs': 'mixins.acuity.json',
-            'FMLAT': 'acuity_at.cfg'
+            'FMLAT': 'acuity_at.cfg',
+            'ForceLoadAsMod': 'true'
     )
-}
-
-jar {
     from sourceSets.main.output
     from sourceSets.api.output
+}
+
+shadowJar {
+    classifier ""
+    from sourceSets.main.output
+    from sourceSets.api.output
+    exclude "LICENSE.txt", "dummyThing"
+}
+
+reobf {
+    shadowJar {
+        mappingType = "SEARGE"
+    }
 }
     
 task deobfJar(type: Jar) {
@@ -122,7 +159,7 @@ task deobfJar(type: Jar) {
     from sourceSets.main.output
     from sourceSets.api.allSource
     from sourceSets.api.output
-    classifier = 'dev'
+    classifier 'dev'
 }
 
 task apiJar(type: Jar, dependsOn: 'sourceApiJava') {
@@ -168,31 +205,6 @@ uploadArchives {
             pom.version = project.version
             pom.artifactId = project.archivesBaseName
             pom.groupId = project.group
-        }
-    }
-}
-
-sourceSets {
-	main {
-	        java {
-	            include 'grondag/**/*'
-	            exclude '*.DS_Store'
-	        }
-	        resources
-	        {
-	        	include '**/*'
-	        	exclude '*.DS_Store'
-	        }
-    }
-	api {
-		java {
-	            include 'grondag/**'
-	            exclude '*.DS_Store'
-	        }
-	}
-    test {
-        java {
-            exclude 'grondag/**'
         }
     }
 }
