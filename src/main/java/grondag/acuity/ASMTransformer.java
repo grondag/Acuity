@@ -55,61 +55,6 @@ public class ASMTransformer implements IClassTransformer
         return allPatchesSuccessful;
     }
     
-    private Consumer<ClassNode> patchBlockRendererDispatcher = classNode ->
-    {
-        Iterator<MethodNode> methods = classNode.methods.iterator();
-        
-        boolean blockWorked = false;
-        boolean fluidWorked = false;
-        
-        while (methods.hasNext())
-        {
-            MethodNode m = methods.next();
-            
-            if (m.name.equals("func_175018_a") || m.name.equals("renderBlock"))
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    // public, so will always be INVOKEVIRTUAL
-                    if(next.getOpcode() == INVOKEVIRTUAL)
-                    {
-                        MethodInsnNode op = (MethodInsnNode)next;
-                        if(op.owner.equals("net/minecraft/client/renderer/BlockModelRenderer")
-                                && (op.name.equals("func_178267_a") || op.name.equals("renderModel")))
-                        {
-                            op.setOpcode(INVOKESTATIC);
-                            op.owner = "grondag/acuity/hooks/PipelineHooks";
-                            op.name = AcuityCore.config.enableBlockStats ? "renderModelDebug" : "renderModel";
-                            op.desc = "(Lnet/minecraft/client/renderer/BlockModelRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/client/renderer/block/model/IBakedModel;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;Z)Z";
-                            op.itf = false;
-                            blockWorked = true;
-                        }
-                        else if(op.owner.equals("net/minecraft/client/renderer/BlockFluidRenderer")
-                                && (op.name.equals("func_178270_a") || op.name.equals("renderFluid")))
-                        {
-                            op.setOpcode(INVOKESTATIC);
-                            op.owner = "grondag/acuity/hooks/PipelineHooks";
-                            op.name = AcuityCore.config.enableFluidStats ? "renderFluidDebug" : "renderFluid";
-                            op.desc = "(Lnet/minecraft/client/renderer/BlockFluidRenderer;Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/block/state/IBlockState;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/client/renderer/BufferBuilder;)Z";
-                            op.itf = false;
-                            fluidWorked = true;
-                        }
-                        
-                        if(blockWorked && fluidWorked)
-                            break;
-                    }
-                }
-                break;
-            }
-        }
-        if(!blockWorked || !fluidWorked)
-        {
-            Acuity.INSTANCE.getLog().error(String.format(msg_fail_patch_locate, "net/minecraft/client/renderer/BlockModelRenderer.renderBlock"));
-            allPatchesSuccessful = false;
-        }
-    };
-    
     private Consumer<ClassNode> patchChunkRenderWorker = classNode ->
     {
         Iterator<MethodNode> methods = classNode.methods.iterator();
@@ -550,9 +495,6 @@ public class ASMTransformer implements IClassTransformer
         if(!allPatchesSuccessful) return basicClass;
         
         final boolean obfuscated = name.compareTo(transformedName) != 0;
-        
-        if(transformedName.equals("net.minecraft.client.renderer.BlockRendererDispatcher"))
-            return patch(transformedName, basicClass, obfuscated, patchBlockRendererDispatcher);
         
         if (transformedName.equals("net.minecraft.client.renderer.RegionRenderCacheBuilder"))
             return patch(transformedName, basicClass, obfuscated, patchRegionRenderCacheBuilder);

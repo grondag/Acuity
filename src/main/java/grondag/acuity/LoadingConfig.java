@@ -5,14 +5,19 @@ import java.io.File;
 
 public class LoadingConfig
 {
-    public boolean disableYieldInGameLoop;
-    public boolean enableRenderStats;
-    public boolean enableFluidStats;
-    public boolean enableBlockStats;
+    public final boolean disableYieldInGameLoop;
+    public final boolean enableRenderStats;
+    public final boolean enableFluidStats;
+    public final boolean enableBlockStats;
 
     public LoadingConfig(File file)
     {
-        if (!file.exists()) {
+        if (!file.exists())
+        {
+            disableYieldInGameLoop = false;
+            enableRenderStats = false;
+            enableFluidStats = false;
+            enableBlockStats = false;
             return;
         }
 
