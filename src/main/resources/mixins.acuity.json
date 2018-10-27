@@ -9,6 +9,7 @@
     "MixinRenderChunk",
     "MixinVisGraph",
     "MixinBlockRendererDispatcher",
-    "MixinRegionRenderCacheBuilder"
+    "MixinRegionRenderCacheBuilder",
+    "MixinChunkRenderDispatcher"
   ]
 }

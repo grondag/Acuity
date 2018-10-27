@@ -24,6 +24,7 @@ import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
+import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
@@ -44,9 +45,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class PipelineHooks
 {
-    @SuppressWarnings("null")
     private static ThreadLocal<CompoundVertexLighter> lighters;
-    @SuppressWarnings("null")
     private static ThreadLocal<FluidBuilder> fluidBuilders;
     
     static
@@ -273,12 +272,12 @@ public class PipelineHooks
         }
     }
 
-    public static void uploadVertexBuffer(BufferBuilder source, VertexBuffer target)
+    public static void uploadVertexBuffer(ChunkRenderDispatcher dispatch, BufferBuilder source, VertexBuffer target)
     {
         if(Acuity.isModEnabled())
             ((CompoundBufferBuilder)source).uploadTo((CompoundVertexBuffer)target);
         else
-            Minecraft.getMinecraft().renderGlobal.renderDispatcher.uploadVertexBuffer(source, target);
+            dispatch.uploadVertexBuffer(source, target);
     }
     
     public static boolean isFirstOrUV(Object callerIgnored, int index, VertexFormatElement.EnumUsage usage)

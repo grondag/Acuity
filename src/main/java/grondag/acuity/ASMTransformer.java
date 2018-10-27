@@ -1,8 +1,6 @@
 package grondag.acuity;
 
-import static org.objectweb.asm.Opcodes.ALOAD;
 import static org.objectweb.asm.Opcodes.GETSTATIC;
-import static org.objectweb.asm.Opcodes.IFEQ;
 import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
 import static org.objectweb.asm.Opcodes.IRETURN;
@@ -16,7 +14,6 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 import org.objectweb.asm.tree.AbstractInsnNode;
 import org.objectweb.asm.tree.ClassNode;
-import org.objectweb.asm.tree.FieldNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
@@ -39,101 +36,12 @@ public class ASMTransformer implements IClassTransformer
     private static final String msg_patching_fail = "Unable to patch %s due to unexpected error ";
     private static final String msg_patching_fail_warning_1 = "Acuity Rendering API will be disabled and partial patches may cause problems.";
     private static final String msg_patching_fail_warning_2 = "Acuity Rendering API or a conflicting mod should be removed to prevent strangeness or crashing.";
-    private static final String msg_field_already_exists = "Unable to add field %s to class %s - field already exists.";
     private static final String msg_fail_patch_gameloop_yield = "Unable to remove call to Thread.yield() in Minecraft game loop.  This error does not prevent Acuity from operating.";
     
     public static final boolean allPatchesSuccessful()
     {
         return allPatchesSuccessful;
     }
-    
-    private Consumer<ClassNode> patchChunkRenderDispatcher = classNode ->
-    {
-        Iterator<MethodNode> methods = classNode.methods.iterator();
-        
-        boolean worked = false;
-        
-        while (methods.hasNext() && !worked)
-        {
-            MethodNode m = methods.next();
-            
-            if (m.name.equals("func_188245_a") || m.name.equals("uploadChunk"))
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    if(next.getOpcode() == INVOKESTATIC)
-                    {
-                        MethodInsnNode op = (MethodInsnNode)next;
-                        
-                        // conditional block we want to modify starts with a check for vbo enabled
-                        if(op.owner.equals("net/minecraft/client/renderer/OpenGlHelper")
-                                && (op.name.equals("func_176075_f") || op.name.equals("useVbo")))
-                        {
-                            // next one should be IFEQ, confirm
-                            int j = i+1;
-                            
-                            next = m.instructions.get(j++);
-                            if(next.getOpcode() != IFEQ)
-                                break;
-                            
-                            // skip labels and line numbers
-                            do
-                            {
-                                next = m.instructions.get(j++);
-                            } while(next.getOpcode() != ALOAD && j < m.instructions.size());
-                            
-                            if(next.getOpcode() != ALOAD)
-                                break;
-                            
-                            // no longer needed to push *this* on stack before calling static hook
-                            if(((VarInsnNode)next).var == 0)
-                            {
-                                m.instructions.remove(next);
-                                next = m.instructions.get(j++);
-                            }
-                            
-                            // skip until call to vbo upload instance method
-                            // might be INVOKESPECIAL or might be INVOKEVIRTUAL if access transfomer made public
-                            // so check the node class instead of the op code
-                            boolean looking = true;
-                            do
-                            {
-                                next = m.instructions.get(j++);
-                                if(next instanceof MethodInsnNode)
-                                {
-                                    MethodInsnNode ins = (MethodInsnNode)next;
-                                    if(ins.owner.equals("net/minecraft/client/renderer/chunk/ChunkRenderDispatcher")
-                                            && (ins.name.equals("func_178506_a") || ins.name.equals("uploadVertexBuffer"))
-                                            && ins.desc.equals("(Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/client/renderer/vertex/VertexBuffer;)V"))
-                                    {
-                                        ins.setOpcode(INVOKESTATIC);
-                                        ins.owner = "grondag/acuity/hooks/PipelineHooks";
-                                        ins.name = "uploadVertexBuffer";
-                                        ins.itf = false;
-                                        looking = false;
-                                    }
-                                }
-                            } while(looking && j < m.instructions.size());
-
-                            if(looking)
-                                break;
-
-                            worked = true;
-                            break;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-        if(!worked)
-        {
-            Acuity.INSTANCE.getLog().error(String.format(msg_fail_patch_locate, "net/minecraft/client/renderer/chunk/ChunkRenderDispatcher.uploadChunk"));
-            allPatchesSuccessful = false;
-        }
-    };
-    
     
     private Consumer<ClassNode> patchVertexFormatElement = classNode ->
     {
@@ -286,9 +194,6 @@ public class ASMTransformer implements IClassTransformer
         
         final boolean obfuscated = name.compareTo(transformedName) != 0;
         
-        if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher"))
-            return patch(transformedName, basicClass, obfuscated, patchChunkRenderDispatcher, ClassWriter.COMPUTE_FRAMES); 
-        
         if (transformedName.equals("net.minecraft.client.renderer.vertex.VertexFormatElement"))
             return patch(transformedName, basicClass, obfuscated, patchVertexFormatElement, ClassWriter.COMPUTE_FRAMES); 
         
@@ -336,19 +241,5 @@ public class ASMTransformer implements IClassTransformer
             Acuity.INSTANCE.getLog().warn(msg_patching_fail_warning_2);
         }
         return result;
-    }
-    
-    @SuppressWarnings("unused")
-    private static void addField(ClassNode classNode, int opCodes, String fieldName, String type, Object init)
-    {
-        for(FieldNode f : classNode.fields)
-        {
-            if (f.name.equals(fieldName)) 
-            {
-                Acuity.INSTANCE.getLog().error(String.format(msg_field_already_exists, fieldName, classNode.name));
-                return;
-            }
-        }
-        classNode.fields.add(new FieldNode(opCodes, fieldName, type, null, init));
     }
 }
