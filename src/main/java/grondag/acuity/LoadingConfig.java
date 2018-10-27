@@ -1,16 +1,19 @@
 package grondag.acuity;
 
+import net.minecraft.launchwrapper.Launch;
 import net.minecraftforge.common.config.Configuration;
 import java.io.File;
 
 public class LoadingConfig
 {
+    public static LoadingConfig INSTANCE = new LoadingConfig(new File(Launch.minecraftHome, "config/acuity.cfg"));
+            
     public final boolean disableYieldInGameLoop;
     public final boolean enableRenderStats;
     public final boolean enableFluidStats;
     public final boolean enableBlockStats;
 
-    public LoadingConfig(File file)
+    private LoadingConfig(File file)
     {
         if (!file.exists())
         {

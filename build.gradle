@@ -95,8 +95,6 @@ minecraft {
     mappings = "stable_39"
     useDepAts = false
     
-    clientJvmArgs += '-Dfml.coreMods.load=grondag.acuity.AcuityCore'
-    
     replaceIn "Reference.java"
     replace "@VERSION@", project.version
 }
@@ -108,9 +106,8 @@ mixin {
 jar {
     manifest.attributes(
             'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
+            'TweakOrder': 0,
             'MixinConfigs': 'mixins.acuity.json',
-            'FMLCorePluginContainsFMLMod': 'true',
-            'FMLCorePlugin': 'grondag.acuity.AcuityCore',
             'FMLAT': 'acuity_at.cfg'
     )
 }

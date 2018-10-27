@@ -5,7 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import grondag.acuity.AcuityCore;
+import grondag.acuity.LoadingConfig;
 import grondag.acuity.core.AbstractPipelinedRenderList;
 import grondag.acuity.core.PipelinedRenderList;
 import grondag.acuity.core.PipelinedRenderListDebug;
@@ -22,7 +22,7 @@ public abstract class MixinVboRenderList extends ChunkRenderContainer
     @Inject(method = "<init>*", at = @At("RETURN"), require = 1)
     private void onConstructed(CallbackInfo ci)
     {
-        ext = AcuityCore.config.enableRenderStats 
+        ext = LoadingConfig.INSTANCE.enableRenderStats 
                 ? new PipelinedRenderListDebug((VboRenderList)(Object)this)
                 : new PipelinedRenderList((VboRenderList)(Object)this);
     }

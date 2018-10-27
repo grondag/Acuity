@@ -55,7 +55,7 @@ public class Acuity
 	@SideOnly(Side.CLIENT)
 	public static final void recomputeEnabledStatus()
 	{
-	    isEnabled = glCapabilitiesMet && ASMTransformer.allPatchesSuccessful() && Configurator.enabled && OpenGlHelperExt.isFastNioCopyEnabled();
+	    isEnabled = glCapabilitiesMet && Configurator.enabled && OpenGlHelperExt.isFastNioCopyEnabled();
 	}
 	
     @Nullable
