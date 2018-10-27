@@ -42,7 +42,6 @@ public class ASMTransformer implements IClassTransformer
     private static final String msg_fail_patch_render_chunk = "Unable to locate VertexBuffer instance in RenderChunk.<init>";
     private static final String msg_fail_patch_render_chunk_set_position = "Unable to patch RenderChunk.setPosition. This is a performance-only patch and will not prevent Acuity from operating correctly.";
     private static final String msg_fail_patch_compiled_chunk = "Unable to locate and patch setVisibility in CompiledChunk";
-    private static final String msg_fail_patch_render_global = "Unable to locate and patch all VBORenderList instances in RenderGlobal";
     private static final String msg_fail_patch_vertex_format_element = "Unable to locate and patch isFirstOrUV() reference in VertexFormatElement.<init>";
     private static final String msg_patching_notice = "Patching %s";
     private static final String msg_patching_fail = "Unable to patch %s due to unexpected error ";
@@ -400,47 +399,6 @@ public class ASMTransformer implements IClassTransformer
         }
     };
     
-    private Consumer<ClassNode> patchRenderGlobal = classNode ->
-    {
-        Iterator<MethodNode> methods = classNode.methods.iterator();
-        boolean shouldUploadWorked = false;
-        
-        while (methods.hasNext())
-        {
-            MethodNode m = methods.next();
-            
-            if ((m.name.equals("func_174977_a") || m.name.equals("renderBlockLayer"))
-                    && m.desc.equals("(Lnet/minecraft/util/BlockRenderLayer;DILnet/minecraft/entity/Entity;)I")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    
-                    // public, so will always be INVOKEVIRTUAL
-                    if(next.getOpcode() == INVOKEVIRTUAL)
-                    {
-                        MethodInsnNode op = (MethodInsnNode)next;
-                        
-                        if(op.owner.equals("net/minecraft/client/renderer/chunk/CompiledChunk")
-                                && (op.name.equals("func_178492_d") || op.name.equals("isLayerStarted")))
-                        {
-                            op.setOpcode(INVOKESTATIC);
-                            op.owner = "grondag/acuity/hooks/PipelineHooks";
-                            op.name = "shouldUploadLayer";
-                            op.desc = "(Lnet/minecraft/client/renderer/chunk/CompiledChunk;Lnet/minecraft/util/BlockRenderLayer;)Z";
-                            shouldUploadWorked = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        if(!(shouldUploadWorked))
-        {
-            Acuity.INSTANCE.getLog().error(msg_fail_patch_render_global);
-            allPatchesSuccessful = false;
-        }
-    };
     
     private Consumer<ClassNode> patchVertexFormatElement = classNode ->
     {
@@ -610,9 +568,6 @@ public class ASMTransformer implements IClassTransformer
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderWorker"))
             return patch(transformedName, basicClass, obfuscated, patchChunkRenderWorker); 
-        
-        if (transformedName.equals("net.minecraft.client.renderer.RenderGlobal"))
-            return patch(transformedName, basicClass, obfuscated, patchRenderGlobal); 
         
         if (transformedName.equals("net.minecraft.client.renderer.vertex.VertexFormatElement"))
             return patch(transformedName, basicClass, obfuscated, patchVertexFormatElement, ClassWriter.COMPUTE_FRAMES); 

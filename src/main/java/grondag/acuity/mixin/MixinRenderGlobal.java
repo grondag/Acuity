@@ -6,15 +6,19 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.core.SetVisibilityExt;
+import grondag.acuity.hooks.PipelineHooks;
 import grondag.acuity.hooks.VisiblityHooks;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.ViewFrustum;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.chunk.SetVisibility;
+import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 
@@ -45,4 +49,9 @@ public abstract class MixinRenderGlobal
         }
     }
 
+    @Redirect(method = "renderBlockLayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;isLayerStarted(Lnet/minecraft/util/BlockRenderLayer;)Z"))
+    private boolean isLayerStarted(CompiledChunk compiledChunk, BlockRenderLayer layer)
+    {
+        return PipelineHooks.shouldUploadLayer(compiledChunk, layer);
+    }
 }
