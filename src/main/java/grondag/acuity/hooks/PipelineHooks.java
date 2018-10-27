@@ -106,10 +106,9 @@ public class PipelineHooks
      * as if the cutout buffers were populated.  We use this hook to correct that
      * so that uploader and rendering work in subsequent operations.<p>
      * 
-     * The rebuildChunk method in RenderChunk is hairy, so we introduce this hook
-     * indirectly via the {@link CompiledChunk#setVisibility(net.minecraft.client.renderer.chunk.SetVisibility)}
-     * method which is very simple and reliably called after the chunks are built in render chunk
-     * and nowhere else.  Our ASM hook to this method calls from there.<p>
+     * Called from the rebuildChunk method in RenderChunk, via a redirect on the call to
+     * {@link CompiledChunk#setVisibility(net.minecraft.client.renderer.chunk.SetVisibility)}
+     * which is reliably called after the chunks are built in render chunk.<p>
      */
     public static void mergeRenderLayers(CompiledChunk compiledChunk)
     {

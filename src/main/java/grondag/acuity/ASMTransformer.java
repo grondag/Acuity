@@ -34,7 +34,6 @@ public class ASMTransformer implements IClassTransformer
     
     // language translation won't be enabled while some patches are running
     private static final String msg_fail_patch_locate = "Unable to locate and patch %s";
-    private static final String msg_fail_patch_compiled_chunk = "Unable to locate and patch setVisibility in CompiledChunk";
     private static final String msg_fail_patch_vertex_format_element = "Unable to locate and patch isFirstOrUV() reference in VertexFormatElement.<init>";
     private static final String msg_patching_notice = "Patching %s";
     private static final String msg_patching_fail = "Unable to patch %s due to unexpected error ";
@@ -47,110 +46,6 @@ public class ASMTransformer implements IClassTransformer
     {
         return allPatchesSuccessful;
     }
-    
-//    private Consumer<ClassNode> patchRenderChunk = classNode ->
-//    {
-//        Iterator<MethodNode> methods = classNode.methods.iterator();
-//        boolean newWorked = false;
-//        boolean invokedWorked = false;
-//        boolean setPositionWorked = false;
-//        
-//        while (methods.hasNext())
-//        {
-//            MethodNode m = methods.next();
-//            
-//            // Initializer isn't obfuscated
-//            if (m.name.equals("<init>")) 
-//            {
-//                for (int i = 0; i < m.instructions.size(); i++)
-//                {
-//                    AbstractInsnNode next = m.instructions.get(i);
-//                    
-//                    if(next.getOpcode() == NEW)
-//                    {
-//                        TypeInsnNode op = (TypeInsnNode)next;
-//                        if(op.desc.equals("net/minecraft/client/renderer/vertex/VertexBuffer"))
-//                        {
-//                            op.desc = "grondag/acuity/core/CompoundVertexBuffer";
-//                            newWorked = true;
-//                        }
-//                    }
-//                    // constructors are always INVOKESPECIAL
-//                    else if(next.getOpcode() == INVOKESPECIAL)
-//                    {
-//                        MethodInsnNode op = (MethodInsnNode)next;
-//                        if(op.owner.equals("net/minecraft/client/renderer/vertex/VertexBuffer") && op.name.equals("<init>"))
-//                        {
-//                            op.owner = "grondag/acuity/core/CompoundVertexBuffer";
-//                            op.itf = false;
-//                            invokedWorked = true;
-//                            break;
-//                        }
-//                    }
-//                }
-//            }
-//            else if (m.name.equals("func_189562_a") || m.name.equals("setPosition")) 
-//            {
-//                for (int i = 0; i < m.instructions.size(); i++)
-//                {
-//                    AbstractInsnNode next = m.instructions.get(i);
-//                    
-//                    // private but may have been transformed so could be either of theseL
-//                    if(next instanceof MethodInsnNode && isStringOneOf(((MethodInsnNode)next).name, "func_178567_n", "initModelviewMatrix"))
-//                    {
-//                        MethodInsnNode op = (MethodInsnNode)next;
-//                        op.setOpcode(INVOKESTATIC);
-//                        op.owner = "grondag/acuity/hooks/PipelineHooks";
-//                        op.name = "renderChunkInitModelViewMatrix";
-//                        op.desc = "(Lnet/minecraft/client/renderer/chunk/RenderChunk;)V";
-//                        setPositionWorked = true;
-//                        break;
-//                    }
-//                }
-//            }
-//        }
-//        if(!(newWorked && invokedWorked))
-//        {
-//            Acuity.INSTANCE.getLog().error(msg_fail_patch_render_chunk);
-//            allPatchesSuccessful = false;
-//        }
-//        if(!setPositionWorked)
-//            Acuity.INSTANCE.getLog().warn(msg_fail_patch_render_chunk_set_position);
-//    };
-    
-    private Consumer<ClassNode> patchCompiledChunk = classNode ->
-    {
-        Iterator<MethodNode> methods = classNode.methods.iterator();
-        boolean worked = false;
-        
-        while (methods.hasNext())
-        {
-            MethodNode m = methods.next();
-            
-            if (m.name.equals("func_178488_a") || m.name.equals("setVisibility")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    
-                    if(next.getOpcode() == RETURN)
-                    {
-                        m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
-                        m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/hooks/PipelineHooks", "mergeRenderLayers", "(Lnet/minecraft/client/renderer/chunk/CompiledChunk;)V", false));
-                        worked = true;
-                        break;
-                    }
-                }
-                break;
-            }
-            
-        }
-        if(!worked)
-        {
-            Acuity.INSTANCE.getLog().error(msg_fail_patch_compiled_chunk);
-            allPatchesSuccessful = false;
-        }
-    };
     
     private Consumer<ClassNode> patchChunkRenderDispatcher = classNode ->
     {
@@ -390,9 +285,6 @@ public class ASMTransformer implements IClassTransformer
         if(!allPatchesSuccessful) return basicClass;
         
         final boolean obfuscated = name.compareTo(transformedName) != 0;
-        
-        if (transformedName.equals("net.minecraft.client.renderer.chunk.CompiledChunk"))
-            return patch(transformedName, basicClass, obfuscated, patchCompiledChunk); 
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.ChunkRenderDispatcher"))
             return patch(transformedName, basicClass, obfuscated, patchChunkRenderDispatcher, ClassWriter.COMPUTE_FRAMES); 
