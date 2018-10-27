@@ -49,7 +49,8 @@ public abstract class MixinRenderGlobal
         }
     }
 
-    @Redirect(method = "renderBlockLayer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;isLayerStarted(Lnet/minecraft/util/BlockRenderLayer;)Z"))
+    @Redirect(method = "renderBlockLayer", require = 1,
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;isLayerStarted(Lnet/minecraft/util/BlockRenderLayer;)Z"))
     private boolean isLayerStarted(CompiledChunk compiledChunk, BlockRenderLayer layer)
     {
         return PipelineHooks.shouldUploadLayer(compiledChunk, layer);

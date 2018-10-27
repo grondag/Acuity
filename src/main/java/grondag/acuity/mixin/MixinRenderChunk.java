@@ -7,5 +7,5 @@ import net.minecraft.client.renderer.chunk.RenderChunk;
 @Mixin(RenderChunk.class)
 public abstract class MixinRenderChunk
 {
-
+    //TODO
 }
