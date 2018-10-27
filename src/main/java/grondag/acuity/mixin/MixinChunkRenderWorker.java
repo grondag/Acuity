@@ -10,7 +10,7 @@ import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.util.BlockRenderLayer;
 
 @Mixin(ChunkRenderWorker.class)
-public class MixinChunkRenderWorker
+public abstract class MixinChunkRenderWorker
 {
     @Redirect(method = "processTask", require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;isLayerStarted(Lnet/minecraft/util/BlockRenderLayer;)Z"))

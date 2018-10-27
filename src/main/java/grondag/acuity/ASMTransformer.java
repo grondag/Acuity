@@ -37,7 +37,6 @@ public class ASMTransformer implements IClassTransformer
     
     // language translation won't be enabled while some patches are running
     private static final String msg_fail_patch_locate = "Unable to locate and patch %s";
-    private static final String msg_fail_patch_buffer_builder = "Unable to locate four expected BufferBuilder instances in RegionRenderCacheBuilder.<init>";
     private static final String msg_fail_patch_render_chunk = "Unable to locate VertexBuffer instance in RenderChunk.<init>";
     private static final String msg_fail_patch_render_chunk_set_position = "Unable to patch RenderChunk.setPosition. This is a performance-only patch and will not prevent Acuity from operating correctly.";
     private static final String msg_fail_patch_compiled_chunk = "Unable to locate and patch setVisibility in CompiledChunk";
@@ -53,63 +52,6 @@ public class ASMTransformer implements IClassTransformer
     {
         return allPatchesSuccessful;
     }
-    
-    private Consumer<ClassNode> patchRegionRenderCacheBuilder = classNode ->
-    {
-        Iterator<MethodNode> methods = classNode.methods.iterator();
-        int newCount = 0;
-        int invokeCount = 0;
-        boolean linkHookDone = false;
-        
-        while (methods.hasNext())
-        {
-            MethodNode m = methods.next();
-            
-            // Initializer isn't obfuscated
-            if (m.name.equals("<init>")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    
-                    if(next.getOpcode() == NEW)
-                    {
-                        TypeInsnNode op = (TypeInsnNode)next;
-                        if(op.desc.equals("net/minecraft/client/renderer/BufferBuilder"))
-                        {
-                            op.desc = "grondag/acuity/core/CompoundBufferBuilder";
-                            newCount++;
-                        }
-                    }
-                    // constructors are always INVOKESPECIAL
-                    else if(next.getOpcode() == INVOKESPECIAL)
-                    {
-                        MethodInsnNode op = (MethodInsnNode)next;
-                        if(op.owner.equals("net/minecraft/client/renderer/BufferBuilder") && op.name.equals("<init>"))
-                        {
-                            op.owner = "grondag/acuity/core/CompoundBufferBuilder";
-                            op.itf = false;
-                            invokeCount++;
-                        }
-                    }
-                    else if(next.getOpcode() == RETURN)
-                    {
-                        m.instructions.insertBefore(next, new VarInsnNode(ALOAD, 0));
-                        m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/hooks/PipelineHooks", "linkBuilders", "(Lnet/minecraft/client/renderer/RegionRenderCacheBuilder;)V", false));
-                        linkHookDone = true;
-                        // necessary so that we don't loop infinitely
-                        break;
-                    }
-                }
-            }
-        }
-        if(newCount != 4 || invokeCount != 4 || !linkHookDone)
-        {
-            Acuity.INSTANCE.getLog().error(msg_fail_patch_buffer_builder);
-            allPatchesSuccessful = false;
-        }
-    };
-    
     
     private Consumer<ClassNode> patchRenderChunk = classNode ->
     {
@@ -453,9 +395,6 @@ public class ASMTransformer implements IClassTransformer
         if(!allPatchesSuccessful) return basicClass;
         
         final boolean obfuscated = name.compareTo(transformedName) != 0;
-        
-        if (transformedName.equals("net.minecraft.client.renderer.RegionRenderCacheBuilder"))
-            return patch(transformedName, basicClass, obfuscated, patchRegionRenderCacheBuilder);
         
         if (transformedName.equals("net.minecraft.client.renderer.chunk.RenderChunk"))
             return patch(transformedName, basicClass, obfuscated, patchRenderChunk); 
