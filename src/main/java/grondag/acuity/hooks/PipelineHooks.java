@@ -280,7 +280,7 @@ public class PipelineHooks
             dispatch.uploadVertexBuffer(source, target);
     }
     
-    public static boolean isFirstOrUV(Object callerIgnored, int index, VertexFormatElement.EnumUsage usage)
+    public static boolean isFirstOrUV(int index, VertexFormatElement.EnumUsage usage)
     {
         // has to apply even when mod is disabled so that our formats can be instantiated
         return index == 0 || usage == VertexFormatElement.EnumUsage.UV || usage == VertexFormatElement.EnumUsage.GENERIC;

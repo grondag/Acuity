@@ -31,7 +31,6 @@ public class ASMTransformer implements IClassTransformer
     
     // language translation won't be enabled while some patches are running
     private static final String msg_fail_patch_locate = "Unable to locate and patch %s";
-    private static final String msg_fail_patch_vertex_format_element = "Unable to locate and patch isFirstOrUV() reference in VertexFormatElement.<init>";
     private static final String msg_patching_notice = "Patching %s";
     private static final String msg_patching_fail = "Unable to patch %s due to unexpected error ";
     private static final String msg_patching_fail_warning_1 = "Acuity Rendering API will be disabled and partial patches may cause problems.";
@@ -42,48 +41,6 @@ public class ASMTransformer implements IClassTransformer
     {
         return allPatchesSuccessful;
     }
-    
-    private Consumer<ClassNode> patchVertexFormatElement = classNode ->
-    {
-        Iterator<MethodNode> methods = classNode.methods.iterator();
-        boolean worked = false;
-        
-        while (methods.hasNext())
-        {
-            MethodNode m = methods.next();
-            
-            // Initializer isn't obfuscated
-            if (m.name.equals("<init>")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    
-                    if(next instanceof MethodInsnNode)
-                    {
-                        MethodInsnNode ins = (MethodInsnNode)next;
-                        if(ins.owner.equals("net/minecraft/client/renderer/vertex/VertexFormatElement")
-                                && (ins.name.equals("isFirstOrUV") || ins.name.equals("func_177372_a"))
-                                && ins.desc.equals("(ILnet/minecraft/client/renderer/vertex/VertexFormatElement$EnumUsage;)Z"))
-                        {
-                            ins.setOpcode(INVOKESTATIC);
-                            ins.owner = "grondag/acuity/hooks/PipelineHooks";
-                            ins.desc = "(Ljava/lang/Object;ILnet/minecraft/client/renderer/vertex/VertexFormatElement$EnumUsage;)Z";
-                            ins.name = "isFirstOrUV";
-                            ins.itf = false;
-                            worked = true;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        if(!worked)
-        {
-            Acuity.INSTANCE.getLog().error(msg_fail_patch_vertex_format_element);
-            allPatchesSuccessful = false;
-        }
-    };
     
     private Consumer<ClassNode> patchOpenGlHelper = classNode ->
     {
@@ -193,9 +150,6 @@ public class ASMTransformer implements IClassTransformer
         if(!allPatchesSuccessful) return basicClass;
         
         final boolean obfuscated = name.compareTo(transformedName) != 0;
-        
-        if (transformedName.equals("net.minecraft.client.renderer.vertex.VertexFormatElement"))
-            return patch(transformedName, basicClass, obfuscated, patchVertexFormatElement, ClassWriter.COMPUTE_FRAMES); 
         
         if (transformedName.equals("net.minecraft.client.renderer.OpenGlHelper"))
             return patch(transformedName, basicClass, obfuscated, patchOpenGlHelper, ClassWriter.COMPUTE_FRAMES); 
