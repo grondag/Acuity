@@ -1,11 +1,7 @@
 package grondag.acuity;
 
-import static org.objectweb.asm.Opcodes.GETSTATIC;
-import static org.objectweb.asm.Opcodes.ILOAD;
 import static org.objectweb.asm.Opcodes.INVOKESTATIC;
-import static org.objectweb.asm.Opcodes.IRETURN;
 import static org.objectweb.asm.Opcodes.NOP;
-import static org.objectweb.asm.Opcodes.RETURN;
 
 import java.util.Iterator;
 import java.util.function.Consumer;
@@ -17,7 +13,6 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.MethodNode;
-import org.objectweb.asm.tree.VarInsnNode;
 
 import net.minecraft.launchwrapper.IClassTransformer;
 import net.minecraftforge.fml.relauncher.Side;
@@ -30,7 +25,6 @@ public class ASMTransformer implements IClassTransformer
     private static boolean allPatchesSuccessful = true;
     
     // language translation won't be enabled while some patches are running
-    private static final String msg_fail_patch_locate = "Unable to locate and patch %s";
     private static final String msg_patching_notice = "Patching %s";
     private static final String msg_patching_fail = "Unable to patch %s due to unexpected error ";
     private static final String msg_patching_fail_warning_1 = "Acuity Rendering API will be disabled and partial patches may cause problems.";
@@ -41,70 +35,6 @@ public class ASMTransformer implements IClassTransformer
     {
         return allPatchesSuccessful;
     }
-    
-    private Consumer<ClassNode> patchOpenGlHelper = classNode ->
-    {
-        Iterator<MethodNode> methods = classNode.methods.iterator();
-        boolean didVbo = false;
-        boolean didGen = false;
-        boolean didDel = false;
-        
-        while (methods.hasNext())
-        {
-            MethodNode m = methods.next();
-            
-            if (m.name.equals("func_176075_f") || m.name.equals("useVbo")) 
-            {
-                for (int i = 0; i < m.instructions.size(); i++)
-                {
-                    AbstractInsnNode next = m.instructions.get(i);
-                    
-                    if(next.getOpcode() == GETSTATIC)
-                    {
-                        // delete all operations up until return
-                        while(next.getOpcode() != IRETURN && i < m.instructions.size())
-                        {
-                            m.instructions.remove(next);
-                            next = m.instructions.get(i);
-                        }
-                       
-                        if(next.getOpcode() == IRETURN)
-                        {
-                            // insert call to our hook before return statement
-                            m.instructions.insertBefore(next, new MethodInsnNode(INVOKESTATIC, "grondag/acuity/hooks/PipelineHooks", "useVbo", "()Z", false));
-                            didVbo = true;
-                        }
-                        break;
-                    }
-                }
-            }
-            else if (m.name.equals("func_176073_e") || m.name.equals("glGenBuffers")) 
-            {
-                m.instructions.clear();
-                m.instructions.add(new MethodInsnNode(INVOKESTATIC, "grondag/acuity/opengl/GLBufferStore", "glGenBuffers", "()I", false));
-                m.instructions.add(new InsnNode(IRETURN));
-                didGen = true;
-            }
-            else if (m.name.equals("func_176074_g") || m.name.equals("glDeleteBuffers")) 
-            {
-                m.instructions.clear();
-                m.instructions.add(new VarInsnNode(ILOAD, 0));
-                m.instructions.add(new MethodInsnNode(INVOKESTATIC, "grondag/acuity/opengl/GLBufferStore", "glDeleteBuffers", "(I)V", false));
-                m.instructions.add(new InsnNode(RETURN));
-                didDel = true;
-            }
-            
-            if(didVbo && didGen && didDel)
-                break;
-        }
-        
-        
-        if(!didVbo)
-        {
-            Acuity.INSTANCE.getLog().error(String.format(msg_fail_patch_locate, "OpenGlHelper.useVbo()"));
-            allPatchesSuccessful = false;
-        }
-    };
 
     private Consumer<ClassNode> patchMinecraft = classNode ->
     {
@@ -150,9 +80,6 @@ public class ASMTransformer implements IClassTransformer
         if(!allPatchesSuccessful) return basicClass;
         
         final boolean obfuscated = name.compareTo(transformedName) != 0;
-        
-        if (transformedName.equals("net.minecraft.client.renderer.OpenGlHelper"))
-            return patch(transformedName, basicClass, obfuscated, patchOpenGlHelper, ClassWriter.COMPUTE_FRAMES); 
         
         if (transformedName.equals("net.minecraft.client.Minecraft"))
             return patch(transformedName, basicClass, obfuscated, patchMinecraft); 

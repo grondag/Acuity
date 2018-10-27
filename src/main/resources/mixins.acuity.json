@@ -11,6 +11,7 @@
     "MixinBlockRendererDispatcher",
     "MixinRegionRenderCacheBuilder",
     "MixinChunkRenderDispatcher",
-    "MixinVertexFormatElement"
+    "MixinVertexFormatElement",
+    "MixinOpenGlHelper"
   ]
 }
