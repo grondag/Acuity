@@ -243,7 +243,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     {
         if(Acuity.isModEnabled())
             // save sort perspective coordinate for use during packing.  Actual sort occurs then.
-            collectors.setSortCoordinates(x, y, z);
+            collectors.setViewCoordinates(x, y, z);
         else
             super.sortVertexData(x, y, z);
     }

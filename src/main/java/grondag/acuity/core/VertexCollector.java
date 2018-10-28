@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 
 import com.google.common.primitives.Floats;
 
+import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
@@ -22,6 +23,8 @@ public class VertexCollector
      */
     private static final ConcurrentLinkedQueue<VertexCollector> collectors = new ConcurrentLinkedQueue<>();
 
+    public @Nullable VertexCollectorList parent; 
+    
     public static VertexCollector claimAndPrepare(RenderPipeline pipeline)
     {
         VertexCollector result = collectors.poll();
@@ -33,6 +36,7 @@ public class VertexCollector
     
     public static void release(VertexCollector collector)
     {
+        collector.parent = null;
         collectors.offer(collector);
     }
     
@@ -125,6 +129,10 @@ public class VertexCollector
     
     public final void pos(final BlockPos pos, float modelX, float modelY, float modelZ)
     {
+        // assumes first addition will always be position
+        if(integerSize == 0 && parent != null)
+            parent.setRenderOrigin(pos.getX(), pos.getY(), pos.getZ());
+            
         this.checkForSize(this.pipeline.piplineVertexFormat().stride);
         this.add(RenderCube.renderCubeRelative(pos.getX()) + modelX);
         this.add(RenderCube.renderCubeRelative(pos.getY()) + modelY);
