@@ -84,7 +84,6 @@ public class CompoundVertexBuffer extends VertexBuffer
         nextInner.enqueue(next);
     }
     
-    @SuppressWarnings("null")
     @Override
     public void deleteGlBuffers()
     {
