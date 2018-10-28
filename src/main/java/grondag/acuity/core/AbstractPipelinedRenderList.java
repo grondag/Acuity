@@ -99,7 +99,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     
     private void addSolidChunk(RenderChunk renderChunkIn)
     {
-        final long cubeKey = RenderCube.getPackedKey(renderChunkIn.getPosition());
+        final long cubeKey = RenderCube.getPackedOrigin(renderChunkIn.getPosition());
         
         ObjectArrayList<CompoundVertexBuffer>[] buffers = solidCubes.get(cubeKey);
         if(buffers == null)
