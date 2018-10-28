@@ -9,6 +9,7 @@ public class OpenGlFenceExt
 {
     private static boolean isFenceEnabled = true;
     
+    @SuppressWarnings("null")
     private static Supplier<Fence> supplier;
     
     public static Fence create()

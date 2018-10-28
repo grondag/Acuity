@@ -45,7 +45,9 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class PipelineHooks
 {
+    @SuppressWarnings("null")
     private static ThreadLocal<CompoundVertexLighter> lighters;
+    @SuppressWarnings("null")
     private static ThreadLocal<FluidBuilder> fluidBuilders;
     
     static
