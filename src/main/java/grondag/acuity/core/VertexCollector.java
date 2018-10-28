@@ -6,7 +6,6 @@ import javax.annotation.Nullable;
 
 import com.google.common.primitives.Floats;
 
-import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
@@ -142,7 +141,7 @@ public class VertexCollector
     @SuppressWarnings("serial")
     public void sortQuads(float x, float y, float z)
     {
-        // works because 4 bytes per int
+         // works because 4 bytes per int
         final int quadIntStride = this.pipeline.piplineVertexFormat().stride;
         final int vertexIntStride = quadIntStride / 4;
         final int quadCount = this.vertexCount() / 4;
