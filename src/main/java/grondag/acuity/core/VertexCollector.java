@@ -4,7 +4,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.Nullable;
 
-import com.google.common.primitives.Floats;
+import com.google.common.primitives.Doubles;
 
 import grondag.acuity.api.RenderPipeline;
 import it.unimi.dsi.fastutil.Swapper;
@@ -44,9 +44,9 @@ public class VertexCollector
     private RenderPipeline pipeline;
     
     /**
-     * Holds per-quad distance after {@link #sortQuads(float, float, float)} is called
+     * Holds per-quad distance after {@link #sortQuads(double, double, double)} is called
      */
-    @Nullable private float[] perQuadDistance;
+    @Nullable private double[] perQuadDistance;
     
     /**
      * Pointer to next sorted quad in sort iteration methods.<br>
@@ -139,13 +139,13 @@ public class VertexCollector
     }
     
     @SuppressWarnings("serial")
-    public void sortQuads(float x, float y, float z)
+    public void sortQuads(double x, double y, double z)
     {
          // works because 4 bytes per int
         final int quadIntStride = this.pipeline.piplineVertexFormat().stride;
         final int vertexIntStride = quadIntStride / 4;
         final int quadCount = this.vertexCount() / 4;
-        final float[] perQuadDistance = new float[quadCount];
+        final double[] perQuadDistance = new double[quadCount];
         final int[] quadSwap = new int[quadIntStride];
         
         for (int j = 0; j < quadCount; ++j)
@@ -160,7 +160,7 @@ public class VertexCollector
             @Override
             public int compare(int a, int b)
             {
-                return Floats.compare(perQuadDistance[b], perQuadDistance[a]);
+                return Doubles.compare(perQuadDistance[b], perQuadDistance[a]);
             }
         },
         new Swapper()
@@ -168,7 +168,7 @@ public class VertexCollector
             @Override
             public void swap(int a, int b)
             {
-                float distSwap = perQuadDistance[a];
+                double distSwap = perQuadDistance[a];
                 perQuadDistance[a] = perQuadDistance[b];
                 perQuadDistance[b] = distSwap;
                 
@@ -182,33 +182,33 @@ public class VertexCollector
         this.sortReadIndex = 0;
     }
     
-    private float getDistanceSq(float x, float y, float z, int integerStride, int vertexIndex)
+    private double getDistanceSq(double x, double y, double z, int integerStride, int vertexIndex)
     {
         // unpack vertex coordinates
         int i = vertexIndex * integerStride * 4;
-        float x0 = Float.intBitsToFloat(this.data[i]);
-        float y0 = Float.intBitsToFloat(this.data[i + 1]);
-        float z0 = Float.intBitsToFloat(this.data[i + 2]);
+        double x0 = Float.intBitsToFloat(this.data[i]);
+        double y0 = Float.intBitsToFloat(this.data[i + 1]);
+        double z0 = Float.intBitsToFloat(this.data[i + 2]);
         
         i += integerStride;
-        float x1 = Float.intBitsToFloat(this.data[i]);
-        float y1 = Float.intBitsToFloat(this.data[i + 1]);
-        float z1 = Float.intBitsToFloat(this.data[i + 2]);
+        double x1 = Float.intBitsToFloat(this.data[i]);
+        double y1 = Float.intBitsToFloat(this.data[i + 1]);
+        double z1 = Float.intBitsToFloat(this.data[i + 2]);
         
         i += integerStride;
-        float x2 = Float.intBitsToFloat(this.data[i]);
-        float y2 = Float.intBitsToFloat(this.data[i + 1]);
-        float z2 = Float.intBitsToFloat(this.data[i + 2]);
+        double x2 = Float.intBitsToFloat(this.data[i]);
+        double y2 = Float.intBitsToFloat(this.data[i + 1]);
+        double z2 = Float.intBitsToFloat(this.data[i + 2]);
         
         i += integerStride;
-        float x3 = Float.intBitsToFloat(this.data[i]);
-        float y3 = Float.intBitsToFloat(this.data[i + 1]);
-        float z3 = Float.intBitsToFloat(this.data[i + 2]);
+        double x3 = Float.intBitsToFloat(this.data[i]);
+        double y3 = Float.intBitsToFloat(this.data[i + 1]);
+        double z3 = Float.intBitsToFloat(this.data[i + 2]);
         
         // compute average distance by component
-        float dx = (x0 + x1 + x2 + x3) * 0.25F - x;
-        float dy = (y0 + y1 + y2 + y3) * 0.25F - y;
-        float dz = (z0 + z1 + z2 + z3) * 0.25F - z;
+        double dx = (x0 + x1 + x2 + x3) * 0.25 - x;
+        double dy = (y0 + y1 + y2 + y3) * 0.25 - y;
+        double dz = (z0 + z1 + z2 + z3) * 0.25 - z;
         
         return dx * dx + dy * dy + dz * dz;
     }
@@ -220,12 +220,12 @@ public class VertexCollector
     }
     
     /**
-     * Will return {@link Float#MIN_VALUE} if no unpacked quads remaining.
+     * Will return {@link Double#MIN_VALUE} if no unpacked quads remaining.
      */
     @SuppressWarnings("null")
-    public float firstUnpackedDistance()
+    public double firstUnpackedDistance()
     {
-        return hasUnpackedSortedQuads() ? this.perQuadDistance[this.sortReadIndex] : Float.MIN_VALUE;
+        return hasUnpackedSortedQuads() ? this.perQuadDistance[this.sortReadIndex] : Double.MIN_VALUE;
     }
     
     /**
@@ -236,7 +236,7 @@ public class VertexCollector
      * (All distances are actually squared distances, to be clear.)
      */
     @SuppressWarnings("null")
-    public int unpackUntilDistance(float minDistanceSquared)
+    public int unpackUntilDistance(double minDistanceSquared)
     {
         if(!hasUnpackedSortedQuads())
             return 0;

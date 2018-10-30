@@ -73,7 +73,7 @@ public class VertexCollectorList
         public int compare(VertexCollector o1, VertexCollector o2)
         {
             // note reverse order - take most distant first
-            return Float.compare(o2.firstUnpackedDistance(), o1.firstUnpackedDistance());
+            return Double.compare(o2.firstUnpackedDistance(), o1.firstUnpackedDistance());
         }
     };
 
@@ -102,18 +102,18 @@ public class VertexCollectorList
     private int maxIndex = -1;
 
     /** used in transparency layer sorting - updated with player eye coordinates */
-    private float viewX;
+    private double viewX;
     /** used in transparency layer sorting - updated with player eye coordinates */
-    private float viewY;
+    private double viewY;
     /** used in transparency layer sorting - updated with player eye coordinates */
-    private float viewZ;
+    private double viewZ;
 
     /** used in transparency layer sorting - updated with origin of render cube */
-    private float renderOriginX = Float.NEGATIVE_INFINITY;
+    private int renderOriginX = Integer.MIN_VALUE;
     /** used in transparency layer sorting - updated with origin of render cube */
-    private float renderOriginY = Float.NEGATIVE_INFINITY;
+    private int renderOriginY = Integer.MIN_VALUE;
     /** used in transparency layer sorting - updated with origin of render cube */
-    private float renderOriginZ = Float.NEGATIVE_INFINITY;
+    private int renderOriginZ = Integer.MIN_VALUE;
 
     private VertexCollectorList()
     {
@@ -125,9 +125,9 @@ public class VertexCollectorList
      */
     private void clear()
     {
-        renderOriginX = Float.NEGATIVE_INFINITY;
-        renderOriginY = Float.NEGATIVE_INFINITY;
-        renderOriginZ = Float.NEGATIVE_INFINITY;
+        renderOriginX = Integer.MIN_VALUE;
+        renderOriginY = Integer.MIN_VALUE;
+        renderOriginZ = Integer.MIN_VALUE;
         
         final int limit = maxIndex;
         if(limit == -1) 
@@ -162,12 +162,13 @@ public class VertexCollectorList
      * save in instance to stay consistent with Vanilla and possibly to 
      * support mods that do strange things with view entity perspective. (PortalGun?) 
      */
-    public void setViewCoordinates(float x, float y, float z)
+    public void setViewCoordinates(double x, double y, double z)
     {
         viewX = x;
         viewY = y;
         viewZ = z;
     }
+
 
     /**
      * Called by child collectors the first time they get a vertex.
@@ -175,11 +176,11 @@ public class VertexCollectorList
      */
     public void setRenderOrigin(float x, float y, float z)
     {
-        final float rX = RenderCube.renderCubeOrigin(MathHelper.fastFloor(x));
-        final float rY = RenderCube.renderCubeOrigin(MathHelper.fastFloor(y));
-        final float rZ = RenderCube.renderCubeOrigin(MathHelper.fastFloor(z));
+        final int rX = RenderCube.renderCubeOrigin(MathHelper.fastFloor(x));
+        final int rY = RenderCube.renderCubeOrigin(MathHelper.fastFloor(y));
+        final int rZ = RenderCube.renderCubeOrigin(MathHelper.fastFloor(z));
         
-        if(renderOriginX == Float.NEGATIVE_INFINITY)
+        if(renderOriginX == Integer.MIN_VALUE)
         {
             renderOriginX = rX;
             renderOriginY = rY;
@@ -252,13 +253,14 @@ public class VertexCollectorList
 
     public final @Nullable Pair<ExpandableByteBuffer, VertexPackingList> packUploadSorted()
     {
+        
         final VertexPackingList packing = new VertexPackingList();
 
         final PriorityQueue<VertexCollector> sorter = sorters.get();
 
-        final float x = viewX - renderOriginX;
-        final float y = viewY - renderOriginY;
-        final float z = viewZ - renderOriginZ;
+        final double x = viewX - renderOriginX;
+        final double y = viewY - renderOriginY;
+        final double z = viewZ - renderOriginZ;
         
         // Sort quads within each pipeline, while accumulating in priority queue
         forEachExisting(vertexCollector ->
@@ -293,7 +295,7 @@ public class VertexCollectorList
 
             } while(second != null);
 
-            packing.addPacking(first.pipeline(), 4 * first.unpackUntilDistance(Float.MIN_VALUE));
+            packing.addPacking(first.pipeline(), 4 * first.unpackUntilDistance(Double.MIN_VALUE));
         }
 
         return packUpload(packing, this);
