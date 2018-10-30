@@ -22,6 +22,7 @@ import net.minecraft.client.renderer.BlockModelRenderer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
+import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
@@ -31,6 +32,7 @@ import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.entity.Entity;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.ReportedException;
@@ -315,5 +317,25 @@ public class PipelineHooks
         return Acuity.isModEnabled()
             ? compiledchunk.isLayerStarted(blockrenderlayer) && !compiledchunk.isLayerEmpty(blockrenderlayer)
             : compiledchunk.isLayerStarted(blockrenderlayer);
+    }
+    
+    public static int renderBlockLayer(RenderGlobal renderGlobal, BlockRenderLayer blockLayerIn, double partialTicks, int pass, Entity entityIn)
+    {
+        if(Acuity.isModEnabled())
+        {
+            switch(blockLayerIn)
+            {
+                case SOLID:
+                case TRANSLUCENT:
+                    return renderGlobal.renderBlockLayer(blockLayerIn, partialTicks, pass, entityIn);
+                    
+                case CUTOUT:
+                case CUTOUT_MIPPED:
+                default: 
+                    return 0;
+            }
+        }
+        else
+            return renderGlobal.renderBlockLayer(blockLayerIn, partialTicks, pass, entityIn);
     }
 }

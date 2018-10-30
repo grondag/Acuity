@@ -13,6 +13,7 @@
     "MixinChunkRenderDispatcher",
     "MixinVertexFormatElement",
     "MixinOpenGlHelper",
-    "MixinMinecraft"
+    "MixinMinecraft",
+    "MixinEntityRenderer"
   ]
 }
