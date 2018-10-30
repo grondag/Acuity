@@ -237,10 +237,22 @@ public class CompoundBufferBuilder extends BufferBuilder
         target.upload(pair.getLeft(), pair.getRight());
     }
     
+//    public static final ConcurrentHashMap<BlockPos, Long> SORTS = new ConcurrentHashMap<>();
+//    private @Nullable BlockPos chunkOriginPos;
+    
+//    @Override
+//    public void setTranslation(double x, double y, double z)
+//    {
+//        super.setTranslation(x, y, z);
+//        chunkOriginPos = new BlockPos((MathHelper.fastFloor(-x) >> 4) << 4, (MathHelper.fastFloor(-y) >> 4) << 4, (MathHelper.fastFloor(-z) >> 4) << 4);
+//    }
+    
     @SuppressWarnings("null")
     @Override
     public void sortVertexData(float x, float y, float z)
     {
+//        SORTS.put(chunkOriginPos, System.nanoTime());
+        
         if(Acuity.isModEnabled())
             // save sort perspective coordinate for use during packing.  Actual sort occurs then.
             collectors.setViewCoordinates(x, y, z);
