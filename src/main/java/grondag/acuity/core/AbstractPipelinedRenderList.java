@@ -19,7 +19,6 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.VboRenderList;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
@@ -29,8 +28,6 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class AbstractPipelinedRenderList implements IAcuityListener
 {
-    protected final VboRenderList parent;
-    
     public boolean isAcuityEnabled = Acuity.isModEnabled();
     
     protected final ObjectArrayList<RenderChunk> chunks = new ObjectArrayList<RenderChunk>();
@@ -62,24 +59,29 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     private int originY = Integer.MIN_VALUE;
     private int originZ = Integer.MIN_VALUE;
   
-    public AbstractPipelinedRenderList(VboRenderList parent)
+    private double viewEntityX;
+    private double viewEntityY;
+    private double viewEntityZ;
+    
+    public AbstractPipelinedRenderList()
     {
-        this.parent = parent;
         xlatMatrix.setIdentity();
         AcuityRuntime.INSTANCE.registerListener(this);
     }
 
+    public void initialize(double viewEntityXIn, double viewEntityYIn, double viewEntityZIn)
+    {
+        this.viewEntityX = viewEntityXIn;
+        this.viewEntityY = viewEntityYIn;
+        this.viewEntityZ = viewEntityZIn;
+    }
+    
     public void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
     {
-        if(isAcuityEnabled)
-        {
-            if(layer == BlockRenderLayer.TRANSLUCENT)
-                this.chunks.add(renderChunkIn);
-            else
-                this.addSolidChunk(renderChunkIn);
-        }
+        if(layer == BlockRenderLayer.TRANSLUCENT)
+            this.chunks.add(renderChunkIn);
         else
-            parent.addRenderChunk(renderChunkIn, layer);
+            this.addSolidChunk(renderChunkIn);
     }
     
     @SuppressWarnings("unchecked")
@@ -120,15 +122,10 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     
     public void renderChunkLayer(BlockRenderLayer layer)
     {
-        if(isAcuityEnabled)
-        {
-            if(layer == BlockRenderLayer.SOLID)
-                renderChunkLayerSolid();
-            else
-                renderChunkLayerTranslucent();
-        }
+        if(layer == BlockRenderLayer.SOLID)
+            renderChunkLayerSolid();
         else
-            parent.renderChunkLayer(layer);
+            renderChunkLayerTranslucent();
     }
     
     private final void updateViewMatrix(long packedRenderCubeKey)
@@ -163,9 +160,9 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         final Matrix4f mvPos = this.mvPos;
         
         // note row-major order in the matrix library we are using
-        xlatMatrix.m03 = (float)(ox -parent.viewEntityX);
-        xlatMatrix.m13 = (float)(oy -parent.viewEntityY);
-        xlatMatrix.m23 = (float)(oz -parent.viewEntityZ);
+        xlatMatrix.m03 = (float)(ox - viewEntityX);
+        xlatMatrix.m13 = (float)(oy - viewEntityY);
+        xlatMatrix.m23 = (float)(oz - viewEntityZ);
 
         Matrix4f.mul(xlatMatrix, mvMatrix, mvPos);
         

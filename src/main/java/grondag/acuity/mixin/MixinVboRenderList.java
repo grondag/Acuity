@@ -24,8 +24,8 @@ public abstract class MixinVboRenderList extends ChunkRenderContainer
     private void onConstructed(CallbackInfo ci)
     {
         ext = LoadingConfig.INSTANCE.enableRenderStats 
-                ? new PipelinedRenderListDebug((VboRenderList)(Object)this)
-                : new PipelinedRenderList((VboRenderList)(Object)this);
+                ? new PipelinedRenderListDebug()
+                : new PipelinedRenderList();
     }
     
     @Override
@@ -37,6 +37,17 @@ public abstract class MixinVboRenderList extends ChunkRenderContainer
             super.addRenderChunk(renderChunkIn, layer);
     }
     
+    
+    
+    @Override
+    public void initialize(double viewEntityXIn, double viewEntityYIn, double viewEntityZIn)
+    {
+        if(ext.isAcuityEnabled)
+            ext.initialize(viewEntityXIn, viewEntityYIn, viewEntityZIn);
+        else
+            super.initialize(viewEntityXIn, viewEntityYIn, viewEntityZIn);
+    }
+
     @Inject(method = "renderChunkLayer", at = @At("HEAD"), cancellable = true, require = 1)
     private void onRenderChunkLayer(BlockRenderLayer layer, CallbackInfo ci)
     {
