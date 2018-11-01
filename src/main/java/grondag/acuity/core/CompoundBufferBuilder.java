@@ -8,6 +8,7 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.buffering.IDrawableChunk;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
@@ -223,7 +224,7 @@ public class CompoundBufferBuilder extends BufferBuilder
        
     }
 
-    public void uploadTo(CompoundVertexBuffer target)
+    public void uploadTo(IDrawableChunk target)
     {   
         assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
         

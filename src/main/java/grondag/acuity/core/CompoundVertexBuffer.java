@@ -3,6 +3,7 @@ package grondag.acuity.core;
 import java.nio.ByteBuffer;
 
 import grondag.acuity.Acuity;
+import grondag.acuity.buffering.IDrawableChunk;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
@@ -17,16 +18,17 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * so we can assume that all pipeline IDs are for a single layer.
  */
 @SideOnly(Side.CLIENT)
-public class CompoundVertexBuffer extends VertexBuffer
+public class CompoundVertexBuffer extends VertexBuffer implements IDrawableChunk.Solid, IDrawableChunk.Translucent
 {
     private VertexBufferInner inner = VertexBufferInner.claim();
     
     // UGLY: keeping a queue of inner buffers and using fences is overwrought when using new glBuffers each time
     // theoretically, glBufferData should have no dependency on our byte buffer after it returns, but doing it this
     // way eliminated remaining rendering artifacts likely due to concurrency and will probably need the fences later
-    // on when using memory-mapped buffers but won't mess with that until LWJGL3 so leaving it for now.  
+    // on when using memory-mapped buffers so leaving it for now.  
     private ObjectArrayFIFOQueue<VertexBufferInner> nextInner = new ObjectArrayFIFOQueue<VertexBufferInner>();
     
+    @Override
     public void clear()
     {
         VertexBufferInner.release(inner);
@@ -56,6 +58,7 @@ public class CompoundVertexBuffer extends VertexBuffer
         return false;
     }
     
+    @Override
     public int drawCount()
     {
         return Acuity.isModEnabled() 
@@ -63,6 +66,7 @@ public class CompoundVertexBuffer extends VertexBuffer
                 : 1;
     }
     
+    @Override
     public int quadCount()
     {
         return Acuity.isModEnabled() 
@@ -77,6 +81,7 @@ public class CompoundVertexBuffer extends VertexBuffer
 
 //    private static int maxSize = 0;
     
+    @Override
     public final void upload(ExpandableByteBuffer uploadBuffer, VertexPackingList packing)
     {
         VertexBufferInner next = VertexBufferInner.claim();
@@ -94,24 +99,28 @@ public class CompoundVertexBuffer extends VertexBuffer
     /**
      * Renders all uploaded vbos.
      */
+    @Override
     public final void renderChunkTranslucent()
     {
         checkInner();
         inner.renderChunkTranslucent();
     }
     
+    @Override
     public final void prepareSolidRender()
     {
         checkInner();
         inner.prepareSolidRender();
     }
     
+    @Override
     public VertexPackingList packingList()
     {
         checkInner();
         return inner.isReady() ? inner.packingList() : DummyPackingList.INSTANCE;
     }
     
+    @Override
     public final void renderSolidNext()
     {
         // note no call to checkInner() cuz render is stateful, don't want to switch after prep

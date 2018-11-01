@@ -11,6 +11,7 @@ import grondag.acuity.Acuity;
 import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.IAcuityListener;
 import grondag.acuity.api.PipelineManager;
+import grondag.acuity.buffering.IDrawableChunk;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -41,12 +42,12 @@ public class AbstractPipelinedRenderList implements IAcuityListener
      * Null values mean that pipeline isn't part of the render cube.<br>
      * Non-null values are lists of buffer in that cube with the given pipeline.<br>
      */
-    private final Long2ObjectOpenHashMap<ObjectArrayList<CompoundVertexBuffer>[]> solidCubes = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectOpenHashMap<ObjectArrayList<IDrawableChunk>[]> solidCubes = new Long2ObjectOpenHashMap<>();
     
     /**
      * Cache and reuse cube data stuctures.
      */
-    private final ArrayDeque<ObjectArrayList<CompoundVertexBuffer>[]> cubeStore = new ArrayDeque<>();
+    private final ArrayDeque<ObjectArrayList<IDrawableChunk>[]> cubeStore = new ArrayDeque<>();
     
     /**
      * Will hold the modelViewMatrix that was in GL context before first call to block render layer this pass.
@@ -82,16 +83,16 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     }
     
     @SuppressWarnings("unchecked")
-    private ObjectArrayList<CompoundVertexBuffer>[] makeCube()
+    private ObjectArrayList<IDrawableChunk>[] makeCube()
     {
-        ObjectArrayList<CompoundVertexBuffer>[] result = cubeStore.poll();
+        ObjectArrayList<IDrawableChunk>[] result = cubeStore.poll();
         if(result == null)
         {
             final int size = PipelineManager.INSTANCE.pipelineCount();
             result = new ObjectArrayList[size];
             for(int i = 0; i < size; i++)
             {
-                result[i] = new ObjectArrayList<CompoundVertexBuffer>();
+                result[i] = new ObjectArrayList<IDrawableChunk>();
             }
         }
         return result;
@@ -101,18 +102,18 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     {
         final long cubeKey = RenderCube.getPackedOrigin(renderChunkIn.getPosition());
         
-        ObjectArrayList<CompoundVertexBuffer>[] buffers = solidCubes.get(cubeKey);
+        ObjectArrayList<IDrawableChunk>[] buffers = solidCubes.get(cubeKey);
         if(buffers == null)
         {
             buffers = makeCube();
             solidCubes.put(cubeKey, buffers);
         }
-        addChunkToBufferArray(renderChunkIn, buffers);
+        addSolidChunkToBufferArray(renderChunkIn, buffers);
     }
     
-    private void addChunkToBufferArray(RenderChunk renderChunkIn, ObjectArrayList<CompoundVertexBuffer>[] buffers)
+    private void addSolidChunkToBufferArray(RenderChunk renderChunkIn, ObjectArrayList<IDrawableChunk>[] buffers)
     {
-        final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderChunkIn.getVertexBufferByLayer(SOLID_ORDINAL);
+        final IDrawableChunk.Solid vertexbuffer = (IDrawableChunk.Solid)renderChunkIn.getVertexBufferByLayer(SOLID_ORDINAL);
         vertexbuffer.prepareSolidRender();
         vertexbuffer.packingList().forEachPipeline(p -> buffers[p.getIndex()].add(vertexbuffer));
     }
@@ -210,6 +211,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     final private static int SOLID_ORDINAL = BlockRenderLayer.SOLID.ordinal();
     protected final void renderChunkLayerSolid()
     {
+        // UGLY: add hook for this
         // Forge doesn't give us a hook in the render loop that comes
         // after camera transform is set up - so call out event handler
         // here as a workaround. Our event handler will only act 1x/frame.
@@ -222,10 +224,10 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         
         preRenderSetup();
         
-        ObjectIterator<Entry<ObjectArrayList<CompoundVertexBuffer>[]>> it = solidCubes.long2ObjectEntrySet().fastIterator();
+        ObjectIterator<Entry<ObjectArrayList<IDrawableChunk>[]>> it = solidCubes.long2ObjectEntrySet().fastIterator();
         while(it.hasNext())
         {
-            Entry<ObjectArrayList<CompoundVertexBuffer>[]> e = it.next();
+            Entry<ObjectArrayList<IDrawableChunk>[]> e = it.next();
             updateViewMatrix(e.getLongKey());
             renderSolidArray(e.getValue());
         }
@@ -234,18 +236,18 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         postRenderCleanup();
     }
     
-    private void renderSolidArray(ObjectArrayList<CompoundVertexBuffer>[] array)
+    private void renderSolidArray(ObjectArrayList<IDrawableChunk>[] array)
     {
-        for(ObjectArrayList<CompoundVertexBuffer> list : array)
+        for(ObjectArrayList<IDrawableChunk> list : array)
             renderSolidList(list);
         cubeStore.offer(array);
     }
     
-    private void renderSolidList(ObjectArrayList<CompoundVertexBuffer> list)
+    private void renderSolidList(ObjectArrayList<IDrawableChunk> list)
     {
         if(list.isEmpty())
             return;
-        list.forEach(b -> b.renderSolidNext());
+        list.forEach(b -> ((IDrawableChunk.Solid)b).renderSolidNext());
         list.clear();
     }
     
@@ -263,7 +265,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         for (int i = 0; i < chunkCount; i++)
         {
             final RenderChunk renderchunk =  chunks.get(i);
-            final CompoundVertexBuffer vertexbuffer = (CompoundVertexBuffer)renderchunk.getVertexBufferByLayer(TRANSLUCENT_ORDINAL);
+            final IDrawableChunk.Translucent vertexbuffer = (IDrawableChunk.Translucent)renderchunk.getVertexBufferByLayer(TRANSLUCENT_ORDINAL);
             updateViewMatrix(renderchunk.getPosition());
             vertexbuffer.renderChunkTranslucent();
         }

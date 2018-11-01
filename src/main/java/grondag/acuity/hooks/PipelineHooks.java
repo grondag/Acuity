@@ -9,8 +9,8 @@ import grondag.acuity.Configurator;
 import grondag.acuity.api.IPipelinedBakedModel;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.buffering.IDrawableChunk;
 import grondag.acuity.core.CompoundBufferBuilder;
-import grondag.acuity.core.CompoundVertexBuffer;
 import grondag.acuity.core.CompoundVertexLighter;
 import grondag.acuity.core.FluidBuilder;
 import grondag.acuity.core.VanillaQuadWrapper;
@@ -279,7 +279,7 @@ public class PipelineHooks
     public static void uploadVertexBuffer(ChunkRenderDispatcher dispatch, BufferBuilder source, VertexBuffer target)
     {
         if(Acuity.isModEnabled())
-            ((CompoundBufferBuilder)source).uploadTo((CompoundVertexBuffer)target);
+            ((CompoundBufferBuilder)source).uploadTo((IDrawableChunk)target);
         else
             dispatch.uploadVertexBuffer(source, target);
     }
@@ -305,8 +305,8 @@ public class PipelineHooks
         {
             // this is called right after setting chunk position because it was moved in the frustum
             // let buffers in the chunk know they are no longer valid and should not render
-            ((CompoundVertexBuffer)renderChunk.getVertexBufferByLayer(BlockRenderLayer.SOLID.ordinal())).clear();
-            ((CompoundVertexBuffer)renderChunk.getVertexBufferByLayer(BlockRenderLayer.TRANSLUCENT.ordinal())).clear();
+            ((IDrawableChunk)renderChunk.getVertexBufferByLayer(BlockRenderLayer.SOLID.ordinal())).clear();
+            ((IDrawableChunk)renderChunk.getVertexBufferByLayer(BlockRenderLayer.TRANSLUCENT.ordinal())).clear();
         }
         else
             renderChunk.initModelviewMatrix();
