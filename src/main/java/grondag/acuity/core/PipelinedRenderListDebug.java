@@ -2,6 +2,7 @@ package grondag.acuity.core;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.buffering.IDrawableChunk;
+import grondag.acuity.hooks.IRenderChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraftforge.fml.relauncher.Side;
@@ -28,7 +29,9 @@ public class PipelinedRenderListDebug extends AbstractPipelinedRenderList
     public final void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
     {
         chunkCounter++;
-        IDrawableChunk vertexbuffer = (IDrawableChunk)renderChunkIn.getVertexBufferByLayer(layer.ordinal());
+        IDrawableChunk vertexbuffer = layer == BlockRenderLayer.SOLID
+                ? ((IRenderChunk)renderChunkIn).getSolidDrawable()
+                : ((IRenderChunk)renderChunkIn).getTranslucentDrawable();
         drawCounter += vertexbuffer.drawCount();
         quadCounter += vertexbuffer.quadCount();
         super.addRenderChunk(renderChunkIn, layer);

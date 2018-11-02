@@ -4,12 +4,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAccumulator;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListenableFutureTask;
+
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
 import grondag.acuity.api.IPipelinedBakedModel;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
-import grondag.acuity.buffering.IDrawableChunk;
 import grondag.acuity.core.CompoundBufferBuilder;
 import grondag.acuity.core.CompoundVertexLighter;
 import grondag.acuity.core.FluidBuilder;
@@ -28,7 +31,6 @@ import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.crash.CrashReportCategory;
@@ -275,14 +277,6 @@ public class PipelineHooks
             throw new ReportedException(crashreport);
         }
     }
-
-    public static void uploadVertexBuffer(ChunkRenderDispatcher dispatch, BufferBuilder source, VertexBuffer target)
-    {
-        if(Acuity.isModEnabled())
-            ((CompoundBufferBuilder)source).uploadTo((IDrawableChunk)target);
-        else
-            dispatch.uploadVertexBuffer(source, target);
-    }
     
     public static boolean isFirstOrUV(int index, VertexFormatElement.EnumUsage usage)
     {
@@ -305,8 +299,8 @@ public class PipelineHooks
         {
             // this is called right after setting chunk position because it was moved in the frustum
             // let buffers in the chunk know they are no longer valid and should not render
-            ((IDrawableChunk)renderChunk.getVertexBufferByLayer(BlockRenderLayer.SOLID.ordinal())).clear();
-            ((IDrawableChunk)renderChunk.getVertexBufferByLayer(BlockRenderLayer.TRANSLUCENT.ordinal())).clear();
+            ((IRenderChunk)renderChunk).getSolidDrawable().clear();
+            ((IRenderChunk)renderChunk).getTranslucentDrawable().clear();
         }
         else
             renderChunk.initModelviewMatrix();
@@ -337,5 +331,37 @@ public class PipelineHooks
         }
         else
             return renderGlobal.renderBlockLayer(blockLayerIn, partialTicks, pass, entityIn);
+    }
+
+    public static ListenableFuture<Object> uploadChunk(ChunkRenderDispatcher chunkRenderDispatcher, BlockRenderLayer blockRenderLayer,
+            BufferBuilder bufferBuilder, RenderChunk renderChunk, CompiledChunk compiledChunk, double distanceSq)
+    {
+        if (Minecraft.getMinecraft().isCallingFromMinecraftThread())
+        {
+            if(blockRenderLayer == BlockRenderLayer.SOLID)
+                ((CompoundBufferBuilder)bufferBuilder).uploadTo(((IRenderChunk)renderChunk).getSolidDrawable());
+            else
+                ((CompoundBufferBuilder)bufferBuilder).uploadTo(((IRenderChunk)renderChunk).getTranslucentDrawable());
+            bufferBuilder.setTranslation(0.0D, 0.0D, 0.0D);
+            return Futures.<Object>immediateFuture((Object)null);
+        }
+        else
+        {
+            ListenableFutureTask<Object> listenablefuturetask = ListenableFutureTask.<Object>create(new Runnable()
+            {
+                @Override
+                public void run()
+                {
+                    uploadChunk(chunkRenderDispatcher, blockRenderLayer, bufferBuilder, renderChunk,
+                            compiledChunk, distanceSq);
+                }
+            }, (Object)null);
+
+            synchronized (chunkRenderDispatcher.queueChunkUploads)
+            {
+                chunkRenderDispatcher.queueChunkUploads.add(chunkRenderDispatcher.new PendingUpload(listenablefuturetask, distanceSq));
+                return listenablefuturetask;
+            }
+        }
     }
 }

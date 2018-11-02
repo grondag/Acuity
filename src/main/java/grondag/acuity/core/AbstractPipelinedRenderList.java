@@ -12,6 +12,7 @@ import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.IAcuityListener;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.buffering.IDrawableChunk;
+import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
@@ -115,7 +116,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     
     private void addSolidChunkToBufferArray(RenderChunk renderChunkIn, ObjectArrayList<IDrawableChunk>[] buffers)
     {
-        final IDrawableChunk.Solid vertexbuffer = (IDrawableChunk.Solid)renderChunkIn.getVertexBufferByLayer(SOLID_ORDINAL);
+        final IDrawableChunk.Solid vertexbuffer = ((IRenderChunk)renderChunkIn).getSolidDrawable();
         vertexbuffer.prepareSolidRender();
         vertexbuffer.packingList().forEachPipeline(p -> buffers[p.getIndex()].add(vertexbuffer));
     }
@@ -205,7 +206,6 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         OpenGlHelperExt.loadTransposeQuickly(modelViewMatrixBuffer, mvMatrix);
     }
     
-    final private static int SOLID_ORDINAL = BlockRenderLayer.SOLID.ordinal();
     protected final void renderChunkLayerSolid()
     {
         // UGLY: add hook for this
@@ -248,7 +248,6 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         list.clear();
     }
     
-    final private static int TRANSLUCENT_ORDINAL = BlockRenderLayer.TRANSLUCENT.ordinal();
     protected final void renderChunkLayerTranslucent()
     {
         final ObjectArrayList<RenderChunk> chunks = this.chunks;
@@ -262,7 +261,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         for (int i = 0; i < chunkCount; i++)
         {
             final RenderChunk renderchunk =  chunks.get(i);
-            final IDrawableChunk.Translucent vertexbuffer = (IDrawableChunk.Translucent)renderchunk.getVertexBufferByLayer(TRANSLUCENT_ORDINAL);
+            final IDrawableChunk.Translucent vertexbuffer = ((IRenderChunk)renderchunk).getTranslucentDrawable();
             updateViewMatrix(renderchunk.getPosition());
             vertexbuffer.renderChunkTranslucent();
         }

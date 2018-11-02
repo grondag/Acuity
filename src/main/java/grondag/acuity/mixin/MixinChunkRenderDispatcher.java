@@ -2,20 +2,28 @@ package grondag.acuity.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
+import grondag.acuity.Acuity;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
-import net.minecraft.client.renderer.vertex.VertexBuffer;
+import net.minecraft.client.renderer.chunk.CompiledChunk;
+import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.util.BlockRenderLayer;
 
 @Mixin(ChunkRenderDispatcher.class)
 public abstract class MixinChunkRenderDispatcher
 {
-    @Redirect(method = "uploadChunk", require = 1,
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher;uploadVertexBuffer(Lnet/minecraft/client/renderer/BufferBuilder;Lnet/minecraft/client/renderer/vertex/VertexBuffer;)V"))
-    private void onUploadVertexBuffer(ChunkRenderDispatcher dispatch, BufferBuilder source, VertexBuffer target)
+    @Inject(method = "uploadChunk", at = @At("HEAD"), cancellable = true, require = 1)
+    public void onUploadChunk(final BlockRenderLayer blockRenderLayer, final BufferBuilder bufferBuilder, final RenderChunk renderChunk, 
+            final CompiledChunk compiledChunk, final double distanceSq, CallbackInfoReturnable<ListenableFuture<Object>> ci)
     {
-        PipelineHooks.uploadVertexBuffer(dispatch, source, target);
+        if(Acuity.isModEnabled())
+            ci.setReturnValue(PipelineHooks.uploadChunk((ChunkRenderDispatcher)(Object)this, blockRenderLayer, bufferBuilder, renderChunk,
+                    compiledChunk, distanceSq));
     }
 }

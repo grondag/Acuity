@@ -1,25 +1,49 @@
 package grondag.acuity.mixin;
 
+import javax.annotation.Nullable;
+
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import grondag.acuity.buffering.IDrawableChunk.Solid;
+import grondag.acuity.buffering.IDrawableChunk.Translucent;
 import grondag.acuity.core.CompoundVertexBuffer;
+import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.chunk.SetVisibility;
-import net.minecraft.client.renderer.vertex.VertexBuffer;
-import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @Mixin(RenderChunk.class)
-public abstract class MixinRenderChunk
+public abstract class MixinRenderChunk implements IRenderChunk
 {
-    @Redirect(method = "<init>*", require = 1, 
-            at = @At(value = "NEW", args = "class=net/minecraft/client/renderer/vertex/VertexBuffer") )
-    private VertexBuffer newVertexBufffer(VertexFormat format)
+    @Nullable Solid solidDrawable;
+    @Nullable Translucent translucentDrawable;
+    
+    @Override
+    public Solid getSolidDrawable()
     {
-        return new CompoundVertexBuffer(format);
+        Solid result = solidDrawable;
+        if(result == null)
+        {
+            result = new CompoundVertexBuffer(DefaultVertexFormats.BLOCK);
+            solidDrawable = result;
+        }
+        return result;
+    }
+
+    @Override
+    public Translucent getTranslucentDrawable()
+    {
+        Translucent result = translucentDrawable;
+        if(result == null)
+        {
+            result = new CompoundVertexBuffer(DefaultVertexFormats.BLOCK);
+            translucentDrawable = result;
+        }
+        return result;
     }
     
     @Redirect(method = "setPosition", require = 1,
