@@ -1,9 +1,14 @@
 package grondag.acuity.hooks;
 
+import javax.annotation.Nullable;
+
 import grondag.acuity.buffering.IDrawableChunk;
 
 public interface IRenderChunk
 {
-    IDrawableChunk.Solid getSolidDrawable();
-    IDrawableChunk.Translucent getTranslucentDrawable();
+    void setSolidDrawable(IDrawableChunk.Solid drawable);
+    void setTranslucentDrawable(IDrawableChunk.Translucent drawable);
+    @Nullable IDrawableChunk.Solid getSolidDrawable();
+    @Nullable IDrawableChunk.Translucent getTranslucentDrawable();
+    void releaseDrawables();
 }

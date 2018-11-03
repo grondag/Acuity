@@ -1,6 +1,7 @@
 package grondag.acuity.buffering;
 
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
+import grondag.acuity.core.CompoundVertexBuffer;
 
 import java.nio.IntBuffer;
 
@@ -8,6 +9,7 @@ import grondag.acuity.api.PipelineManager;
 import grondag.acuity.core.BufferStore;
 import grondag.acuity.core.VertexCollectorList;
 import grondag.acuity.core.VertexPackingList;
+import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 //TODO: remove when WIP done
 public interface IUploadableChunk
@@ -43,5 +45,15 @@ public interface IUploadableChunk
             this.byteBuffer = buffer;
             this.packingList = packing;
         }
+
+        @Override
+        public IDrawableChunk produceDrawable()
+        {
+            CompoundVertexBuffer result = new CompoundVertexBuffer(DefaultVertexFormats.BLOCK);
+            result.upload(this);
+            return result;
+        }
     }
+
+    public IDrawableChunk produceDrawable();
 }

@@ -118,7 +118,8 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     private void addSolidChunkToBufferArray(RenderChunk renderChunkIn, ObjectArrayList<IDrawableBufferDelegate>[] buffers)
     {
         final IDrawableChunk.Solid vertexbuffer = ((IRenderChunk)renderChunkIn).getSolidDrawable();
-        vertexbuffer.prepareSolidRender(d -> buffers[d.getPipeline().getIndex()].add(d));
+        if(vertexbuffer != null)
+            vertexbuffer.prepareSolidRender(d -> buffers[d.getPipeline().getIndex()].add(d));
     }
     
     public void renderChunkLayer(BlockRenderLayer layer)
@@ -273,6 +274,8 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         {
             final RenderChunk renderchunk =  chunks.get(i);
             final IDrawableChunk.Translucent vertexbuffer = ((IRenderChunk)renderchunk).getTranslucentDrawable();
+            if(vertexbuffer == null)
+                continue;
             updateViewMatrix(renderchunk.getPosition());
             vertexbuffer.renderChunkTranslucent();
         }

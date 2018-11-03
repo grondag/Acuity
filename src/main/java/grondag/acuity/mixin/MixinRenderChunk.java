@@ -8,42 +8,28 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 import grondag.acuity.buffering.IDrawableChunk.Solid;
 import grondag.acuity.buffering.IDrawableChunk.Translucent;
-import grondag.acuity.core.CompoundVertexBuffer;
 import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.chunk.SetVisibility;
-import net.minecraft.client.renderer.vertex.DefaultVertexFormats;
 
 @Mixin(RenderChunk.class)
-public abstract class MixinRenderChunk implements IRenderChunk
+public class MixinRenderChunk implements IRenderChunk
 {
     @Nullable Solid solidDrawable;
     @Nullable Translucent translucentDrawable;
     
     @Override
-    public Solid getSolidDrawable()
+    public @Nullable Solid getSolidDrawable()
     {
-        Solid result = solidDrawable;
-        if(result == null)
-        {
-            result = new CompoundVertexBuffer(DefaultVertexFormats.BLOCK);
-            solidDrawable = result;
-        }
-        return result;
+        return solidDrawable;
     }
 
     @Override
-    public Translucent getTranslucentDrawable()
+    public @Nullable Translucent getTranslucentDrawable()
     {
-        Translucent result = translucentDrawable;
-        if(result == null)
-        {
-            result = new CompoundVertexBuffer(DefaultVertexFormats.BLOCK);
-            translucentDrawable = result;
-        }
-        return result;
+        return translucentDrawable;
     }
     
     @Redirect(method = "setPosition", require = 1,
@@ -59,5 +45,25 @@ public abstract class MixinRenderChunk implements IRenderChunk
     {
         compiledChunk.setVisibility(setVisibility);
         PipelineHooks.mergeRenderLayers(compiledChunk);
+    }
+
+    @Override
+    public void setSolidDrawable(Solid drawable)
+    {
+        solidDrawable = drawable;
+    }
+
+    @Override
+    public void setTranslucentDrawable(Translucent drawable)
+    {
+        translucentDrawable = drawable;
+    }
+
+    @Override
+    public void releaseDrawables()
+    {
+        //TODO: release vs dereference
+        solidDrawable = null;
+        translucentDrawable = null;
     }
 }

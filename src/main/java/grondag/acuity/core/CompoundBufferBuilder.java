@@ -222,7 +222,10 @@ public class CompoundBufferBuilder extends BufferBuilder
        
     }
 
-    public void uploadTo(IDrawableChunk target)
+    /**
+     * Must be called on thread - handles any portion of GL buffering that must be done in context.
+     */
+    public @Nullable IDrawableChunk produceDrawable()
     {   
         assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
         
@@ -230,10 +233,10 @@ public class CompoundBufferBuilder extends BufferBuilder
         if(uploadBuffer == null)
         {
 //            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Ignoring upload request due to missing upload state in Compound Vertex Buffer (" + layer.toString() + ") - must have been loaded earlier");
-            return;
+            return null;
         }
 
-        target.upload(uploadBuffer);
+        return uploadBuffer.produceDrawable();
     }
     
 //    public static final ConcurrentHashMap<BlockPos, Long> SORTS = new ConcurrentHashMap<>();

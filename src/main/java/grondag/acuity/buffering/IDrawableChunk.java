@@ -33,8 +33,6 @@ public interface IDrawableChunk
      * Called when buffer content is no longer current and will not be rendered.
      */
     void clear();
-
-    void upload(IUploadableChunk payload);
     
     public static interface Solid extends IDrawableChunk
     {

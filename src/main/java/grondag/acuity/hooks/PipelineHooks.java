@@ -13,6 +13,8 @@ import grondag.acuity.Configurator;
 import grondag.acuity.api.IPipelinedBakedModel;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.buffering.IDrawableChunk.Solid;
+import grondag.acuity.buffering.IDrawableChunk.Translucent;
 import grondag.acuity.core.CompoundBufferBuilder;
 import grondag.acuity.core.CompoundVertexLighter;
 import grondag.acuity.core.FluidBuilder;
@@ -298,9 +300,8 @@ public class PipelineHooks
         if(Acuity.isModEnabled())
         {
             // this is called right after setting chunk position because it was moved in the frustum
-            // let buffers in the chunk know they are no longer valid and should not render
-            ((IRenderChunk)renderChunk).getSolidDrawable().clear();
-            ((IRenderChunk)renderChunk).getTranslucentDrawable().clear();
+            // let buffers in the chunk know they are no longer valid and can be released.
+            ((IRenderChunk)renderChunk).releaseDrawables();
         }
         else
             renderChunk.initModelviewMatrix();
@@ -333,15 +334,17 @@ public class PipelineHooks
             return renderGlobal.renderBlockLayer(blockLayerIn, partialTicks, pass, entityIn);
     }
 
+    @SuppressWarnings("null")
     public static ListenableFuture<Object> uploadChunk(ChunkRenderDispatcher chunkRenderDispatcher, BlockRenderLayer blockRenderLayer,
             BufferBuilder bufferBuilder, RenderChunk renderChunk, CompiledChunk compiledChunk, double distanceSq)
     {
         if (Minecraft.getMinecraft().isCallingFromMinecraftThread())
         {
             if(blockRenderLayer == BlockRenderLayer.SOLID)
-                ((CompoundBufferBuilder)bufferBuilder).uploadTo(((IRenderChunk)renderChunk).getSolidDrawable());
+                ((IRenderChunk)renderChunk).setSolidDrawable((Solid) ((CompoundBufferBuilder)bufferBuilder).produceDrawable());
             else
-                ((CompoundBufferBuilder)bufferBuilder).uploadTo(((IRenderChunk)renderChunk).getTranslucentDrawable());
+                ((IRenderChunk)renderChunk).setTranslucentDrawable((Translucent) ((CompoundBufferBuilder)bufferBuilder).produceDrawable());
+            
             bufferBuilder.setTranslation(0.0D, 0.0D, 0.0D);
             return Futures.<Object>immediateFuture((Object)null);
         }

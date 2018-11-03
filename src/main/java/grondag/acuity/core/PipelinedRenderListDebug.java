@@ -32,6 +32,8 @@ public class PipelinedRenderListDebug extends AbstractPipelinedRenderList
         IDrawableChunk vertexbuffer = layer == BlockRenderLayer.SOLID
                 ? ((IRenderChunk)renderChunkIn).getSolidDrawable()
                 : ((IRenderChunk)renderChunkIn).getTranslucentDrawable();
+        if(vertexbuffer == null)
+            return;
         drawCounter += vertexbuffer.drawCount();
         quadCounter += vertexbuffer.quadCount();
         super.addRenderChunk(renderChunkIn, layer);

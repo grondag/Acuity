@@ -83,7 +83,6 @@ public class CompoundVertexBuffer extends VertexBuffer implements IDrawableChunk
 
 //    private static int maxSize = 0;
     
-    @Override
     public final void upload(IUploadableChunk uploadBuffer)
     {
         VertexBufferInner next = VertexBufferInner.claim();
