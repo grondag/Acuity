@@ -3,6 +3,7 @@ package grondag.acuity.core;
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
@@ -13,16 +14,16 @@ import org.lwjgl.opengl.GL15;
 import grondag.acuity.Configurator;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
+import grondag.acuity.buffering.IDrawableBufferDelegate;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import grondag.acuity.opengl.Fence;
 import grondag.acuity.opengl.OpenGlFenceExt;
 import grondag.acuity.opengl.OpenGlHelperExt;
-import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
-public class VertexBufferInner implements VertexPackingConsumer
+public class VertexBufferInner
 {
     private static final ConcurrentLinkedQueue<VertexBufferInner> store = new ConcurrentLinkedQueue<VertexBufferInner>();
     
@@ -47,13 +48,7 @@ public class VertexBufferInner implements VertexPackingConsumer
             store.offer(buffer);
     }
     
-    int bufferOffset = 0;
-    int vertexOffset = 0;
-    boolean isSolidLayer;
-    
     boolean isNew = true;
-    
-    @Nullable PipelineVertexFormat lastFormat = null;
     
     /**
      * Holds VAO buffer names.  Null if VAO not available.
@@ -170,69 +165,135 @@ public class VertexBufferInner implements VertexPackingConsumer
         awaitingFence = true;
     }
     
+    /** for use in lambdas */
+    private int lambdaBufferOffset = 0;
+    /** for use in lambdas */
+    private int lambdaVertexOffset = 0;
+    /** for use in lambdas */
+    private @Nullable PipelineVertexFormat lambdaLastFormat = null;
+    
     /**
      * Renders all uploaded vbos.
      */
+    @SuppressWarnings("null")
     public final void renderChunkTranslucent()
     {
         if(this.isNew)
             return;
         
+        lambdaBufferOffset = 0;
+        lambdaVertexOffset = 0;
+        lambdaLastFormat = null;
+        
         final VertexPackingList packing = this.vertexPackingList;
         if(packing.size() == 0) return;
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        reset(false);
-        packing.forEach(this);
-    }
-    
-    public final void prepareSolidRender()
-    {
-        if(this.isNew)
-            return;
         
-        reset(true);
-        vertexPackingList.reset();
+        vertexPackingList.forEach((pipeline, vertexCount) ->
+        {
+            pipeline.activate(false);
+            
+            if(pipeline.piplineVertexFormat() != lambdaLastFormat)
+            {
+                lambdaVertexOffset = 0;
+                lambdaLastFormat = pipeline.piplineVertexFormat();
+                setupAttributes(lambdaLastFormat, lambdaBufferOffset);
+            }
+            
+            OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, lambdaVertexOffset, vertexCount);
+            
+            lambdaVertexOffset += vertexCount;
+            lambdaBufferOffset += vertexCount * lambdaLastFormat.stride;
+        });
     }
     
-    void reset(boolean isSolidLayer)
+    public final void bind()
     {
-        bufferOffset = 0;
-        vertexOffset = 0;
-        lastFormat = null;
-        this.isSolidLayer = isSolidLayer;
-    }
-    
-    public final void renderSolidNext()
-    {
-        if(this.isNew)
-            return;
         
-        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-        vertexPackingList.renderNext(this);
     }
     
     @SuppressWarnings("null")
-    @Override
-    public final void accept(RenderPipeline pipeline, int vertexCount)
+    public final void prepareSolidRender(Consumer<IDrawableBufferDelegate> consumer)
     {
-        pipeline.activate(isSolidLayer);
-        if(pipeline.piplineVertexFormat() != lastFormat)
+        if(this.isNew)
+            return;
+        
+        lambdaBufferOffset = 0;
+        lambdaVertexOffset = 0;
+        lambdaLastFormat = null;
+        
+        vertexPackingList.forEach((pipeline, vertexCount) -> 
         {
-            vertexOffset = 0;
-            lastFormat = pipeline.piplineVertexFormat();
-            setupAttributes(lastFormat, bufferOffset);
-        }
-        // Always necessary to rebind attributes in solid because calls to accept are interleaved with calls to other buffers
-        // Not needed in translucent because all pipelines in buffer are rendered before moving to next buffer.
-        else if(isSolidLayer)
-            setupAttributes(lastFormat, bufferOffset);
+            if(pipeline.piplineVertexFormat() != lambdaLastFormat)
+            {
+                lambdaVertexOffset = 0;
+                lambdaLastFormat = pipeline.piplineVertexFormat();
+            }
+            
+            final int bufferOffset = lambdaBufferOffset;
+            final int vertexOffset = lambdaVertexOffset;
+            
+            consumer.accept(new IDrawableBufferDelegate()
+            {
+                @Override
+                public int bufferId()
+                {
+                    return glBufferId;
+                }
+
+                @Override
+                public RenderPipeline getPipeline()
+                {
+                    return pipeline;
+                }
+
+                @Override
+                public void bind()
+                {
+                    OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, bufferId());
+                    setupAttributes(pipeline.piplineVertexFormat(), bufferOffset);
+                }
+
+                @Override
+                public void draw()
+                {
+                    OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, vertexOffset, vertexCount);
+                }
+                
+            }); 
+            
+            lambdaVertexOffset += vertexCount;
+            lambdaBufferOffset += vertexCount * lambdaLastFormat.stride;
+        });
         
         
-        OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, vertexOffset, vertexCount);
-        
-        vertexOffset += vertexCount;
-        bufferOffset += vertexCount * lastFormat.stride;
     }
+    
+    //TODO: remove
+//    @SuppressWarnings("null")
+//    @Override
+//    public final void accept(RenderPipeline pipeline, int vertexCount)
+//    {
+//        pipeline.activate(isSolidLayer);
+//        
+//        if(pipeline.piplineVertexFormat() != lastFormat)
+//        {
+//            vertexOffset = 0;
+//            lastFormat = pipeline.piplineVertexFormat();
+//            setupAttributes(lastFormat, bufferOffset);
+//        }
+//        
+//        // Always necessary to rebind attributes in solid because calls to accept are interleaved with calls to other buffers
+//        // Not needed in translucent because all pipelines in buffer are rendered before moving to next buffer.
+//        else if(isSolidLayer)
+//            setupAttributes(lastFormat, bufferOffset);
+//        
+//        
+//        OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, vertexOffset, vertexCount);
+//        
+//        vertexOffset += vertexCount;
+//        bufferOffset += vertexCount * lastFormat.stride;
+//    }
     
     private void setupAttributes(PipelineVertexFormat format, int bufferOffset)
     {

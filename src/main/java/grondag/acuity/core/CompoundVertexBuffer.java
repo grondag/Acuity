@@ -1,8 +1,10 @@
 package grondag.acuity.core;
 
 import java.nio.ByteBuffer;
+import java.util.function.Consumer;
 
 import grondag.acuity.Acuity;
+import grondag.acuity.buffering.IDrawableBufferDelegate;
 import grondag.acuity.buffering.IDrawableChunk;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
@@ -107,24 +109,10 @@ public class CompoundVertexBuffer extends VertexBuffer implements IDrawableChunk
     }
     
     @Override
-    public final void prepareSolidRender()
+    public final void prepareSolidRender(Consumer<IDrawableBufferDelegate> consumer)
     {
         checkInner();
-        inner.prepareSolidRender();
-    }
-    
-    @Override
-    public VertexPackingList packingList()
-    {
-        checkInner();
-        return inner.isReady() ? inner.packingList() : DummyPackingList.INSTANCE;
-    }
-    
-    @Override
-    public final void renderSolidNext()
-    {
-        // note no call to checkInner() cuz render is stateful, don't want to switch after prep
-        inner.renderSolidNext();
+        inner.prepareSolidRender(consumer);
     }
 
     @Override

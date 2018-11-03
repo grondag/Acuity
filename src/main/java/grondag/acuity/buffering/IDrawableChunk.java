@@ -1,5 +1,7 @@
 package grondag.acuity.buffering;
 
+import java.util.function.Consumer;
+
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import grondag.acuity.core.VertexPackingList;
 
@@ -26,9 +28,6 @@ import grondag.acuity.core.VertexPackingList;
  */
 public interface IDrawableChunk
 {
-
-    VertexPackingList packingList();
-
     int drawCount();
 
     int quadCount();
@@ -39,8 +38,11 @@ public interface IDrawableChunk
     
     public static interface Solid extends IDrawableChunk
     {
-        void prepareSolidRender();
-        void renderSolidNext();
+        /**
+         * Prepares for iteration and handles any internal housekeeping.
+         * Called each frame from client thread before any call to {@link #renderSolidNext()}.
+         */
+        void prepareSolidRender(Consumer<IDrawableBufferDelegate> consumer);
     }
     
     public static interface Translucent extends IDrawableChunk

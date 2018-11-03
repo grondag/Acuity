@@ -11,6 +11,7 @@ import grondag.acuity.Acuity;
 import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.IAcuityListener;
 import grondag.acuity.api.PipelineManager;
+import grondag.acuity.buffering.IDrawableBufferDelegate;
 import grondag.acuity.buffering.IDrawableChunk;
 import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.opengl.OpenGlHelperExt;
@@ -40,12 +41,12 @@ public class AbstractPipelinedRenderList implements IAcuityListener
      * Null values mean that pipeline isn't part of the render cube.<br>
      * Non-null values are lists of buffer in that cube with the given pipeline.<br>
      */
-    private final Long2ObjectOpenHashMap<ObjectArrayList<IDrawableChunk>[]> solidCubes = new Long2ObjectOpenHashMap<>();
+    private final Long2ObjectOpenHashMap<ObjectArrayList<IDrawableBufferDelegate>[]> solidCubes = new Long2ObjectOpenHashMap<>();
     
     /**
      * Cache and reuse cube data stuctures.
      */
-    private final ArrayDeque<ObjectArrayList<IDrawableChunk>[]> cubeStore = new ArrayDeque<>();
+    private final ArrayDeque<ObjectArrayList<IDrawableBufferDelegate>[]> cubeStore = new ArrayDeque<>();
     
     /**
      * Will hold the modelViewMatrix that was in GL context before first call to block render layer this pass.
@@ -86,16 +87,16 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     }
     
     @SuppressWarnings("unchecked")
-    private ObjectArrayList<IDrawableChunk>[] makeCube()
+    private ObjectArrayList<IDrawableBufferDelegate>[] makeCube()
     {
-        ObjectArrayList<IDrawableChunk>[] result = cubeStore.poll();
+        ObjectArrayList<IDrawableBufferDelegate>[] result = cubeStore.poll();
         if(result == null)
         {
             final int size = PipelineManager.INSTANCE.pipelineCount();
             result = new ObjectArrayList[size];
             for(int i = 0; i < size; i++)
             {
-                result[i] = new ObjectArrayList<IDrawableChunk>();
+                result[i] = new ObjectArrayList<IDrawableBufferDelegate>();
             }
         }
         return result;
@@ -105,7 +106,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     {
         final long cubeKey = RenderCube.getPackedOrigin(renderChunkIn.getPosition());
         
-        ObjectArrayList<IDrawableChunk>[] buffers = solidCubes.get(cubeKey);
+        ObjectArrayList<IDrawableBufferDelegate>[] buffers = solidCubes.get(cubeKey);
         if(buffers == null)
         {
             buffers = makeCube();
@@ -114,11 +115,10 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         addSolidChunkToBufferArray(renderChunkIn, buffers);
     }
     
-    private void addSolidChunkToBufferArray(RenderChunk renderChunkIn, ObjectArrayList<IDrawableChunk>[] buffers)
+    private void addSolidChunkToBufferArray(RenderChunk renderChunkIn, ObjectArrayList<IDrawableBufferDelegate>[] buffers)
     {
         final IDrawableChunk.Solid vertexbuffer = ((IRenderChunk)renderChunkIn).getSolidDrawable();
-        vertexbuffer.prepareSolidRender();
-        vertexbuffer.packingList().forEachPipeline(p -> buffers[p.getIndex()].add(vertexbuffer));
+        vertexbuffer.prepareSolidRender(d -> buffers[d.getPipeline().getIndex()].add(d));
     }
     
     public void renderChunkLayer(BlockRenderLayer layer)
@@ -221,10 +221,10 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         
         preRenderSetup();
         
-        ObjectIterator<Entry<ObjectArrayList<IDrawableChunk>[]>> it = solidCubes.long2ObjectEntrySet().fastIterator();
+        ObjectIterator<Entry<ObjectArrayList<IDrawableBufferDelegate>[]>> it = solidCubes.long2ObjectEntrySet().fastIterator();
         while(it.hasNext())
         {
-            Entry<ObjectArrayList<IDrawableChunk>[]> e = it.next();
+            Entry<ObjectArrayList<IDrawableBufferDelegate>[]> e = it.next();
             updateViewMatrix(e.getLongKey());
             renderSolidArray(e.getValue());
         }
@@ -233,18 +233,29 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         postRenderCleanup();
     }
     
-    private void renderSolidArray(ObjectArrayList<IDrawableChunk>[] array)
+    private void renderSolidArray(ObjectArrayList<IDrawableBufferDelegate>[] array)
     {
-        for(ObjectArrayList<IDrawableChunk> list : array)
+        for(ObjectArrayList<IDrawableBufferDelegate> list : array)
             renderSolidList(list);
         cubeStore.offer(array);
     }
     
-    private void renderSolidList(ObjectArrayList<IDrawableChunk> list)
+    private void renderSolidList(ObjectArrayList<IDrawableBufferDelegate> list)
     {
         if(list.isEmpty())
             return;
-        list.forEach(b -> ((IDrawableChunk.Solid)b).renderSolidNext());
+        
+        list.get(0).getPipeline().activate(true);
+        
+        //TODO: group and draw by buffer
+       
+        
+        list.forEach(b -> 
+        {
+            b.bind();
+            b.draw();
+        });
+        
         list.clear();
     }
     

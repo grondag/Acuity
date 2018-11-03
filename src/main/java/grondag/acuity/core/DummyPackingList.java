@@ -35,17 +35,4 @@ public class DummyPackingList extends VertexPackingList
     {
         throw new UnsupportedOperationException();
     }
-
-    @Override
-    public void reset()
-    {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void renderNext(VertexPackingConsumer consumer)
-    {
-        throw new UnsupportedOperationException();
-    }
-
 }
