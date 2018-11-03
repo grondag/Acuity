@@ -87,7 +87,7 @@ public enum PipelineVertexFormat
     public final int layerIndex;
     
     public final int attributeCount;
-    protected final int stride;
+    public final int stride;
     
     private final PipelineVertextFormatElement [] elements;
     

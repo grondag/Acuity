@@ -6,7 +6,7 @@ import java.util.function.Consumer;
 import grondag.acuity.Acuity;
 import grondag.acuity.buffering.IDrawableBufferDelegate;
 import grondag.acuity.buffering.IDrawableChunk;
-import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
+import grondag.acuity.buffering.IUploadableChunk;
 import it.unimi.dsi.fastutil.objects.ObjectArrayFIFOQueue;
 import net.minecraft.client.renderer.vertex.VertexBuffer;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -84,10 +84,10 @@ public class CompoundVertexBuffer extends VertexBuffer implements IDrawableChunk
 //    private static int maxSize = 0;
     
     @Override
-    public final void upload(ExpandableByteBuffer uploadBuffer, VertexPackingList packing)
+    public final void upload(IUploadableChunk uploadBuffer)
     {
         VertexBufferInner next = VertexBufferInner.claim();
-        next.upload(uploadBuffer, packing);
+        next.upload(uploadBuffer);
         nextInner.enqueue(next);
     }
     

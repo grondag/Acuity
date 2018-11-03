@@ -2,9 +2,6 @@ package grondag.acuity.buffering;
 
 import java.util.function.Consumer;
 
-import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
-import grondag.acuity.core.VertexPackingList;
-
 /**
  * Plays same role as VertexBuffer in RenderChunk but implementation
  * is much different.<p>
@@ -32,9 +29,12 @@ public interface IDrawableChunk
 
     int quadCount();
 
+    /**
+     * Called when buffer content is no longer current and will not be rendered.
+     */
     void clear();
 
-    void upload(ExpandableByteBuffer left, VertexPackingList right);
+    void upload(IUploadableChunk payload);
     
     public static interface Solid extends IDrawableChunk
     {

@@ -15,6 +15,7 @@ import grondag.acuity.Configurator;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.buffering.IDrawableBufferDelegate;
+import grondag.acuity.buffering.IUploadableChunk;
 import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
 import grondag.acuity.opengl.Fence;
 import grondag.acuity.opengl.OpenGlFenceExt;
@@ -140,17 +141,19 @@ public class VertexBufferInner
         return !(isNew || awaitingFence);
     }
     
-    public final void upload(ExpandableByteBuffer uploadBuffer, VertexPackingList packing)
+    public final void upload(IUploadableChunk upload)
     {
         assert this.isNew;
         assert !this.awaitingFence; 
         assert this.loadingBuffer == null;
         
-        this.vertexPackingList = packing;
+        IUploadableChunk.Temporary temp = (IUploadableChunk.Temporary)upload;
+        
+        this.vertexPackingList = temp.packingList;
         this.vaoBindingFlags = 0;
         
-        this.loadingBuffer = uploadBuffer;
-        ByteBuffer byteBuffer = uploadBuffer.byteBuffer();
+        this.loadingBuffer = temp.byteBuffer;
+        ByteBuffer byteBuffer = temp.byteBuffer.byteBuffer();
         byteBuffer.position(0);
 //            int newMax = Math.max(maxSize, buffer.limit());
 //            if(newMax > maxSize)

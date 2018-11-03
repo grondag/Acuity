@@ -2,6 +2,7 @@ package grondag.acuity.buffering;
 
 import grondag.acuity.api.RenderPipeline;
 
+//TODO: remove when WIP done
 public interface IDrawableBufferDelegate
 {
     /**

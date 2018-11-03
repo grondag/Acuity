@@ -4,12 +4,10 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
-import org.apache.commons.lang3.tuple.Pair;
-
 import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.buffering.IDrawableChunk;
-import grondag.acuity.core.BufferStore.ExpandableByteBuffer;
+import grondag.acuity.buffering.IUploadableChunk;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -24,7 +22,7 @@ public class CompoundBufferBuilder extends BufferBuilder
      * Holds vertex data and packing data for next upload if we have it.
      * Buffer is obtained from BufferStore and will be released back to store by upload.
      */
-    private AtomicReference<Pair<ExpandableByteBuffer, VertexPackingList>>  uploadState  = new AtomicReference<>();
+    private AtomicReference<IUploadableChunk>  uploadState  = new AtomicReference<>();
     
     /**
      * During drawing collects vertex info. Should be null other times.
@@ -180,7 +178,7 @@ public class CompoundBufferBuilder extends BufferBuilder
                 switch(this.layer)
                 {
                     case SOLID:
-                        this.uploadState.getAndSet(collectors.packUpload());
+                        this.uploadState.getAndSet(collectors.packUploadSolid());
 //                        Pair<ExpandableByteBuffer, VertexPackingList> pair = collectors.packUpload();
 //                        if(this.uploadState.getAndSet(pair) != null)
 //                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Solid) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
@@ -190,7 +188,7 @@ public class CompoundBufferBuilder extends BufferBuilder
                         return;
                     
                     case TRANSLUCENT:
-                        this.uploadState.getAndSet(collectors.packUploadSorted());
+                        this.uploadState.getAndSet(collectors.packUploadTranslucent());
 //                        Pair<ExpandableByteBuffer, VertexPackingList> pair = collectors.packUploadSorted();
 //                        if(this.uploadState.getAndSet(pair) != null)
 //                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Translucent) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
@@ -228,14 +226,14 @@ public class CompoundBufferBuilder extends BufferBuilder
     {   
         assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
         
-        Pair<ExpandableByteBuffer, VertexPackingList> pair = this.uploadState.getAndSet(null);
-        if(pair == null)
+        IUploadableChunk uploadBuffer = this.uploadState.getAndSet(null);
+        if(uploadBuffer == null)
         {
 //            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Ignoring upload request due to missing upload state in Compound Vertex Buffer (" + layer.toString() + ") - must have been loaded earlier");
             return;
         }
 
-        target.upload(pair.getLeft(), pair.getRight());
+        target.upload(uploadBuffer);
     }
     
 //    public static final ConcurrentHashMap<BlockPos, Long> SORTS = new ConcurrentHashMap<>();
