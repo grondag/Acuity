@@ -10,8 +10,7 @@ import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
-//UGLY: name sucks
-public class DrawableBufferDelegate
+public class SolidDrawableChunkDelegate
 {
     private static final int VAO_UNTESTED = -1;
     private static final int VAO_DISABLED = -2;
@@ -25,7 +24,7 @@ public class DrawableBufferDelegate
      */
     int vaoBufferId = VAO_UNTESTED;
     
-    public DrawableBufferDelegate(MappedBuffer buffer, RenderPipeline pipeline, int vertexOffset, int vertexCount)
+    public SolidDrawableChunkDelegate(MappedBuffer buffer, RenderPipeline pipeline, int vertexOffset, int vertexCount)
     {
         this.buffer = buffer;
         this.pipeline = pipeline;

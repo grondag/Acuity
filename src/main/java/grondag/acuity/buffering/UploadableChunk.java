@@ -31,7 +31,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
     
     public static class Solid extends UploadableChunk<DrawableChunk.Solid>
     {
-        ObjectArrayList<DrawableBufferDelegate> delegates = new ObjectArrayList<>();
+        ObjectArrayList<SolidDrawableChunkDelegate> delegates = new ObjectArrayList<>();
         int intOffset = 0;
         
         public Solid(VertexPackingList packing, VertexCollectorList collectorList)
@@ -47,7 +47,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                     final int intLength = byteCount / 4;
                     intBuffer.put(collectorList.getIfExists(pipeline.getIndex()).rawData(), intOffset, intLength);
                     intOffset += intLength; 
-                    delegates.add(new DrawableBufferDelegate(buffer, pipeline, byteOffset / stride, byteCount / stride));
+                    delegates.add(new SolidDrawableChunkDelegate(buffer, pipeline, byteOffset / stride, byteCount / stride));
                 });
             });
         }

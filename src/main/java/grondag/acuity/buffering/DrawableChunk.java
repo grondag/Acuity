@@ -59,9 +59,9 @@ public abstract class DrawableChunk
     
     public static class Solid extends DrawableChunk
     {
-        final ObjectArrayList<DrawableBufferDelegate> delegates;
+        final ObjectArrayList<SolidDrawableChunkDelegate> delegates;
         
-        public Solid(ObjectArrayList<DrawableBufferDelegate> delegates)
+        public Solid(ObjectArrayList<SolidDrawableChunkDelegate> delegates)
         {
             this.delegates = delegates;
         }
@@ -70,7 +70,7 @@ public abstract class DrawableChunk
          * Prepares for iteration and handles any internal housekeeping.
          * Called each frame from client thread before any call to {@link #renderSolidNext()}.
          */
-        public void prepareSolidRender(Consumer<DrawableBufferDelegate> consumer)
+        public void prepareSolidRender(Consumer<SolidDrawableChunkDelegate> consumer)
         {
             delegates.forEach(consumer);
         }
