@@ -2,6 +2,7 @@ package grondag.acuity.core;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayDeque;
+import java.util.Comparator;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -241,21 +242,40 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         cubeStore.offer(array);
     }
     
+    private static final Comparator<SolidDrawableChunkDelegate> BUFFER_SORT = new Comparator<SolidDrawableChunkDelegate>()
+    {
+        @SuppressWarnings("null")
+        @Override
+        public int compare(SolidDrawableChunkDelegate o1, SolidDrawableChunkDelegate o2)
+        {
+            return Integer.compare(o1.bufferId(), o2.bufferId());
+        }
+    };
+    
+    /**
+     * Renders solid chunks in vertex buffer order to minimize bind calls.
+     * Assumes all chunks in the list share the same pipeline.
+     */
     private void renderSolidList(ObjectArrayList<SolidDrawableChunkDelegate> list)
     {
         if(list.isEmpty())
             return;
         
+        list.sort(BUFFER_SORT);
+        
         list.get(0).getPipeline().activate(true);
+
+        int lastBufferId = -1;
         
-        //TODO: group and draw by buffer
-       
-        
-        list.forEach(b -> 
+        for(SolidDrawableChunkDelegate b : list)
         {
-            b.bind();
+            if(b.bufferId() != lastBufferId)
+            {
+                lastBufferId = b.bufferId();
+                b.bind();
+            }
             b.draw();
-        });
+        }
         
         list.clear();
     }

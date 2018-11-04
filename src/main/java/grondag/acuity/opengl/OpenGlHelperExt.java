@@ -972,7 +972,7 @@ public class OpenGlHelperExt
         nioCopyFromArray.invokeExact((Object)elements, nioFloatArrayBaseOffset, 0l, bufferAddress, 64l);
     }
     
-    //TODO: make fast
+    //PERF: make fast
     public static void glBufferData(int target, int size, int usage)
     {
         if (OpenGlHelper.arbVbo)
