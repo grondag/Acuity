@@ -29,7 +29,7 @@ public class PipelineVertextFormatElement extends VertexFormatElement
      */
     public static final PipelineVertextFormatElement LIGHTMAPS_4UB = new PipelineVertextFormatElement(2, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_lightmap", false);
 
-    //FIXME: index in for generic attributes misaligned now due to mismatched usage in vanilla vs extended formats 
+    //UGLY: index in for generic attributes misaligned now due to mismatched usage in vanilla vs extended formats 
     // (doesn't currently matter)
     public static final PipelineVertextFormatElement NORMAL_AO_4UB = new PipelineVertextFormatElement(0, VertexFormatElement.EnumType.UBYTE, VertexFormatElement.EnumUsage.GENERIC, 4, "in_normal_ao", false);
 
