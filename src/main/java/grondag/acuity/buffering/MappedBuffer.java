@@ -5,7 +5,6 @@ import java.nio.ByteBuffer;
 import javax.annotation.Nullable;
 
 import org.lwjgl.opengl.APPLEFlushBufferRange;
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL30;
 
@@ -37,6 +36,11 @@ public class MappedBuffer
     public ByteBuffer byteBuffer()
     {
         return mapped;
+    }
+    
+    private void map()
+    {
+        mapped = OpenGlHelperExt.mapBuffer(mapped, CAPACITY_BYTES);
     }
     
     /** Called for buffers that are being reused.  Should already have been orphaned earlier.*/
@@ -96,32 +100,10 @@ public class MappedBuffer
     }
 
     /** assumes buffer is bound */
-    private void map()
-    {
-        if(OpenGlHelperExt.appleMapping)
-        {
-            //PERF: make this fast
-            mapped = GL15.glMapBuffer(OpenGlHelper.GL_ARRAY_BUFFER, GL15.GL_WRITE_ONLY, CAPACITY_BYTES, mapped);
-        }
-        else
-        {
-            //PERF: make this fast
-            mapped = GL30.glMapBufferRange(OpenGlHelper.GL_ARRAY_BUFFER, 0, CAPACITY_BYTES, 
-                    GL30.GL_MAP_FLUSH_EXPLICIT_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_WRITE_BIT,
-                    mapped);
-        }
-    }
-    
-    /** assumes buffer is bound */
     private void orphan()
     {
         OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, CAPACITY_BYTES, GL15.GL_STATIC_DRAW);
-        if(OpenGlHelperExt.appleMapping)
-        {
-            //PERF: make this fast
-            APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL11.GL_FALSE);
-            APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_FLUSHING_UNMAP_APPLE, GL11.GL_FALSE);
-        }
+        OpenGlHelperExt.handleAppleMappedBuffer();
     }
     
     /**

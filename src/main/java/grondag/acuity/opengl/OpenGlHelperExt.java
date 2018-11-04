@@ -17,6 +17,7 @@ import org.apache.commons.io.IOUtils;
 import org.lwjgl.BufferChecks;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.MemoryUtil;
+import org.lwjgl.opengl.APPLEFlushBufferRange;
 import org.lwjgl.opengl.APPLEVertexArrayObject;
 import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.ARBVertexBufferObject;
@@ -982,6 +983,41 @@ public class OpenGlHelperExt
         else
         {
             GL15.glBufferData(target, size, usage);
+        }
+    }
+
+    /** 
+     * Assumes buffer is bound and starting offset is 0. 
+     * Maps whole buffer. (Size should be size of buffer.)
+     */
+    public static ByteBuffer mapBuffer(@Nullable ByteBuffer priorMapped, int bufferSize)
+    {
+        if(appleMapping)
+        {
+            //PERF: make this fast
+            return GL15.glMapBuffer(OpenGlHelper.GL_ARRAY_BUFFER, GL15.GL_WRITE_ONLY, bufferSize, priorMapped);
+        }
+        else
+        {
+            //PERF: make this fast
+            return GL30.glMapBufferRange(OpenGlHelper.GL_ARRAY_BUFFER, 0, bufferSize, 
+                    GL30.GL_MAP_FLUSH_EXPLICIT_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_WRITE_BIT,
+                    priorMapped);
+        }
+    }
+
+    /**
+     * Call on buffers that will be mapped and should be unsynchronized / explicitly flushed.
+     * Has no effect with non-apple drivers but is essential for mapped buffers with Apple drivers
+     * that do not support standard buffer range mapping.
+     */
+    public static void handleAppleMappedBuffer()
+    {
+        if(appleMapping)
+        {
+            //PERF: make this fast
+            APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL11.GL_FALSE);
+            APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_FLUSHING_UNMAP_APPLE, GL11.GL_FALSE);
         }
     }
 }
