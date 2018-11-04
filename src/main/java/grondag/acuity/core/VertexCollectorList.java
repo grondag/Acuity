@@ -9,7 +9,7 @@ import javax.annotation.Nullable;
 
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
-import grondag.acuity.buffering.IUploadableChunk;
+import grondag.acuity.buffering.UploadableChunk;
 import net.minecraft.util.math.MathHelper;
 
 public class VertexCollectorList
@@ -31,21 +31,6 @@ public class VertexCollectorList
     {
         list.clear();
         lists.offer(list);
-    }
-
-    /**
-     * Will return null if packing is empty;
-     * If isSolid is false, means is translucent and order must be preserved.  Affects buffer grouping.
-     */
-    private static final @Nullable IUploadableChunk packUpload(
-            final VertexPackingList packing, 
-            final VertexCollectorList collectorList,
-            final boolean isSolid)
-    {
-        if(packing.size() == 0)
-            return null;
-        
-        return new IUploadableChunk.Temporary(packing, collectorList, isSolid);
     }
 
     private static final Comparator<VertexCollector> vertexCollectionComparator = new Comparator<VertexCollector>() 
@@ -217,7 +202,7 @@ public class VertexCollectorList
         }
     }
 
-    public final @Nullable IUploadableChunk packUploadSolid()
+    public final @Nullable UploadableChunk.Solid packUploadSolid()
     {
         VertexPackingList packing = new VertexPackingList();
 
@@ -230,12 +215,14 @@ public class VertexCollectorList
                 packing.addPacking(vertexCollector.pipeline(), vertexCount);
         });
 
-        return packUpload(packing, this, true);
+        if(packing.size() == 0)
+            return null;
+        
+        return new UploadableChunk.Solid(packing, this);
     }
 
-    public final @Nullable IUploadableChunk packUploadTranslucent()
+    public final @Nullable UploadableChunk.Translucent packUploadTranslucent()
     {
-        
         final VertexPackingList packing = new VertexPackingList();
 
         final PriorityQueue<VertexCollector> sorter = sorters.get();
@@ -280,6 +267,6 @@ public class VertexCollectorList
             packing.addPacking(first.pipeline(), 4 * first.unpackUntilDistance(Double.MIN_VALUE));
         }
 
-        return packUpload(packing, this, false);
+        return packing.size() == 0 ? null : new UploadableChunk.Translucent(packing, this);
     }
 }

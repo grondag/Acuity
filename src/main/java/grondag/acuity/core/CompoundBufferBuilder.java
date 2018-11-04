@@ -6,8 +6,8 @@ import javax.annotation.Nullable;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
-import grondag.acuity.buffering.IDrawableChunk;
-import grondag.acuity.buffering.IUploadableChunk;
+import grondag.acuity.buffering.DrawableChunk;
+import grondag.acuity.buffering.UploadableChunk;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
@@ -22,7 +22,7 @@ public class CompoundBufferBuilder extends BufferBuilder
      * Holds vertex data and packing data for next upload if we have it.
      * Buffer is obtained from BufferStore and will be released back to store by upload.
      */
-    private AtomicReference<IUploadableChunk>  uploadState  = new AtomicReference<>();
+    private AtomicReference<UploadableChunk<?>>  uploadState  = new AtomicReference<>();
     
     /**
      * During drawing collects vertex info. Should be null other times.
@@ -178,25 +178,27 @@ public class CompoundBufferBuilder extends BufferBuilder
                 switch(this.layer)
                 {
                     case SOLID:
-                        this.uploadState.getAndSet(collectors.packUploadSolid());
-//                        Pair<ExpandableByteBuffer, VertexPackingList> pair = collectors.packUpload();
-//                        if(this.uploadState.getAndSet(pair) != null)
-//                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Solid) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
+                    {
+                        UploadableChunk<?> abandoned = this.uploadState.getAndSet(collectors.packUploadSolid());
+                        if(abandoned != null)
+                            abandoned.cancel();
                         
                         VertexCollectorList.release(collectors);
                         collectors = null;
                         return;
+                    }
                     
                     case TRANSLUCENT:
-                        this.uploadState.getAndSet(collectors.packUploadTranslucent());
-//                        Pair<ExpandableByteBuffer, VertexPackingList> pair = collectors.packUploadSorted();
-//                        if(this.uploadState.getAndSet(pair) != null)
-//                            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Discarding & replacing upload state (Translucent) in Compound Vertex Buffer - probably because rebuild overtook upload queue");
+                    {
+                        UploadableChunk<?> abandoned = this.uploadState.getAndSet(collectors.packUploadTranslucent());
+                        if(abandoned != null)
+                            abandoned.cancel();
                         
                         // can't release collector list because retained in vertex state
                         // but remove reference to prevent mishap
                         collectors = null;
                         return;
+                    }
                     
                     case CUTOUT:
                     case CUTOUT_MIPPED:
@@ -225,11 +227,11 @@ public class CompoundBufferBuilder extends BufferBuilder
     /**
      * Must be called on thread - handles any portion of GL buffering that must be done in context.
      */
-    public @Nullable IDrawableChunk produceDrawable()
+    public @Nullable DrawableChunk produceDrawable()
     {   
         assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
         
-        IUploadableChunk uploadBuffer = this.uploadState.getAndSet(null);
+        UploadableChunk<?> uploadBuffer = this.uploadState.getAndSet(null);
         if(uploadBuffer == null)
         {
 //            System.out.println(Integer.toHexString(CompoundBufferBuilder.this.hashCode()) + " Ignoring upload request due to missing upload state in Compound Vertex Buffer (" + layer.toString() + ") - must have been loaded earlier");

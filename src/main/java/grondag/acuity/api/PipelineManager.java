@@ -11,6 +11,7 @@ import org.lwjgl.opengl.GL13;
 import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Configurator;
+import grondag.acuity.buffering.MappedBufferStore;
 import grondag.acuity.core.PipelineShaderManager;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.minecraft.client.Minecraft;
@@ -219,6 +220,8 @@ public final class PipelineManager implements IPipelineManager
     @SuppressWarnings("null")
     public void onRenderTick(RenderTickEvent event)
     {
+        MappedBufferStore.prepareEmpties();
+        
         didUpdatePipelinesThisFrame = false;
 
         Entity entity = Minecraft.getMinecraft().getRenderViewEntity();

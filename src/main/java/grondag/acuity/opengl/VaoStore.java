@@ -2,29 +2,29 @@ package grondag.acuity.opengl;
 
 import java.nio.IntBuffer;
 
-import org.lwjgl.opengl.ARBVertexBufferObject;
-import org.lwjgl.opengl.GL15;
-
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 import net.minecraft.client.renderer.GLAllocation;
-import net.minecraft.client.renderer.OpenGlHelper;
 
-/**
- * Buffer gen is incredibly slow on some Windows/NVidia systems and default MC behavior
- */
-public class GLBufferStore
+public class VaoStore
 {
     private static final IntArrayFIFOQueue queue = new IntArrayFIFOQueue();
     private static final IntBuffer buff = GLAllocation.createDirectIntBuffer(128);
     
-    public static int claimBuffer()
+    public static int[] claimVertexArrays(int howMany)
+    {
+        int[] result = new int[howMany];
+        for(int i = 0; i < howMany; i++)
+        {
+            result[i] = claimVertexArray();
+        }
+        return result;
+    }
+    
+    public static int claimVertexArray()
     {
         if(queue.isEmpty())
         {
-            if(OpenGlHelper.arbVbo)
-                ARBVertexBufferObject.glGenBuffersARB(buff);
-            else
-                GL15.glGenBuffers(buff);
+            OpenGlHelperExt.glGenVertexArrays(buff);
             
             for(int i = 0; i < 128; i++)
                 queue.enqueue(buff.get(i));
@@ -35,9 +35,15 @@ public class GLBufferStore
         return queue.dequeueInt();
     }
     
-    public static void releaseBuffer(int buffer)
+    public static void releaseVertexArray(int vaoBufferId)
     {
-        queue.enqueue(buffer);
+        queue.enqueue(vaoBufferId);
+    }
+    
+    public static void releaseVertexArrays(int[] vaoBufferId)
+    {
+        for(int b : vaoBufferId)
+            releaseVertexArray(b);
     }
     
     // should not be needed - Gl resources are destroyed when the context is destroyed

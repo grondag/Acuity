@@ -122,6 +122,8 @@ public class OpenGlHelperExt
     @SuppressWarnings("null")
     static private MethodHandle fastMatrixBufferCopyHandler;
     
+    public static boolean appleMapping = false;
+    
     /**
      *  call after known that GL context is initialized
      */
@@ -132,6 +134,18 @@ public class OpenGlHelperExt
         try
         {
             ContextCapabilities caps = GLContext.getCapabilities();
+            
+            appleMapping = caps.GL_APPLE_flush_buffer_range;
+            if(caps.OpenGL30 || caps.GL_ARB_map_buffer_range)
+            {
+                appleMapping = false;
+            }
+            else if(!appleMapping)
+            {
+                //FIXME: haha
+                throw new UnsupportedOperationException("Acuity done be borked! Ain't got no mapped buffer thingies.");
+            }
+            
             if(caps.OpenGL30)
             {
                 Field pointer = ContextCapabilities.class.getDeclaredField("glBindVertexArray");
@@ -956,5 +970,18 @@ public class OpenGlHelperExt
     public static final void fastMatrix4fBufferCopyStraight(float[] elements, long bufferAddress) throws Throwable
     {
         nioCopyFromArray.invokeExact((Object)elements, nioFloatArrayBaseOffset, 0l, bufferAddress, 64l);
+    }
+    
+    //TODO: make fast
+    public static void glBufferData(int target, int size, int usage)
+    {
+        if (OpenGlHelper.arbVbo)
+        {
+            ARBVertexBufferObject.glBufferDataARB(target, size, usage);
+        }
+        else
+        {
+            GL15.glBufferData(target, size, usage);
+        }
     }
 }

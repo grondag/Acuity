@@ -6,8 +6,8 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import grondag.acuity.buffering.IDrawableChunk.Solid;
-import grondag.acuity.buffering.IDrawableChunk.Translucent;
+import grondag.acuity.buffering.DrawableChunk.Solid;
+import grondag.acuity.buffering.DrawableChunk.Translucent;
 import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
@@ -62,8 +62,16 @@ public class MixinRenderChunk implements IRenderChunk
     @Override
     public void releaseDrawables()
     {
-        //TODO: release vs dereference
-        solidDrawable = null;
-        translucentDrawable = null;
+        if(solidDrawable != null)
+        {
+            solidDrawable.clear();
+            solidDrawable = null;
+        }
+        
+        if(translucentDrawable != null)
+        {
+            translucentDrawable.clear();
+            translucentDrawable = null;
+        }
     }
 }

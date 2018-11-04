@@ -19,12 +19,12 @@ public abstract class MixinOpenGlHelper
     @Overwrite
     public static int glGenBuffers()
     {
-        return GLBufferStore.glGenBuffers();
+        return GLBufferStore.claimBuffer();
     }
     
     @Overwrite
     public static void glDeleteBuffers(int buffer)
     {
-        GLBufferStore.glDeleteBuffers(buffer);
+        GLBufferStore.releaseBuffer(buffer);
     }
 }
