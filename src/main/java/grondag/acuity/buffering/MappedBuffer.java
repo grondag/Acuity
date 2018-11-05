@@ -4,11 +4,10 @@ import java.nio.ByteBuffer;
 
 import javax.annotation.Nullable;
 
-import org.lwjgl.opengl.APPLEFlushBufferRange;
 import org.lwjgl.opengl.GL15;
-import org.lwjgl.opengl.GL30;
 
 import grondag.acuity.opengl.OpenGlHelperExt;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
 
 public class MappedBuffer
@@ -40,7 +39,7 @@ public class MappedBuffer
     
     private void map()
     {
-        mapped = OpenGlHelperExt.mapBuffer(mapped, CAPACITY_BYTES);
+        mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES);
     }
     
     /** Called for buffers that are being reused.  Should already have been orphaned earlier.*/
@@ -114,15 +113,7 @@ public class MappedBuffer
         if(currentDirtyOffset != currentByteOffset)
         {
             bind();
-            if(OpenGlHelperExt.appleMapping)
-            {
-                APPLEFlushBufferRange.glFlushMappedBufferRangeAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, currentDirtyOffset, currentByteOffset - currentDirtyOffset);
-            }
-            else
-            {
-                GL30.glFlushMappedBufferRange(OpenGlHelper.GL_ARRAY_BUFFER, currentDirtyOffset, currentByteOffset - currentDirtyOffset);
-            }
-            GL15.glUnmapBuffer(OpenGlHelper.GL_ARRAY_BUFFER);
+            OpenGlHelperExt.flushAndUnmapBuffer(currentDirtyOffset, currentByteOffset - currentDirtyOffset);
             map();
             currentDirtyOffset = currentByteOffset;
             unbind();
@@ -138,19 +129,27 @@ public class MappedBuffer
         retainCount++;
     }
     
-    public synchronized void release()
+    public void release()
     {
-        retainCount--;
-        if(retainCount == 0)
+        if(Minecraft.getMinecraft().isCallingFromMinecraftThread())
         {
-            currentByteOffset = 0;
-            currentDirtyOffset = 0;
-            retainCount = 0;
-            mapped = null;
-            bind();
-            orphan();
-            unbind();
-            MappedBufferStore.release(this);
+            synchronized(this)
+            {
+                retainCount--;
+                if(retainCount == 0)
+                {
+                    currentByteOffset = 0;
+                    currentDirtyOffset = 0;
+                    retainCount = 0;
+                    mapped = null;
+                    bind();
+                    orphan();
+                    unbind();
+                    MappedBufferStore.release(this);
+                }
+            }
         }
+        else 
+            MappedBufferStore.scheduleRelease(this);
     }
 }

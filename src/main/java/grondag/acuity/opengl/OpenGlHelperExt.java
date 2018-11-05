@@ -123,14 +123,13 @@ public class OpenGlHelperExt
     @SuppressWarnings("null")
     static private MethodHandle fastMatrixBufferCopyHandler;
     
-    public static boolean appleMapping = false;
+    static private final MethodHandles.Lookup lookup = MethodHandles.lookup();
     
     /**
      *  call after known that GL context is initialized
      */
     public static void initialize()
     {
-        final MethodHandles.Lookup lookup = MethodHandles.lookup();
 
         try
         {
@@ -139,12 +138,12 @@ public class OpenGlHelperExt
             appleMapping = caps.GL_APPLE_flush_buffer_range;
             if(caps.OpenGL30 || caps.GL_ARB_map_buffer_range)
             {
+                // prefer standard GL ranged buffer map if available
                 appleMapping = false;
             }
             else if(!appleMapping)
             {
-                //FIXME: haha
-                throw new UnsupportedOperationException("Acuity done be borked! Ain't got no mapped buffer thingies.");
+                asynchBufferMapEnabled = false;
             }
             
             if(caps.OpenGL30)
@@ -489,6 +488,35 @@ public class OpenGlHelperExt
             fastNioCopy = false;
             Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "fastNioCopy"), e);
         }
+        
+        glBufferDataFunctionPointer = functionPointer(OpenGlHelper.arbVbo ? "glBufferDataARB" : "glBufferData");
+        nglBufferData = OpenGlHelper.arbVbo
+                ? nativeMethod(ARBVertexBufferObject.class, "nglBufferDataARB", 
+                        int.class, long.class, long.class, int.class, long.class)
+                : nativeMethod(GL15.class, "nglBufferData", 
+                        int.class, long.class, long.class, int.class, long.class);
+        
+        glmapBufferAsynchFunctionPointer = functionPointer(appleMapping ? "glMapBuffer" : "glMapBufferRange");
+        nglmapBufferAsynch = appleMapping
+                ? nativeMethod(GL15.class, "nglMapBuffer", 
+                        int.class, int.class, long.class, ByteBuffer.class, long.class)
+                : nativeMethod(GL30.class, "nglMapBufferRange", 
+                        int.class, long.class, long.class, int.class, ByteBuffer.class, long.class);
+                
+        glBufferParameteriAPPLEFunctionPointer = functionPointer("glBufferParameteriAPPLE");
+        nglBufferParameteriAPPLE = nativeMethod(APPLEFlushBufferRange.class, "nglBufferParameteriAPPLE", 
+                int.class, int.class, int.class, long.class);
+        
+        glFlushMappedBufferRangeFunctionPointer = functionPointer(appleMapping ? "glFlushMappedBufferRangeAPPLE" : "glFlushMappedBufferRange");
+        nglFlushMappedBufferRange = appleMapping
+                ? nativeMethod(APPLEFlushBufferRange.class, "nglFlushMappedBufferRangeAPPLE", 
+                        int.class, long.class, long.class, long.class)
+                : nativeMethod(GL30.class, "nglFlushMappedBufferRange", 
+                        int.class, long.class, long.class, long.class);
+                
+        glUnmapBufferFunctionPointer = functionPointer("glUnmapBuffer");
+        nglUnmapBuffer = nativeMethod(GL15.class, "nglUnmapBuffer", 
+                int.class, long.class);
     }
     
     public static void glGenVertexArrays(IntBuffer arrays)
@@ -926,31 +954,6 @@ public class OpenGlHelperExt
         return fastNioCopy;
     }
     
-//    /**
-//     * Accessible version of nio Bits method.
-//     * Check {@link #isFastNioCopyEnabled()} before calling 
-//     * or bad things will happen.
-//     */
-//    public static void nioCopyFromArray(Object src, long srcBaseOffset, long srcPos, long dstAddr, long length) throws Throwable
-//    {
-//        nioCopyFromArray.invokeExact(src, srcBaseOffset, srcPos, dstAddr, length);
-//    }
-    
-//    /**
-//     * Accessible version of nio Bits method.
-//     * Check {@link #isFastNioCopyEnabled()} before calling 
-//     * or bad things will happen.
-//     */
-//    public static void nioCopyFromIntArray(Object src, long srcPos, long dstAddr, long length) throws Throwable
-//    {
-//        nioCopyFromIntArray.invokeExact(src, srcPos, dstAddr, length);
-//    }
-    
-//    public static final long nioFloatArrayBaseOffset()
-//    {
-//        return nioFloatArrayBaseOffset;
-//    }
-    
     public static final void fastMatrix4fBufferCopy(float[] elements, long bufferAddress)
     {
         try
@@ -973,8 +976,34 @@ public class OpenGlHelperExt
         nioCopyFromArray.invokeExact((Object)elements, nioFloatArrayBaseOffset, 0l, bufferAddress, 64l);
     }
     
-    //PERF: make fast
+    private static boolean appleMapping = false;
+    private static boolean asynchBufferMapEnabled = true;
+    public static boolean areAsynchMappedBuffersSupported()
+    {
+        return asynchBufferMapEnabled;
+    }
+    
+    static private long glBufferDataFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglBufferData = null;
     public static void glBufferData(int target, int size, int usage)
+    {
+        if(glBufferDataFunctionPointer == -1)
+            glBufferDataSlow(target, size, usage);
+        else
+            try
+            {
+                nglBufferData.invokeExact(target, (long)size, 0L, usage, glBufferDataFunctionPointer);
+            }
+            catch (Throwable e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glBufferData"), e);
+                glBufferDataFunctionPointer = -1;
+                glBufferDataSlow(target, size, usage);
+            }
+    }
+
+    private static void glBufferDataSlow(int target, int size, int usage)
     {
         if (OpenGlHelper.arbVbo)
         {
@@ -985,27 +1014,61 @@ public class OpenGlHelperExt
             GL15.glBufferData(target, size, usage);
         }
     }
-
+    
+    static private long glmapBufferAsynchFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglmapBufferAsynch = null;
     /** 
      * Assumes buffer is bound and starting offset is 0. 
      * Maps whole buffer. (Size should be size of buffer.)
      */
-    public static ByteBuffer mapBuffer(@Nullable ByteBuffer priorMapped, int bufferSize)
+    public static @Nullable ByteBuffer mapBufferAsynch(@Nullable ByteBuffer priorMapped, int bufferSize)
+    {
+        if(glmapBufferAsynchFunctionPointer == -1)
+            return mapBufferAsynchSlow(priorMapped, bufferSize);
+        else
+            try
+            {
+                ByteBuffer result;
+                
+                if(appleMapping)
+                    result = (ByteBuffer) nglmapBufferAsynch.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, GL15.GL_WRITE_ONLY, (long)bufferSize, priorMapped, glmapBufferAsynchFunctionPointer);
+                else
+                    result = (ByteBuffer) nglmapBufferAsynch.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, 0L, (long)bufferSize, 
+                            GL30.GL_MAP_FLUSH_EXPLICIT_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_WRITE_BIT, 
+                            priorMapped, glmapBufferAsynchFunctionPointer);
+                
+                if(result != null)
+                    result.order(ByteOrder.nativeOrder());
+                
+                return result;
+            }
+            catch (Throwable e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "mapBufferAsynch"), e);
+                glmapBufferAsynchFunctionPointer = -1;
+                return mapBufferAsynchSlow(priorMapped, bufferSize);
+            }
+        
+    }
+    
+    private static @Nullable ByteBuffer mapBufferAsynchSlow(@Nullable ByteBuffer priorMapped, int bufferSize)
     {
         if(appleMapping)
         {
-            //PERF: make this fast
             return GL15.glMapBuffer(OpenGlHelper.GL_ARRAY_BUFFER, GL15.GL_WRITE_ONLY, bufferSize, priorMapped);
         }
         else
         {
-            //PERF: make this fast
             return GL30.glMapBufferRange(OpenGlHelper.GL_ARRAY_BUFFER, 0, bufferSize, 
                     GL30.GL_MAP_FLUSH_EXPLICIT_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_WRITE_BIT,
                     priorMapped);
         }
     }
-
+    
+    static private long glBufferParameteriAPPLEFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglBufferParameteriAPPLE = null;
     /**
      * Call on buffers that will be mapped and should be unsynchronized / explicitly flushed.
      * Has no effect with non-apple drivers but is essential for mapped buffers with Apple drivers
@@ -1015,9 +1078,103 @@ public class OpenGlHelperExt
     {
         if(appleMapping)
         {
-            //PERF: make this fast
-            APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL11.GL_FALSE);
-            APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_FLUSHING_UNMAP_APPLE, GL11.GL_FALSE);
+            if(glBufferParameteriAPPLEFunctionPointer == -1)
+                handleAppleMappedBufferSlow();
+            else
+                try
+                {
+                    nglBufferParameteriAPPLE.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL11.GL_FALSE, glBufferParameteriAPPLEFunctionPointer);
+                    nglBufferParameteriAPPLE.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_FLUSHING_UNMAP_APPLE, GL11.GL_FALSE, glBufferParameteriAPPLEFunctionPointer);
+                }
+                catch (Throwable e)
+                {
+                    Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "handleAppleMappedBuffer"), e);
+                    glBufferParameteriAPPLEFunctionPointer = -1;
+                    handleAppleMappedBufferSlow();
+                }
+        }
+    }
+
+    private static void handleAppleMappedBufferSlow()
+    {
+        APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL11.GL_FALSE);
+        APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_FLUSHING_UNMAP_APPLE, GL11.GL_FALSE);
+
+    }
+
+    static private long glFlushMappedBufferRangeFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglFlushMappedBufferRange = null;
+    
+    static private long glUnmapBufferFunctionPointer = -1;
+    @SuppressWarnings("null")
+    static private MethodHandle nglUnmapBuffer = null;
+    
+    public static void flushAndUnmapBuffer(long offset, long length)
+    {
+        if(glFlushMappedBufferRangeFunctionPointer == -1 || glUnmapBufferFunctionPointer == -1)
+        {
+            flushAndUnmapBufferSlow(offset, length);
+        }
+        else 
+            try
+            {
+                nglFlushMappedBufferRange.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, offset, length, glFlushMappedBufferRangeFunctionPointer);
+                @SuppressWarnings("unused")
+                boolean discard = (boolean) nglUnmapBuffer.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, glUnmapBufferFunctionPointer);
+            }
+            catch (Throwable e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "flushAndUnmapBuffer"), e);
+                glFlushMappedBufferRangeFunctionPointer = -1;
+                flushAndUnmapBufferSlow(offset, length);
+            }
+    }
+    
+    private static void flushAndUnmapBufferSlow(long offset, long length)
+    {
+        if(appleMapping)
+        {
+            APPLEFlushBufferRange.glFlushMappedBufferRangeAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, offset, length);
+        }
+        else
+        {
+            GL30.glFlushMappedBufferRange(OpenGlHelper.GL_ARRAY_BUFFER, offset, length);
+        }
+        GL15.glUnmapBuffer(OpenGlHelper.GL_ARRAY_BUFFER);
+    }
+    
+    private static long functionPointer(String capabilityFieldName)
+    {
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField(capabilityFieldName);
+            pointer.setAccessible(true);
+            long result = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(result);
+            return result;
+        }
+        catch(Exception e)
+        {
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", capabilityFieldName), e);
+            return -1;
+        }
+    }
+    
+    @SuppressWarnings("null")
+    private static MethodHandle nativeMethod(Class<?> glClass, String methodName, Class<?>... args)
+    {
+        try
+        {
+            Method nativeMethod = glClass.getDeclaredMethod(methodName, args);
+            nativeMethod.setAccessible(true);
+            return lookup.unreflect(nativeMethod);
+        }
+        catch(Exception e)
+        {
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", methodName), e);
+            return null;
         }
     }
 }

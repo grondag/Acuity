@@ -14,6 +14,7 @@ public class MappedBufferStore
     private static final int CAPACITY = 32;
     private static final ArrayBlockingQueue<MappedBuffer> emptyMapped = new ArrayBlockingQueue<MappedBuffer>(CAPACITY);
     private static final ConcurrentLinkedQueue<MappedBuffer> emptyUnmapped = new ConcurrentLinkedQueue<MappedBuffer>();
+    private static final ConcurrentLinkedQueue<MappedBuffer> pendingRelease = new ConcurrentLinkedQueue<>();
     
     private static final Object[] solidLock = new Object[PipelineManager.MAX_PIPELINES];
     private static final Object translucentLock = new Object();
@@ -47,6 +48,11 @@ public class MappedBufferStore
      */
     public static void prepareEmpties()
     {
+        while(!pendingRelease.isEmpty())
+        {
+            pendingRelease.poll().release();
+        }
+        
         while(emptyMapped.size() < CAPACITY)
         {
             MappedBuffer empty =  emptyUnmapped.poll();
@@ -142,6 +148,15 @@ public class MappedBufferStore
     static void release(MappedBuffer buffer)
     {
         emptyUnmapped.offer(buffer);
+    }
+    
+    /**
+     * Called by mapped buffers when they are released off thread.
+     * Prevents GL calls outside client thread.
+     */
+    public static void scheduleRelease(MappedBuffer mappedBuffer)
+    {
+        pendingRelease.offer(mappedBuffer);
     }
     
 }

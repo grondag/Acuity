@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 
 import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.IAcuityRuntime;
-import grondag.acuity.opengl.OpenGlFenceExt;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -92,12 +91,23 @@ public class Acuity
             getLog().warn(I18n.translateToLocal("misc.fail_opengl_version"));
             return;
         }
-        if(!OpenGlFenceExt.isFenceEnabled())
+        
+        OpenGlHelperExt.initialize();
+        
+        if(!OpenGlHelperExt.areAsynchMappedBuffersSupported())
         {
-            getLog().warn(I18n.translateToLocal("misc.fail_opengl_fence"));
+            getLog().warn(I18n.translateToLocal("misc.fail_no_asynch_mapped"));
             return;
         }
+        
         getLog().info(I18n.translateToLocal("misc.hardware_ok"));
+        getLog().info(I18n.translateToLocal(OpenGlHelperExt.isVaoEnabled() ? "misc.vao_on" : "misc.vao_off"));
+        
+        if(!OpenGlHelperExt.isFastNioCopyEnabled())
+        {
+            getLog().error(I18n.translateToLocal("misc.error_no_fast_nio_copy"));
+        }
+        
         glCapabilitiesMet = true;
         recomputeEnabledStatus();
 	}
@@ -113,18 +123,6 @@ public class Acuity
 	@EventHandler
 	public void postInit(FMLPostInitializationEvent event)
 	{
-        // try to get faster access to GL calls
-        OpenGlHelperExt.initialize();
-        OpenGlFenceExt.initialize();
-        
-        getLog().info(I18n.translateToLocal(OpenGlHelperExt.isVaoEnabled() ? "misc.vao_on" : "misc.vao_off"));
-        
-        if(!OpenGlHelperExt.isFastNioCopyEnabled())
-        {
-            getLog().error(I18n.translateToLocal("misc.error_no_fast_nio_copy"));
-            recomputeEnabledStatus();
-        }
-        
         IResourceManager rm = Minecraft.getMinecraft().getResourceManager();
         if(rm instanceof IReloadableResourceManager)
         {
