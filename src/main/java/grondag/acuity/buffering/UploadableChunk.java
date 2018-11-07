@@ -46,8 +46,10 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                     intBuffer.position(byteOffset / 4);
                     final int intLength = byteCount / 4;
                     intBuffer.put(collectorList.getIfExists(pipeline.getIndex()).rawData(), intOffset, intLength);
-                    intOffset += intLength; 
-                    delegates.add(new SolidDrawableChunkDelegate(buffer, pipeline, byteOffset / stride, byteCount / stride));
+                    intOffset += intLength;
+                    final SolidDrawableChunkDelegate delegate = new SolidDrawableChunkDelegate(buffer, pipeline, byteOffset / stride, byteCount / stride);
+                    buffer.retain(delegate, byteCount);
+                    delegates.add(delegate);
                 });
             });
         }
@@ -113,6 +115,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                         pipelineStarts[pipelineIndex] = startInt + intLength;
                     });
                     mappedBuffer = buffer;
+                    buffer.retain(this, byteCount);
                 }
             });
         }
@@ -125,7 +128,9 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                 return null;
             
             mappedBuffer.flush();
-            return new DrawableChunk.Translucent(mappedBuffer, packingList, bufferByteOffset);
+            DrawableChunk.Translucent result = new DrawableChunk.Translucent(mappedBuffer, packingList, bufferByteOffset);
+            mappedBuffer.transferRetainer(this, result);
+            return result;
         }
 
         @Override
@@ -133,7 +138,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
         {
             if(mappedBuffer != null)
             {
-                mappedBuffer.release();
+                mappedBuffer.release(this);
                 mappedBuffer = null;
             }
         }

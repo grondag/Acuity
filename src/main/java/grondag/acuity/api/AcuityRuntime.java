@@ -6,6 +6,7 @@ import java.util.Iterator;
 import java.util.function.Consumer;
 
 import grondag.acuity.Acuity;
+import grondag.acuity.buffering.MappedBufferStore;
 import grondag.acuity.core.PipelineShaderManager;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.util.text.translation.I18n;
@@ -41,6 +42,7 @@ public final class AcuityRuntime implements IAcuityRuntime
         PipelineShaderManager.INSTANCE.forceReload();
         PipelineManager.INSTANCE.forceReload();
         PipelineHooks.forceReload();
+        MappedBufferStore.forceReload();
         AcuityRuntime.INSTANCE.forEachListener(c -> c.onRenderReload());
     }
 

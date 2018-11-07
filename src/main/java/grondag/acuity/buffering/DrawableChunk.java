@@ -14,7 +14,6 @@ import grondag.acuity.opengl.OpenGlHelperExt;
 import grondag.acuity.opengl.VaoStore;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 /**
@@ -40,6 +39,8 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement;
  */
 public abstract class DrawableChunk
 {
+    protected boolean isCleared = false;
+    
     public int drawCount()
     {
         // TODO Auto-generated method stub
@@ -55,7 +56,10 @@ public abstract class DrawableChunk
     /**
      * Called when buffer content is no longer current and will not be rendered.
      */
-    public abstract void clear();
+    public void clear()
+    {
+        isCleared = true;
+    }
     
     public static class Solid extends DrawableChunk
     {
@@ -72,12 +76,16 @@ public abstract class DrawableChunk
          */
         public void prepareSolidRender(Consumer<SolidDrawableChunkDelegate> consumer)
         {
+            if(isCleared)
+                return;
+            
             delegates.forEach(consumer);
         }
 
         @Override
         public void clear()
         {
+            super.clear();
             delegates.forEach(d -> d.release());
         }
     }
@@ -159,10 +167,13 @@ public abstract class DrawableChunk
         
         public void renderChunkTranslucent()
         {
+            if(isCleared || buffer.isDisposed())
+                return;
+            
             final VertexPackingList packing = this.packing;
             final MappedBuffer buffer = this.buffer;
             if(packing.size() == 0) return;
-            OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, buffer.glBufferId);
+            buffer.bindForRender(this);
             
             prepareVao();
             
@@ -233,7 +244,8 @@ public abstract class DrawableChunk
         @Override
         public void clear()
         {
-            buffer.release();
+            super.clear();
+            buffer.release(this);
             if(vaoBufferId != null && vaoBufferId != VAO_DISABLED)
             {
                 int lastId = -1;

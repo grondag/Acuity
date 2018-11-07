@@ -14,6 +14,7 @@ import java.nio.IntBuffer;
 import javax.annotation.Nullable;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.logging.log4j.Logger;
 import org.lwjgl.BufferChecks;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.MemoryUtil;
@@ -28,6 +29,7 @@ import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GLContext;
+import org.lwjgl.util.glu.GLU;
 import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Acuity;
@@ -1110,37 +1112,53 @@ public class OpenGlHelperExt
     @SuppressWarnings("null")
     static private MethodHandle nglUnmapBuffer = null;
     
-    public static void flushAndUnmapBuffer(long offset, long length)
+    public static void flushBuffer(long offset, long length)
     {
-        if(glFlushMappedBufferRangeFunctionPointer == -1 || glUnmapBufferFunctionPointer == -1)
+        if(glFlushMappedBufferRangeFunctionPointer == -1)
         {
-            flushAndUnmapBufferSlow(offset, length);
+            flushBufferSlow(offset, length);
         }
         else 
             try
             {
                 nglFlushMappedBufferRange.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, offset, length, glFlushMappedBufferRangeFunctionPointer);
+            }
+            catch (Throwable e)
+            {
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "flushBuffer"), e);
+                glFlushMappedBufferRangeFunctionPointer = -1;
+                flushBufferSlow(offset, length);
+            }
+    }
+    
+    private static void flushBufferSlow(long offset, long length)
+    {
+        if(appleMapping)
+            APPLEFlushBufferRange.glFlushMappedBufferRangeAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, offset, length);
+        else
+            GL30.glFlushMappedBufferRange(OpenGlHelper.GL_ARRAY_BUFFER, offset, length);
+    }
+    
+    public static void unmapBuffer()
+    {
+        if(glUnmapBufferFunctionPointer == -1)
+            unmapBufferSlow();
+        else 
+            try
+            {
                 @SuppressWarnings("unused")
                 boolean discard = (boolean) nglUnmapBuffer.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, glUnmapBufferFunctionPointer);
             }
             catch (Throwable e)
             {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "flushAndUnmapBuffer"), e);
-                glFlushMappedBufferRangeFunctionPointer = -1;
-                flushAndUnmapBufferSlow(offset, length);
+                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "unmapBuffer"), e);
+                glUnmapBufferFunctionPointer = -1;
+                unmapBufferSlow();
             }
     }
     
-    private static void flushAndUnmapBufferSlow(long offset, long length)
+    private static void unmapBufferSlow()
     {
-        if(appleMapping)
-        {
-            APPLEFlushBufferRange.glFlushMappedBufferRangeAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, offset, length);
-        }
-        else
-        {
-            GL30.glFlushMappedBufferRange(OpenGlHelper.GL_ARRAY_BUFFER, offset, length);
-        }
         GL15.glUnmapBuffer(OpenGlHelper.GL_ARRAY_BUFFER);
     }
     
@@ -1175,6 +1193,23 @@ public class OpenGlHelperExt
         {
             Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", methodName), e);
             return null;
+        }
+    }
+    
+    public static boolean assertNoGLError(String marker)
+    {
+        int i = GlStateManager.glGetError();
+
+        if (i == 0)
+            return true;
+        else
+        {
+            String s = GLU.gluErrorString(i);
+            final Logger log = Acuity.INSTANCE.getLog();
+            log.error("########## GL ERROR ##########");
+            log.error("@ {}", (Object)marker);
+            log.error("{}: {}", Integer.valueOf(i), s);
+            return false;
         }
     }
 }

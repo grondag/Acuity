@@ -7,7 +7,6 @@ import grondag.acuity.core.PipelineVertexFormat;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import grondag.acuity.opengl.VaoStore;
 import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 public class SolidDrawableChunkDelegate
@@ -55,7 +54,10 @@ public class SolidDrawableChunkDelegate
      */
     public void bind()
     {
-        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, bufferId());
+        if(this.buffer.isDisposed())
+            return;
+        
+        this.buffer.bindForRender(this);
         if(vaoBufferId > 0)
         {
             OpenGlHelperExt.glBindVertexArray(vaoBufferId);
@@ -87,12 +89,14 @@ public class SolidDrawableChunkDelegate
      */
     public void draw()
     {
+        if(this.buffer.isDisposed())
+            return;
         OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, vertexOffset, vertexCount);
     }
     
     public void release()
     {
-        buffer.release();
+        buffer.release(this);
         if(this.vaoBufferId > 0)
         {
             VaoStore.releaseVertexArray(vaoBufferId);
