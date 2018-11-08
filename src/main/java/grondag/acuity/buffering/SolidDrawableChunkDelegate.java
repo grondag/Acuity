@@ -14,7 +14,7 @@ public class SolidDrawableChunkDelegate
     private static final int VAO_UNTESTED = -1;
     private static final int VAO_DISABLED = -2;
     
-    private final MappedBuffer buffer;
+    private final IMappedBufferReference buffer;
     private final RenderPipeline pipeline;
     final int vertexOffset;
     final int vertexCount;
@@ -23,7 +23,7 @@ public class SolidDrawableChunkDelegate
      */
     int vaoBufferId = VAO_UNTESTED;
     
-    public SolidDrawableChunkDelegate(MappedBuffer buffer, RenderPipeline pipeline, int vertexOffset, int vertexCount)
+    public SolidDrawableChunkDelegate(IMappedBufferReference buffer, RenderPipeline pipeline, int vertexOffset, int vertexCount)
     {
         this.buffer = buffer;
         this.pipeline = pipeline;
@@ -38,7 +38,7 @@ public class SolidDrawableChunkDelegate
      */
     public int bufferId()
     {
-        return this.buffer.glBufferId;
+        return this.buffer.glBufferId();
     }
     
     /**
@@ -57,7 +57,7 @@ public class SolidDrawableChunkDelegate
         if(this.buffer.isDisposed())
             return;
         
-        this.buffer.bindForRender(this);
+        this.buffer.bind();
         if(vaoBufferId > 0)
         {
             OpenGlHelperExt.glBindVertexArray(vaoBufferId);
@@ -96,7 +96,7 @@ public class SolidDrawableChunkDelegate
     
     public void release()
     {
-        buffer.release(this);
+        buffer.release();
         if(this.vaoBufferId > 0)
         {
             VaoStore.releaseVertexArray(vaoBufferId);

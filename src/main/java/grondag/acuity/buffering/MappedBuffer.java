@@ -119,14 +119,7 @@ public class MappedBuffer
         return result;
     }
 
-    public void bindForRender(Object retainer)
-    {
-        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
-        assert(retainers.containsKey(retainer));
-        bind();
-    }
-    
-    private void bind()
+    void bind()
     {
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
     }
@@ -197,12 +190,6 @@ public class MappedBuffer
             maxBytes += bytes;
             currentBytes += bytes;
         }
-    }
-    
-    public synchronized void transferRetainer(Object fromRetainer, Object toRetainer)
-    {
-        assert retainers.containsKey(fromRetainer);
-        retainers.put(toRetainer, retainers.removeInt(fromRetainer));
     }
     
     public synchronized void release(Object retainer)

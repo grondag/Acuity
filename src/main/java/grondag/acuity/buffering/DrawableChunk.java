@@ -96,7 +96,7 @@ public abstract class DrawableChunk
     
     public static class Translucent extends DrawableChunk
     {
-        final MappedBuffer buffer;
+        final IMappedBufferReference buffer;
         final VertexPackingList packing;
         final int bufferByteOffset;
         /**
@@ -114,7 +114,7 @@ public abstract class DrawableChunk
         
         private static final int[] VAO_DISABLED = new int[0];
         
-        public Translucent(MappedBuffer buffer, VertexPackingList packing, int bufferByteOffset)
+        public Translucent(IMappedBufferReference buffer, VertexPackingList packing, int bufferByteOffset)
         {
             this.buffer = buffer;
             this.packing = packing;
@@ -175,9 +175,9 @@ public abstract class DrawableChunk
                 return;
             
             final VertexPackingList packing = this.packing;
-            final MappedBuffer buffer = this.buffer;
+            final IMappedBufferReference buffer = this.buffer;
             if(packing.size() == 0) return;
-            buffer.bindForRender(this);
+            buffer.bind();
             
             prepareVao();
             
@@ -249,7 +249,7 @@ public abstract class DrawableChunk
         public void clear()
         {
             super.clear();
-            buffer.release(this);
+            buffer.release();
             if(vaoBufferId != null && vaoBufferId != VAO_DISABLED)
             {
                 int lastId = -1;

@@ -42,17 +42,15 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                 final int stride = pipeline.piplineVertexFormat().stride;
                 MappedBufferStore.claimSolid(pipeline, vertexCount * stride, ref ->
                 {
-                    final MappedBuffer buffer = ref.buffer();
                     final int byteOffset = ref.byteOffset();
                     final int byteCount = ref.byteCount();
                     
-                    final IntBuffer intBuffer = buffer.byteBuffer().asIntBuffer();
+                    final IntBuffer intBuffer = ref.intBuffer();
                     intBuffer.position(byteOffset / 4);
                     final int intLength = byteCount / 4;
                     intBuffer.put(collectorList.getIfExists(pipeline.getIndex()).rawData(), intOffset, intLength);
                     intOffset += intLength;
-                    final SolidDrawableChunkDelegate delegate = new SolidDrawableChunkDelegate(buffer, pipeline, byteOffset / stride, byteCount / stride);
-                    buffer.retain(delegate, byteCount);
+                    final SolidDrawableChunkDelegate delegate = new SolidDrawableChunkDelegate(ref, pipeline, byteOffset / stride, byteCount / stride);
                     delegates.add(delegate);
                 });
             });
@@ -85,7 +83,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
             }
         };
         
-        private @Nullable MappedBuffer mappedBuffer;
+        private @Nullable IMappedBufferReference mappedBuffer;
         private int bufferByteOffset;
         
         public Translucent(VertexPackingList packing, VertexCollectorList collectorList)
@@ -100,7 +98,6 @@ public abstract class UploadableChunk<V extends DrawableChunk>
             
             MappedBufferStore.claimTranslucent(packing.totalBytes(), ref ->
             {
-                final MappedBuffer buffer = ref.buffer();
                 final int byteCount = ref.byteCount();
                 final int byteOffset = ref.byteOffset();
                 
@@ -110,7 +107,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                 {
                     bufferByteOffset = byteOffset;
                     
-                    final IntBuffer intBuffer = buffer.byteBuffer().asIntBuffer();
+                    final IntBuffer intBuffer = ref.intBuffer();
                     
                     intBuffer.position(byteOffset / 4);
 
@@ -122,8 +119,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                         intBuffer.put(collectorList.getIfExists(pipelineIndex).rawData(), startInt, intLength);
                         pipelineStarts[pipelineIndex] = startInt + intLength;
                     });
-                    mappedBuffer = buffer;
-                    buffer.retain(this, byteCount);
+                    mappedBuffer = ref;
                 }
             });
         }
@@ -137,7 +133,6 @@ public abstract class UploadableChunk<V extends DrawableChunk>
             
             mappedBuffer.flush();
             DrawableChunk.Translucent result = new DrawableChunk.Translucent(mappedBuffer, packingList, bufferByteOffset);
-            mappedBuffer.transferRetainer(this, result);
             return result;
         }
 
@@ -146,7 +141,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
         {
             if(mappedBuffer != null)
             {
-                mappedBuffer.release(this);
+                mappedBuffer.release();
                 mappedBuffer = null;
             }
         }
