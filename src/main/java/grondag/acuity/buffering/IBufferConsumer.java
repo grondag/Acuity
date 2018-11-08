@@ -1,6 +1,5 @@
 package grondag.acuity.buffering;
 
-
 @FunctionalInterface
 public interface IBufferConsumer
 {

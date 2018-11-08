@@ -643,8 +643,10 @@ public class Program
         }
         
         if(!this.isErrored)
-        {
-            this.uniforms.forEach(u -> u.load(progID));
+        {   
+            final int limit = uniforms.size();
+            for(int i = 0; i < limit; i++)
+                uniforms.get(i).load(progID);
         }
         
     }
@@ -684,12 +686,20 @@ public class Program
 
     public final void onRenderTick()
     {
-        this.renderTickUpdates.forEach(u -> u.markForInitialization());
+        final int limit = renderTickUpdates.size();
+        for(int i = 0; i < limit; i++)
+        {
+            renderTickUpdates.get(i).markForInitialization();
+        }
     }
 
     public final void onGameTick()
     {
-        this.gameTickUpdates.forEach(u -> u.markForInitialization());
+        final int limit = gameTickUpdates.size();
+        for(int i = 0; i < limit; i++)
+        {
+            gameTickUpdates.get(i).markForInitialization();
+        }
     }
     
     @Nullable

@@ -79,14 +79,18 @@ public abstract class DrawableChunk
             if(isCleared)
                 return;
             
-            delegates.forEach(consumer);
+            final int limit = delegates.size();
+            for(int i = 0; i < limit; i++)
+                consumer.accept(delegates.get(i));
         }
 
         @Override
         public void clear()
         {
             super.clear();
-            delegates.forEach(d -> d.release());
+            final int limit = delegates.size();
+            for(int i = 0; i < limit; i++)
+                delegates.get(i).release();
         }
     }
     
