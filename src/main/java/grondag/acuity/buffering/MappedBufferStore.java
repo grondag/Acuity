@@ -74,9 +74,6 @@ public class MappedBufferStore
             else
                 empty.remap();
             
-            // prevent buffers still being filled from being released when the only chunk using it is rebuilt
-            empty.retain(STORE_RETAINER, 0);
-            
             emptyMapped.offer(empty);
         }
         
@@ -130,7 +127,7 @@ public class MappedBufferStore
                 if(result == null)
                 {
                     // store no longer knows/cares about it, and it can be released when no longer needed for render
-                    target.release(STORE_RETAINER);
+                    target.setFinal();
                     target = getEmptyMapped();
                     if(target == null)
                         return;
@@ -171,7 +168,7 @@ public class MappedBufferStore
             if(ref == null)
             {
                 // store no longer knows/cares about it, and it can be released when no longer needed for render
-                target.release(STORE_RETAINER);
+                target.setFinal();
                 target = getEmptyMapped();
                 if(target == null)
                     return;

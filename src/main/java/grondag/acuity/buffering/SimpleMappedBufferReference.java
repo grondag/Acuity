@@ -13,7 +13,7 @@ public class SimpleMappedBufferReference implements IMappedBufferReference
         this.buffer = buffer;
         this.byteCount = byteCount;
         this.byteOffset = byteOffset;
-        buffer.retain(this, byteCount);
+        buffer.retain(byteCount);
     }
 
     @Override
@@ -55,7 +55,7 @@ public class SimpleMappedBufferReference implements IMappedBufferReference
     @Override
     public void release()
     {
-        buffer.release(this);
+        buffer.release(this.byteCount);
     }
 
     @Override

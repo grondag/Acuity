@@ -1,6 +1,7 @@
 package grondag.acuity.buffering;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
 
@@ -9,9 +10,6 @@ import org.lwjgl.opengl.GL15;
 import grondag.acuity.Acuity;
 import grondag.acuity.opengl.GLBufferStore;
 import grondag.acuity.opengl.OpenGlHelperExt;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMaps;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -19,8 +17,6 @@ import net.minecraft.client.renderer.OpenGlHelper;
 public class MappedBuffer
 {
     public static final int CAPACITY_BYTES = 0x80000;
-    
-    public static final int UNABLE_TO_ALLOCATE = -1;
     
     //TODO: disable
     public static final ObjectArrayList<MappedBuffer> inUse = new ObjectArrayList<>();
@@ -35,22 +31,16 @@ public class MappedBuffer
     private boolean isMapped = false;
     private boolean isFinal = false;
     
-    //PERF: switch back to a counter
-    private final Object2IntMap<Object> retainers = Object2IntMaps.synchronize(new Object2IntOpenHashMap<Object>());
+    private final AtomicInteger retainCount = new AtomicInteger();
     
     MappedBuffer()
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
-        
-        // prevents 0-byte store retainer from being discarded
-        retainers.defaultReturnValue(-1);
-        
         this.glBufferId = OpenGlHelper.glGenBuffers();
         bind();
         orphan();
         map();
         unbind();
-        
         
         //PERF: is always on client thread - why synchronize?
         synchronized(inUse)
@@ -180,9 +170,9 @@ public class MappedBuffer
      * Called implicitly when bytes are allocated.
      * Store calls explicitly to retain while this buffer is being filled.
      */
-    public synchronized void retain(Object retainer, int bytes)
+    public synchronized void retain(int bytes)
     {
-        retainers.put(retainer, bytes);
+        retainCount.incrementAndGet();
         // don't count store retainer
         if(bytes != 0)
         {
@@ -192,25 +182,21 @@ public class MappedBuffer
         }
     }
     
-    public synchronized void release(Object retainer)
+    public synchronized void release(int bytes)
     {
-        final int bytes = retainers.removeInt(retainer);
         currentBytes -= bytes;
         
-        if(retainer == MappedBufferStore.STORE_RETAINER)
-            this.isFinal = true;
-        else
-            assert bytes != 0;
+        assert bytes != 0;
         
-        if(retainers.isEmpty())
+        if(retainCount.addAndGet(-bytes) == 0)
             MappedBufferStore.scheduleRelease(this);
     }
     
     public void reportStats()
     {
         Acuity.INSTANCE.getLog().info(String.format("Buffer %d: MaxCount=%d  MaxBytes=%d    Count=%d  Bytes=%d   (%d / %d)",
-                this.glBufferId, this.maxRetainCount, this.maxBytes, this.retainers.size(), this.currentBytes,
-                this.maxRetainCount == 0 ? 0 : this.retainers.size() * 100 / this.maxRetainCount,
+                this.glBufferId, this.maxRetainCount, this.maxBytes, this.retainCount.get(), this.currentBytes,
+                this.maxRetainCount == 0 ? 0 : this.retainCount.get() * 100 / this.maxRetainCount,
                 this.maxBytes == 0 ? 0 : this.currentBytes * 100 / this.maxBytes));
         
     }
@@ -243,7 +229,7 @@ public class MappedBuffer
     
     public void reset()
     {
-        assert retainers.isEmpty();
+        assert retainCount.get() == 0;
         
         bind();
         if(isMapped)
