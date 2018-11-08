@@ -264,7 +264,6 @@ public class AbstractPipelinedRenderList implements IAcuityListener
 
         int lastBufferId = -1;
         
-        // PERF: actually the problem might be in the sort, above
         // using conventional loop here to prevent iterator garbage in hot loop
         // profiling shows it matters
         for(int i = 0; i < limit; i++)

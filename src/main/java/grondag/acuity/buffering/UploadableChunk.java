@@ -40,8 +40,12 @@ public abstract class UploadableChunk<V extends DrawableChunk>
             packing.forEach((pipeline, vertexCount) ->
             {
                 final int stride = pipeline.piplineVertexFormat().stride;
-                MappedBufferStore.claimSolid(pipeline, vertexCount * stride, (byteOffset, byteCount, buffer) ->
+                MappedBufferStore.claimSolid(pipeline, vertexCount * stride, ref ->
                 {
+                    final MappedBuffer buffer = ref.buffer();
+                    final int byteOffset = ref.byteOffset();
+                    final int byteCount = ref.byteCount();
+                    
                     final IntBuffer intBuffer = buffer.byteBuffer().asIntBuffer();
                     intBuffer.position(byteOffset / 4);
                     final int intLength = byteCount / 4;
@@ -94,8 +98,12 @@ public abstract class UploadableChunk<V extends DrawableChunk>
             
             assert packing.totalBytes() != 0;
             
-            MappedBufferStore.claimTranslucent(packing.totalBytes(), (byteOffset, byteCount, buffer) ->
+            MappedBufferStore.claimTranslucent(packing.totalBytes(), ref ->
             {
+                final MappedBuffer buffer = ref.buffer();
+                final int byteCount = ref.byteCount();
+                final int byteOffset = ref.byteOffset();
+                
                 assert byteCount == packing.totalBytes();
                 
                 if(byteCount != 0)

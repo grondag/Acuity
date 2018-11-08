@@ -3,6 +3,7 @@ package grondag.acuity.buffering;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
@@ -108,7 +109,7 @@ public class MappedBufferStore
      * If more than one buffer is needed, break(s) will be at a boundary compatible with all vertex formats.
      * All vertices in the buffer(s) will share the same pipeline (and thus vertex format).
      */
-    public static void claimSolid(RenderPipeline pipeline, int byteCount, IBufferConsumer consumer)
+    public static void claimSolid(RenderPipeline pipeline, int byteCount, Consumer<IMappedBufferReference> consumer)
     {
         synchronized(solidLock[pipeline.getIndex()])
         {
@@ -125,8 +126,8 @@ public class MappedBufferStore
                 
             while(byteCount > 0)
             {
-                long result = target.requestBytes(byteCount, quadStride);
-                if(result == 0)
+                IMappedBufferReference result = target.requestBytes(byteCount, quadStride);
+                if(result == null)
                 {
                     // store no longer knows/cares about it, and it can be released when no longer needed for render
                     target.release(STORE_RETAINER);
@@ -136,9 +137,8 @@ public class MappedBufferStore
                 }
                 else
                 {
-                    final int filled = (int) (result >> 32);
-                    consumer.accept((int)(result & 0xFFFFFFFF), filled, target);
-                    byteCount -= filled;
+                    consumer.accept(result);
+                    byteCount -= result.byteCount();
                 }
             }
             
@@ -154,7 +154,7 @@ public class MappedBufferStore
      * and potentially multiple vertex formats will be backed into the same space to honor vertex sorting.
      * Will not split across buffers.
      */
-    public static void claimTranslucent(int byteCount, IBufferConsumer consumer)
+    public static void claimTranslucent(int byteCount, Consumer<IMappedBufferReference> consumer)
     {
         synchronized(translucentLock)
         {
@@ -167,21 +167,21 @@ public class MappedBufferStore
             if(target == null)
                 return;
                 
-            int offset = target.requestBytes(byteCount);
-            if(offset == MappedBuffer.UNABLE_TO_ALLOCATE)
+            IMappedBufferReference ref = target.requestBytes(byteCount);
+            if(ref == null)
             {
                 // store no longer knows/cares about it, and it can be released when no longer needed for render
                 target.release(STORE_RETAINER);
                 target = getEmptyMapped();
                 if(target == null)
                     return;
-                offset = target.requestBytes(byteCount);
+                ref = target.requestBytes(byteCount);
             }
             
-            assert offset != MappedBuffer.UNABLE_TO_ALLOCATE;
+            assert ref != null;
             
-            if(offset != MappedBuffer.UNABLE_TO_ALLOCATE)
-                consumer.accept(offset, byteCount, target);
+            if(ref != null)
+                consumer.accept(ref);
                 
             if(startBuffer != target)
                 translucentPartial = target;

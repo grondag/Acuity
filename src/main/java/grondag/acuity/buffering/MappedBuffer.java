@@ -82,41 +82,39 @@ public class MappedBuffer
     }
 
     /**
-     * Will return {@link #UNABLE_TO_ALLOCATE} if can't fit.
-     * Otherwise returns starting offset, which may be zero.
+     * Will return null if can't fit.
      * Used for translucent render.
      */
-    public synchronized int requestBytes(int byteCount)
+    public synchronized @Nullable IMappedBufferReference requestBytes(int byteCount)
     {
         assert mapped != null;
         
         final int oldOffset = currentByteOffset;
         final int newOffset = oldOffset + byteCount;
         if(newOffset > CAPACITY_BYTES)
-            return UNABLE_TO_ALLOCATE;
+            return null;
         
         currentByteOffset = newOffset;
-        return oldOffset;
+        return new SimpleMappedBufferReference(this, oldOffset, byteCount);
     }
     
     /**
-     * Will return offset (low) and allocated bytes (high) as packed ints. 
      * Won't break stride.
      * Used for solid renders that all share same pipeline/vertex format.
      */
-    public synchronized long requestBytes(int byteCount, int stride)
+    public synchronized @Nullable IMappedBufferReference requestBytes(int byteCount, int stride)
     {
         assert mapped != null;
         
         int filled = ((CAPACITY_BYTES - currentByteOffset) / stride) * stride;
         
         if(filled <= 0)
-            return 0;
+            return null;
         
         if(filled > byteCount)
             filled = byteCount;
         
-        long result =  (((long)filled) << 32) | currentByteOffset;
+        SimpleMappedBufferReference result =  new SimpleMappedBufferReference(this, currentByteOffset, filled);
         currentByteOffset += filled;
         return result;
     }
