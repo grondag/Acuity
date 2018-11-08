@@ -14,7 +14,7 @@ import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.IAcuityListener;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.buffering.DrawableChunk;
-import grondag.acuity.buffering.SolidDrawableChunkDelegate;
+import grondag.acuity.buffering.DrawableChunkDelegate;
 import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
@@ -230,7 +230,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     
     private void renderSolidArray(SolidRenderCube rendercube)
     {
-        for(ObjectArrayList<SolidDrawableChunkDelegate> list : rendercube.pipelineLists)
+        for(ObjectArrayList<DrawableChunkDelegate> list : rendercube.pipelineLists)
             renderSolidList(list);
         cubeStore.offer(rendercube);
     }
@@ -241,7 +241,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         @Override
         public int compare(Object o1, Object o2)
         {
-            return Integer.compare(((SolidDrawableChunkDelegate)o1).bufferId(), ((SolidDrawableChunkDelegate)o2).bufferId());
+            return Integer.compare(((DrawableChunkDelegate)o1).bufferId(), ((DrawableChunkDelegate)o2).bufferId());
         }
     };
     
@@ -249,7 +249,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
      * Renders solid chunks in vertex buffer order to minimize bind calls.
      * Assumes all chunks in the list share the same pipeline.
      */
-    private void renderSolidList(ObjectArrayList<SolidDrawableChunkDelegate> list)
+    private void renderSolidList(ObjectArrayList<DrawableChunkDelegate> list)
     {
         final int limit = list.size();
         
@@ -260,7 +260,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         
         Arrays.sort(delegates, 0, limit, BUFFER_SORT);
         
-        ((SolidDrawableChunkDelegate)delegates[0]).getPipeline().activate(true);
+        ((DrawableChunkDelegate)delegates[0]).getPipeline().activate(true);
 
         int lastBufferId = -1;
         
@@ -268,12 +268,8 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         // profiling shows it matters
         for(int i = 0; i < limit; i++)
         {
-            final SolidDrawableChunkDelegate b = (SolidDrawableChunkDelegate)delegates[i];
-            if(b.bufferId() != lastBufferId)
-            {
-                lastBufferId = b.bufferId();
-                b.bind();
-            }
+            final DrawableChunkDelegate b = (DrawableChunkDelegate)delegates[i];
+            lastBufferId = b.bind(lastBufferId);
             b.draw();
         }
         list.clear();
@@ -292,11 +288,11 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         for (int i = 0; i < chunkCount; i++)
         {
             final RenderChunk renderchunk =  chunks.get(i);
-            final DrawableChunk.Translucent vertexbuffer = ((IRenderChunk)renderchunk).getTranslucentDrawable();
-            if(vertexbuffer == null)
+            final DrawableChunk.Translucent drawable = ((IRenderChunk)renderchunk).getTranslucentDrawable();
+            if(drawable == null)
                 continue;
             updateViewMatrix(renderchunk.getPosition());
-            vertexbuffer.renderChunkTranslucent();
+            drawable.renderChunkTranslucent();
         }
 
         chunks.clear();

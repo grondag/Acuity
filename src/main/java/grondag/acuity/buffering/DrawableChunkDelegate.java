@@ -9,26 +9,24 @@ import grondag.acuity.opengl.VaoStore;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
-public class SolidDrawableChunkDelegate
+public class DrawableChunkDelegate
 {
     private static final int VAO_UNTESTED = -1;
     private static final int VAO_DISABLED = -2;
     
     private final IMappedBufferReference buffer;
     private final RenderPipeline pipeline;
-    final int vertexOffset;
     final int vertexCount;
     /**
      * VAO Buffer name if enabled and initialized.
      */
     int vaoBufferId = VAO_UNTESTED;
     
-    public SolidDrawableChunkDelegate(IMappedBufferReference buffer, RenderPipeline pipeline, int vertexOffset, int vertexCount)
+    public DrawableChunkDelegate(IMappedBufferReference buffer, RenderPipeline pipeline, int vertexCount)
     {
         this.buffer = buffer;
         this.pipeline = pipeline;
         this.vertexCount = vertexCount;
-        this.vertexOffset = vertexOffset;
     }
     
     /**
@@ -50,38 +48,52 @@ public class SolidDrawableChunkDelegate
     }
     
     /**
-     * Should only be needed 1X for draws that share the same pipeline and buffer ID.
+     * Won't bind buffer if this buffer same as last - will only do vertex attributes.
+     * Returns the buffer Id that is bound, or input if unchanged.
      */
-    public void bind()
+    public int bind(int lastBufferId)
     {
         if(this.buffer.isDisposed())
-            return;
+            return lastBufferId;
         
-        this.buffer.bind();
+        if(this.buffer.glBufferId() != lastBufferId)
+        {
+            this.buffer.bind();
+            lastBufferId = this.buffer.glBufferId();
+        }
+        
         if(vaoBufferId > 0)
         {
             OpenGlHelperExt.glBindVertexArray(vaoBufferId);
-            return;
+            return lastBufferId;
         }
         
+        final PipelineVertexFormat format = pipeline.piplineVertexFormat();
         if(vaoBufferId == VAO_UNTESTED)
         {
             if(OpenGlHelperExt.isVaoEnabled())
             {
                 vaoBufferId = VaoStore.claimVertexArray();
-                PipelineVertexFormat format = pipeline.piplineVertexFormat();
                 OpenGlHelperExt.glBindVertexArray(vaoBufferId);
                 GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
                 OpenGlHelperExt.enableAttributesVao(format.attributeCount);
-                OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), format.stride, 0);
-                format.bindAttributeLocations(0);
-                return;
+                bindVertexAttributes(format);
+                return lastBufferId;
             }
             else
                 vaoBufferId = VAO_DISABLED;
         }
         
-        
+        // if get to here, no VAO and must rebind each time
+        bindVertexAttributes(format);
+        return lastBufferId; 
+       
+    }
+    
+    private void bindVertexAttributes(PipelineVertexFormat format)
+    {
+        OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), format.stride, buffer.byteOffset());
+        format.bindAttributeLocations(buffer.byteOffset());
     }
     
     /**
@@ -91,7 +103,7 @@ public class SolidDrawableChunkDelegate
     {
         if(this.buffer.isDisposed())
             return;
-        OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, vertexOffset, vertexCount);
+        OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, 0, vertexCount);
     }
     
     public void release()
