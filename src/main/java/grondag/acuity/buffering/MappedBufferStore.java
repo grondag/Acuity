@@ -5,47 +5,46 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
-import javax.annotation.Nullable;
-
-import grondag.acuity.Acuity;
-import grondag.acuity.api.PipelineManager;
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.TextureFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
 
 public class MappedBufferStore
 {
-    private static final int MIN_CAPACITY = 32;
-    private static final int TARGET_BUFFERS = 512;
+    private static final int MIN_BUFFERS = 64;
+    private static final int MAX_BUFFERS = 128;
+    private static int bufferCount = 0;
+    private static final MappedBuffer buffers[] = new MappedBuffer[MAX_BUFFERS];
     
-    private static final ArrayBlockingQueue<MappedBuffer> emptyMapped = new ArrayBlockingQueue<MappedBuffer>(TARGET_BUFFERS);
-    private static final ConcurrentLinkedQueue<MappedBuffer> emptyUnmapped = new ConcurrentLinkedQueue<>();
-    private static final ConcurrentLinkedQueue<MappedBuffer> pendingRelease = new ConcurrentLinkedQueue<>();
+    private static final ArrayBlockingQueue<MappedBuffer> freeBuffers = new ArrayBlockingQueue<MappedBuffer>(MAX_BUFFERS);
     
-    private static final Object[] solidLock = new Object[PipelineManager.MAX_PIPELINES];
-    private static final Object translucentLock = new Object();
+    @SuppressWarnings("unchecked")
+    private static final ConcurrentLinkedQueue<BufferAllocation>[][] allocations 
+        = new ConcurrentLinkedQueue[TextureFormat.values().length][BufferSlice.SLICE_COUNT];
     
-    private static final MappedBuffer[] solidPartial = new MappedBuffer[PipelineManager.MAX_PIPELINES];
-    private static @Nullable MappedBuffer translucentPartial = null;
-    
-    static final Object STORE_RETAINER = new Object();
+    private static volatile ConcurrentLinkedQueue<BufferAllocation> disposalQueueA = new ConcurrentLinkedQueue<>();
+    private static ConcurrentLinkedQueue<BufferAllocation> disposalQueueB = new ConcurrentLinkedQueue<>();
+    private static ConcurrentLinkedQueue<BufferAllocation> disposalQueueC = new ConcurrentLinkedQueue<>();
     
     static
     {
-        for(int i = 0; i < PipelineManager.MAX_PIPELINES; i++)
-            solidLock[i] = new Object();
+        for(ConcurrentLinkedQueue<?>[] array : allocations)
+        {
+            for(int i = 0; i < BufferSlice.SLICE_COUNT; i++)
+                array[i] = new ConcurrentLinkedQueue<BufferAllocation>();
+        }
     }
     
-    private static @Nullable MappedBuffer getEmptyMapped()
+    private static MappedBuffer getEmptyMapped()
     {
         try
         {
-            return emptyMapped.poll(27, TimeUnit.DAYS);
+            return freeBuffers.poll(27, TimeUnit.DAYS);
         }
         catch (Exception e)
         {
             Minecraft.getMinecraft().crashed(new CrashReport("Unable to allocate empty GL buffer", e));
-            return null;
+            return buffers[0];
         }
     }
     
@@ -55,26 +54,21 @@ public class MappedBufferStore
      */
     public static void prepareEmpties()
     {
-        while(!pendingRelease.isEmpty())
-        {
-            MappedBuffer b = pendingRelease.poll();
-            b.reset();
-            if(!b.isDisposed())
-                emptyUnmapped.offer(b);
-        }
+        ConcurrentLinkedQueue<BufferAllocation> disposal = disposalQueueC;
+        while(!disposal.isEmpty())
+            acceptFreeInner(disposal.poll());
         
-        final int targetBuffers = Math.max(MIN_CAPACITY, TARGET_BUFFERS - MappedBuffer.inUse.size());
+        disposalQueueC = disposalQueueB;
+        disposalQueueB = disposalQueueA;
+        disposalQueueA = disposal;
         
-        while(emptyMapped.size() < targetBuffers)
+        final int targetBuffers = Math.max(freeBuffers.size() - 4, MIN_BUFFERS - bufferCount);
+        
+        while(freeBuffers.size() < targetBuffers && bufferCount < MAX_BUFFERS)
         {
-            MappedBuffer empty =  emptyUnmapped.poll();
-
-            if(empty == null)
-                empty = new MappedBuffer();
-            else
-                empty.remap();
-            
-            emptyMapped.offer(empty);
+            MappedBuffer empty =  new MappedBuffer();
+            buffers[bufferCount++] = empty;
+            freeBuffers.offer(empty);
         }
         
         doStats();
@@ -90,14 +84,14 @@ public class MappedBufferStore
         if(statCounter++ == 2400)
         {
             statCounter = 0;
-            final int extantCount = MappedBuffer.inUse.size();
-            MappedBuffer.inUse.forEach(b -> b.reportStats());
-            Acuity.INSTANCE.getLog().info("Extant Mapped Buffers: " + extantCount);
-            Acuity.INSTANCE.getLog().info("Extant Mapped Capacity (MB): " + extantCount * MappedBuffer.CAPACITY_BYTES / 0x100000);
-            Acuity.INSTANCE.getLog().info("Ready Buffers: " + emptyMapped.size());
-            Acuity.INSTANCE.getLog().info("Idle Buffers: " + emptyUnmapped.size());
-            Acuity.INSTANCE.getLog().info("Release Count (Lifetime): " + releaseCount);
-            Acuity.INSTANCE.getLog().info("");
+//            final int extantCount = MappedBuffer.inUse.size();
+//            MappedBuffer.inUse.forEach(b -> b.reportStats());
+//            Acuity.INSTANCE.getLog().info("Extant Mapped Buffers: " + extantCount);
+//            Acuity.INSTANCE.getLog().info("Extant Mapped Capacity (MB): " + extantCount * MappedBuffer.CAPACITY_BYTES / 0x100000);
+//            Acuity.INSTANCE.getLog().info("Ready Buffers: " + emptyMapped.size());
+//            Acuity.INSTANCE.getLog().info("Idle Buffers: " + emptyUnmapped.size());
+//            Acuity.INSTANCE.getLog().info("Release Count (Lifetime): " + releaseCount);
+//            Acuity.INSTANCE.getLog().info("");
         }
     }
     
@@ -106,107 +100,117 @@ public class MappedBufferStore
      * If more than one buffer is needed, break(s) will be at a boundary compatible with all vertex formats.
      * All vertices in the buffer(s) will share the same pipeline (and thus vertex format).
      */
-    public static void claimSolid(RenderPipeline pipeline, int byteCount, Consumer<IMappedBufferReference> consumer)
+    @SuppressWarnings("null")
+    public static void claimAllocation(TextureFormat format, int quadCount, Consumer<IBufferAllocation> consumer)
     {
-        synchronized(solidLock[pipeline.getIndex()])
+        BufferAllocator allocator = BufferAllocator.findBest(format, quadCount);
+        assert allocator.quadCount >= quadCount;
+        
+        if(allocator.isDouble)
         {
-            final MappedBuffer startBuffer = solidPartial[pipeline.getIndex()];
-            MappedBuffer target =  startBuffer;
-            
-            if(target == null)
-                target = getEmptyMapped();
-            
-            if(target == null)
-                return;
-            
-            final int quadStride = pipeline.piplineVertexFormat().stride * 4;
-                
-            while(byteCount > 0)
-            {
-                IMappedBufferReference result = target.requestBytes(byteCount, quadStride);
-                if(result == null)
-                {
-                    // store no longer knows/cares about it, and it can be released when no longer needed for render
-                    target.setFinal();
-                    target = getEmptyMapped();
-                    if(target == null)
-                        return;
-                }
-                else
-                {
-                    consumer.accept(result);
-                    byteCount -= result.byteCount();
-                }
-            }
-            
-            if(startBuffer != target)
-                solidPartial[pipeline.getIndex()] = target;
+            assert quadCount - allocator.primarySlice.quadCount > 0;
+            consumer.accept(getAllocation(allocator.primarySlice, allocator.primarySlice.quadCount));
+            consumer.accept(getAllocation(allocator.secondarySlice, quadCount - allocator.primarySlice.quadCount));
         }
+        else
+        {
+            assert quadCount <= allocator.primarySlice.quadCount;
+            consumer.accept(getAllocation(allocator.primarySlice, quadCount));
+        }
+    }
+
+    private static BufferAllocation getAllocation(BufferSlice slice, int quadCount)
+    {
+        BufferAllocation a = getAllocation(slice);
+        a.setQuadCount(quadCount);
+        return a;
     }
     
     /**
-     * Will give consumer one or more buffers w/ offsets able to contain the given byte count.
-     * If more than one buffer is needed, break will be at a boundary compatible with all vertex formats.
-     * Unlike {@link #claimSolid(RenderPipeline, int, int, IBufferConsumer)} this assumes all pipelines
-     * and potentially multiple vertex formats will be backed into the same space to honor vertex sorting.
-     * Will not split across buffers.
+     * Returned allocation will be claimed.
      */
-    public static void claimTranslucent(int byteCount, Consumer<IMappedBufferReference> consumer)
+    private static BufferAllocation getAllocation(BufferSlice slice)
     {
-        synchronized(translucentLock)
-        {
-            final MappedBuffer startBuffer = translucentPartial;
-            MappedBuffer target =  startBuffer;
-            
-            if(target == null)
-                target = getEmptyMapped();
-            
-            if(target == null)
-                return;
-                
-            IMappedBufferReference ref = target.requestBytes(byteCount);
-            if(ref == null)
-            {
-                // store no longer knows/cares about it, and it can be released when no longer needed for render
-                target.setFinal();
-                target = getEmptyMapped();
-                if(target == null)
-                    return;
-                ref = target.requestBytes(byteCount);
-            }
-            
-            assert ref != null;
-            
-            if(ref != null)
-                consumer.accept(ref);
-                
-            if(startBuffer != target)
-                translucentPartial = target;
-        }
+        ConcurrentLinkedQueue<BufferAllocation> q = allocations[slice.formatOrdinal][slice.divisionLevel];
+        BufferAllocation a = q.poll();
+        while(a != null && !a.claim())
+            a = q.poll();
+        return a == null ? newAllocation(slice) : a;
     }
     
     /**
-     * Called by mapped buffers when they are released off thread.
-     * Prevents GL calls outside client thread.
+     * Returned allocation will be claimed.
      */
-    public static void scheduleRelease(MappedBuffer mappedBuffer)
+    private static BufferAllocation newAllocation(BufferSlice slice)
     {
-        pendingRelease.offer(mappedBuffer);
-        releaseCount++;
+        if(slice.isMax)
+        {
+            BufferAllocation result = new BufferAllocation.Root(slice, getEmptyMapped());
+            result.buffer().setFormat(slice.format);
+            result.claim();
+            return result;
+        }
+        else
+        {
+            @SuppressWarnings("null")
+            BufferAllocation parent = getAllocation(slice.bigger());
+            BufferAllocation.Slice a = new BufferAllocation.Slice(slice, parent.startVertex(), parent);
+            BufferAllocation.Slice b = new BufferAllocation.Slice(slice, parent.startVertex() + slice.quadCount * 4, parent);
+            a.buddy = b;
+            b.buddy = a;
+            a.claim();
+            assert a.isFree.get() == false;
+            MappedBufferStore.acceptFree(b);
+            return a;
+        }
     }
 
     public static void forceReload()
     {
-        MappedBuffer.inUse.forEach(b -> b.dispose());
-        MappedBuffer.inUse.clear();
-        emptyMapped.clear();
-        emptyUnmapped.clear();
-        pendingRelease.clear();
-        for(int i = 0; i < PipelineManager.MAX_PIPELINES; i++)
-            solidPartial[i] = null;
-        translucentPartial = null;
+        for(int i = 0; i < bufferCount; i++)
+        {
+            buffers[i].dispose();
+            buffers[i] = null;
+        }
+        bufferCount = 0;
+        
+        disposalQueueA.clear();
+        disposalQueueB.clear();
+        freeBuffers.clear();
+        
+        for(ConcurrentLinkedQueue<?>[] array : allocations)
+        {
+            for(ConcurrentLinkedQueue<?> q : array)
+            {
+                q.clear();
+            }
+        }
         releaseCount = 0;
         statCounter = 0;
     }
+
+    /**
+     * Saves free allocation for reuse.
+     */
+    static void acceptFreeInner(BufferAllocation free)
+    {
+        ConcurrentLinkedQueue<BufferAllocation> q = allocations[free.slice.formatOrdinal][free.slice.divisionLevel];
+        if(free instanceof BufferAllocation.Root)
+        {
+            if(q.isEmpty())
+                q.offer(free);
+            else
+            {
+                free.isDeleted = true;
+                freeBuffers.offer(free.buffer());
+            }
+        }
+        else
+            q.offer(free);
+    }
     
+    static void acceptFree(BufferAllocation free)
+    {
+        disposalQueueA.offer(free);
+    }
 }

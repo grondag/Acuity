@@ -1,52 +1,47 @@
 package grondag.acuity.buffering;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.Nullable;
 
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
-import grondag.acuity.Acuity;
+import grondag.acuity.Configurator;
+import grondag.acuity.api.TextureFormat;
+import grondag.acuity.core.PipelineVertexFormat;
 import grondag.acuity.opengl.GLBufferStore;
 import grondag.acuity.opengl.OpenGlHelperExt;
-import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import grondag.acuity.opengl.VaoStore;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 public class MappedBuffer
 {
-    public static final int CAPACITY_BYTES = 0x80000;
-    
-    //TODO: disable
-    public static final ObjectArrayList<MappedBuffer> inUse = new ObjectArrayList<>();
-    public int maxRetainCount = 0;
-    public int maxBytes = 0;
-    public int currentBytes = 0;
+    /**
+     * VAO Buffer name if enabled and initialized.
+     */
+    private int vaoBufferId = -1;
+    private boolean vaoNeedsRefresh = true;
+    private PipelineVertexFormat format = Configurator.lightingModel.vertexFormat(TextureFormat.SINGLE);
     
     public final int glBufferId;
-    private int currentByteOffset = 0;
-    private int currentDirtyOffset = 0;
     private @Nullable ByteBuffer mapped = null;
     private boolean isMapped = false;
-    private boolean isFinal = false;
-    
-    private final AtomicInteger retainCount = new AtomicInteger();
+    private final ConcurrentLinkedQueue<IBufferAllocation> flushes = new ConcurrentLinkedQueue<>();
     
     MappedBuffer()
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         this.glBufferId = OpenGlHelper.glGenBuffers();
         bind();
-        orphan();
+        OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, BufferSlice.MAX_BUFFER_BYTES, GL15.GL_STATIC_DRAW);
+        OpenGlHelperExt.handleAppleMappedBuffer();
         map();
         unbind();
-        
-        //PERF: is always on client thread - why synchronize?
-        synchronized(inUse)
-        {
-            inUse.add(this);
-        }
     }
     
     public ByteBuffer byteBuffer()
@@ -58,11 +53,17 @@ public class MappedBuffer
     private void map()
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
-        mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES);
+        mapped = OpenGlHelperExt.mapBufferAsynch(mapped, BufferSlice.MAX_BUFFER_BYTES);
         isMapped = true;
     }
     
-    /** Called for buffers that are being reused.  Should already have been orphaned earlier.*/
+    public void setFormat(TextureFormat textureFormat)
+    {
+        this.format = Configurator.lightingModel.vertexFormat(textureFormat);
+        this.vaoNeedsRefresh = true;
+    }
+    
+    /** Called for buffers that are being flushed or reused.*/
     public void remap()
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
@@ -71,134 +72,75 @@ public class MappedBuffer
         unbind();
     }
 
-    /**
-     * Will return null if can't fit.
-     * Used for translucent render.
-     */
-    public synchronized @Nullable IMappedBufferReference requestBytes(int byteCount)
+    private void bindVertexAttributesInner()
     {
-        assert mapped != null;
-        
-        final int oldOffset = currentByteOffset;
-        final int newOffset = oldOffset + byteCount;
-        if(newOffset > CAPACITY_BYTES)
-            return null;
-        
-        currentByteOffset = newOffset;
-        return new SimpleMappedBufferReference(this, oldOffset, byteCount);
+        OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), format.stride, 0);
+        format.bindAttributeLocations(0);
     }
     
-    /**
-     * Won't break stride.
-     * Used for solid renders that all share same pipeline/vertex format.
-     */
-    public synchronized @Nullable IMappedBufferReference requestBytes(int byteCount, int stride)
-    {
-        assert mapped != null;
-        
-        int filled = ((CAPACITY_BYTES - currentByteOffset) / stride) * stride;
-        
-        if(filled <= 0)
-            return null;
-        
-        if(filled > byteCount)
-            filled = byteCount;
-        
-        SimpleMappedBufferReference result =  new SimpleMappedBufferReference(this, currentByteOffset, filled);
-        currentByteOffset += filled;
-        return result;
-    }
-
     void bind()
     {
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+    }
+    
+    public void bindVertexAttributes()
+    {
+        if(vaoNeedsRefresh)
+        {
+            if(OpenGlHelperExt.isVaoEnabled())
+            {
+                if(vaoBufferId != -1)
+                    vaoBufferId = VaoStore.claimVertexArray();
+            }
+            OpenGlHelperExt.glBindVertexArray(vaoBufferId);
+            GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
+            OpenGlHelperExt.enableAttributesVao(format.attributeCount);
+            bindVertexAttributesInner();
+            vaoNeedsRefresh = false;
+        }
+        
+        if(vaoBufferId > -1)
+            OpenGlHelperExt.glBindVertexArray(vaoBufferId);
+        else        
+            // no VAO and must rebind each time
+            bindVertexAttributesInner();
     }
     
     private void unbind()
     {
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
     }
-
-    /** assumes buffer is bound */
-    private void orphan()
-    {
-        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
-        OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, CAPACITY_BYTES, GL15.GL_STATIC_DRAW);
-        OpenGlHelperExt.handleAppleMappedBuffer();
-    }
     
     /**
      * Called each tick to send updates to GPU. Synchronized to prevent any content upload in between.
      */
-    public synchronized void flush()
+    public void flush()
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         
-        if(currentDirtyOffset == currentByteOffset && !isMapped)
-            return;
+        IBufferAllocation ref = flushes.poll();
+        
+        assert ref == null || isMapped;
         
         bind();
-        if(currentDirtyOffset != currentByteOffset)
+        while(ref != null)
         {
-            assert isMapped;
-            OpenGlHelperExt.flushBuffer(currentDirtyOffset, currentByteOffset - currentDirtyOffset);
-            currentDirtyOffset = currentByteOffset;
+            OpenGlHelperExt.flushBuffer(ref.byteOffset(), ref.byteCount());
+            ref = flushes.poll();
         }
         
-        if(isMapped)
-        {
-            OpenGlHelperExt.unmapBuffer();
-            if(isFinal)
-            {
-                isMapped = false;
-                mapped = null;
-            }
-            else
-                remap();
-        }
-        
+        //TODO: need locking here to prevent buffer access while unmapped?
+        OpenGlHelperExt.unmapBuffer();
+        remap();
         unbind();
-    }
-    
-    /** called to leave buffer unmapped on next synch when will no longer be adding */
-    public void setFinal()
-    {
-        this.isFinal = true;
     }
 
     /**
-     * Called implicitly when bytes are allocated.
-     * Store calls explicitly to retain while this buffer is being filled.
+     * Causes part of buffer to be flushed next time we flush.
      */
-    public synchronized void retain(int bytes)
+    public void flushLater(IBufferAllocation delegate)
     {
-        retainCount.incrementAndGet();
-        // don't count store retainer
-        if(bytes != 0)
-        {
-            maxRetainCount++;
-            maxBytes += bytes;
-            currentBytes += bytes;
-        }
-    }
-    
-    public synchronized void release(int bytes)
-    {
-        currentBytes -= bytes;
-        
-        assert bytes != 0;
-        
-        if(retainCount.addAndGet(-bytes) == 0)
-            MappedBufferStore.scheduleRelease(this);
-    }
-    
-    public void reportStats()
-    {
-        Acuity.INSTANCE.getLog().info(String.format("Buffer %d: MaxCount=%d  MaxBytes=%d    Count=%d  Bytes=%d   (%d / %d)",
-                this.glBufferId, this.maxRetainCount, this.maxBytes, this.retainCount.get(), this.currentBytes,
-                this.maxRetainCount == 0 ? 0 : this.retainCount.get() * 100 / this.maxRetainCount,
-                this.maxBytes == 0 ? 0 : this.currentBytes * 100 / this.maxBytes));
-        
+        flushes.add(delegate);
     }
     
     /** called by store on render reload to recycle GL buffer */
@@ -217,6 +159,12 @@ public class MappedBuffer
         {
             isDisposed = true;
             GLBufferStore.releaseBuffer(glBufferId);
+            
+            if(this.vaoBufferId > 0)
+            {
+                VaoStore.releaseVertexArray(vaoBufferId);
+                vaoBufferId = -1;
+            }
         }
     }
     
@@ -225,26 +173,5 @@ public class MappedBuffer
     public boolean isDisposed()
     {
         return isDisposed;
-    }
-    
-    public void reset()
-    {
-        assert retainCount.get() == 0;
-        
-        bind();
-        if(isMapped)
-        {
-            OpenGlHelperExt.unmapBuffer();
-            isMapped = false;
-            mapped = null;
-        }
-        orphan();
-        unbind();
-        isFinal = false;
-        currentByteOffset = 0;
-        currentDirtyOffset = 0;
-        maxRetainCount = 0;
-        maxBytes = 0;
-        currentBytes = 0;
     }
 }
