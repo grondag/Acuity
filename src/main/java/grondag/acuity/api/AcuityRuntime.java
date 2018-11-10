@@ -6,6 +6,8 @@ import java.util.Iterator;
 import java.util.function.Consumer;
 
 import grondag.acuity.Acuity;
+import grondag.acuity.buffering.BufferAllocator;
+import grondag.acuity.buffering.BufferSlice;
 import grondag.acuity.buffering.MappedBufferStore;
 import grondag.acuity.core.PipelineShaderManager;
 import grondag.acuity.hooks.PipelineHooks;
@@ -42,6 +44,8 @@ public final class AcuityRuntime implements IAcuityRuntime
         PipelineShaderManager.INSTANCE.forceReload();
         PipelineManager.INSTANCE.forceReload();
         PipelineHooks.forceReload();
+        BufferSlice.initialize();
+        BufferAllocator.initialize();
         MappedBufferStore.forceReload();
         AcuityRuntime.INSTANCE.forEachListener(c -> c.onRenderReload());
     }
