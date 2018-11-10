@@ -5,6 +5,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
+import grondag.acuity.Acuity;
 import grondag.acuity.api.TextureFormat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.crash.CrashReport;
@@ -78,21 +79,63 @@ public class MappedBufferStore
     
     static int statCounter = 0;
     static int releaseCount = 0;
+    static int[] useCounts = new int[BufferSlice.SLICE_COUNT];
+    static int[] freeCounts = new int[BufferSlice.SLICE_COUNT];
+    static int byteCount = 0;
     
     private static void doStats()
     {
-        if(statCounter++ == 2400)
+        if(statCounter++ == 200)
         {
             statCounter = 0;
-//            final int extantCount = MappedBuffer.inUse.size();
-//            MappedBuffer.inUse.forEach(b -> b.reportStats());
-//            Acuity.INSTANCE.getLog().info("Extant Mapped Buffers: " + extantCount);
-//            Acuity.INSTANCE.getLog().info("Extant Mapped Capacity (MB): " + extantCount * MappedBuffer.CAPACITY_BYTES / 0x100000);
-//            Acuity.INSTANCE.getLog().info("Ready Buffers: " + emptyMapped.size());
-//            Acuity.INSTANCE.getLog().info("Idle Buffers: " + emptyUnmapped.size());
-//            Acuity.INSTANCE.getLog().info("Release Count (Lifetime): " + releaseCount);
-//            Acuity.INSTANCE.getLog().info("");
+            int inUse = 0;
+            int totalByteCount = 0;
+            for(int i = 0; i < bufferCount; i++)
+            {
+                MappedBuffer buff = buffers[i];
+                if(buff.root != null)
+                {
+                    inUse++;
+                    byteCount = 0;
+                    
+                    reportAlloc(buff.root);
+                    totalByteCount += byteCount;
+                    
+                    Acuity.INSTANCE.getLog().info(String.format("In-use Buffer Bytes (pct): %d (%d)  Format = %s",
+                            byteCount, byteCount * 100 / BufferSlice.MAX_BUFFER_BYTES, buff.root.slice.format.name()));
+                    for(int j = 0; j < BufferSlice.SLICE_COUNT; j++)
+                    {
+                        Acuity.INSTANCE.getLog().info(String.format("  DivLevel %d: used = %d, free = %d",
+                                j, useCounts[j], freeCounts[j]));
+                        useCounts[j] = 0;
+                        freeCounts[j] = 0;
+                    }
+                }
+            }
+            if(inUse > 0)
+                Acuity.INSTANCE.getLog().info(String.format("In-use Count/Bytes (pct): %d / %d (%d)",
+                        inUse, totalByteCount, totalByteCount * 100 / (inUse * BufferSlice.MAX_BUFFER_BYTES)));
+            Acuity.INSTANCE.getLog().info("");
         }
+    }
+    
+    private static void reportAlloc(BufferAllocation alloc)
+    {
+        if(alloc.isFree.get())
+        {
+            freeCounts[alloc.slice.divisionLevel] += 1;
+        }
+        else if(alloc.childA != null)
+        {
+            reportAlloc(alloc.childA);
+            reportAlloc(alloc.childB);
+        }
+        else
+        {
+            byteCount += alloc.byteCount();
+            useCounts[alloc.slice.divisionLevel] += 1;
+        }
+            
     }
     
     /**
@@ -145,8 +188,9 @@ public class MappedBufferStore
     {
         if(slice.isMax)
         {
-            BufferAllocation result = new BufferAllocation.Root(slice, getEmptyMapped());
-            result.buffer().setFormat(slice.format);
+            BufferAllocation.Root result = new BufferAllocation.Root(slice, getEmptyMapped());
+            result.buffer.setFormat(slice.format);
+            result.buffer.root = result;
             result.claim();
             return result;
         }
@@ -156,11 +200,13 @@ public class MappedBufferStore
             BufferAllocation parent = getAllocation(slice.bigger());
             BufferAllocation.Slice a = new BufferAllocation.Slice(slice, parent.startVertex(), parent);
             BufferAllocation.Slice b = new BufferAllocation.Slice(slice, parent.startVertex() + slice.quadCount * 4, parent);
+            parent.childA = a;
+            parent.childB = b;
             a.buddy = b;
             b.buddy = a;
             a.claim();
             assert a.isFree.get() == false;
-            MappedBufferStore.acceptFree(b);
+            allocations[slice.formatOrdinal][slice.divisionLevel].offer(b);
             return a;
         }
     }
@@ -202,7 +248,9 @@ public class MappedBufferStore
             else
             {
                 free.isDeleted = true;
-                freeBuffers.offer(free.buffer());
+                MappedBuffer buff = ((BufferAllocation.Root) free).buffer;
+                buff.root = null;
+                freeBuffers.offer(buff);
             }
         }
         else

@@ -12,6 +12,9 @@ public abstract class BufferAllocation implements IBufferAllocation
     protected AtomicBoolean isFree = new AtomicBoolean(true);
     protected boolean isDeleted = false;
     
+    @Nullable BufferAllocation childA;
+    @Nullable BufferAllocation childB;
+    
     protected BufferAllocation(BufferSlice slice, int startVertex)
     {
         this.startVertex = startVertex;
@@ -51,6 +54,15 @@ public abstract class BufferAllocation implements IBufferAllocation
     {
         return this.slice;
     }
+    
+    @Override
+    public void release()
+    {
+        assert !this.isDeleted;
+        assert !this.isFree.get();
+        this.childA = null;
+        this.childB = null;
+    }
 
     public static class Root extends BufferAllocation
     {
@@ -66,14 +78,13 @@ public abstract class BufferAllocation implements IBufferAllocation
         @Override
         public MappedBuffer buffer()
         {
-            assert !isDeleted;
             return buffer;
         }
         
         @Override
         public void release()
         {
-            assert !isDeleted;
+            super.release();
             this.isFree.set(true);
             MappedBufferStore.acceptFree(this);
         }
@@ -101,9 +112,7 @@ public abstract class BufferAllocation implements IBufferAllocation
         @Override
         public void release()
         {
-            assert !this.isDeleted;
-            assert !this.isFree.get();
-            
+            super.release();
             if(this.buddy.claim())
             {
                 this.buddy.isDeleted = true;
