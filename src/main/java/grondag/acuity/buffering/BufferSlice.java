@@ -45,14 +45,9 @@ public class BufferSlice
         final int formatOrdinal = format.ordinal();
         BufferSlice[] slices = SLICES[format.ordinal()];
         final int quadStride = Configurator.lightingModel.vertexFormat(format).stride * 4;
-        final int minQuads = (MAX_BUFFER_BYTES / quadStride) >> (SLICE_COUNT - 1);
-        int quadCount = minQuads << (SLICE_COUNT - 1);
         
         for(int i = 0; i < SLICE_COUNT; i++)
-        {
-            slices[i] = new BufferSlice(i, quadStride, quadCount, format);
-            quadCount /= 2;
-        }
+            slices[i] = new BufferSlice(i, quadStride, MAX_BUFFER_BYTES >> i, format);
         
         BIGGEST_SLICE[formatOrdinal] = slices[0];
         SMALLEST_SLICE[formatOrdinal] = slices[SLICE_COUNT - 1];
@@ -72,12 +67,12 @@ public class BufferSlice
     public final TextureFormat format;
     public final int formatOrdinal;
     
-    private BufferSlice(int divisionLevel, int quadStride, int quadCount, TextureFormat format)
+    private BufferSlice(int divisionLevel, int quadStride, int bytes, TextureFormat format)
     {
         this.divisionLevel = divisionLevel;
         this.quadStride = quadStride;
-        this.quadCount = quadCount;
-        this.bytes = quadStride * quadCount;
+        this.bytes = bytes;
+        this.quadCount = bytes / quadStride;
         this.isMax = divisionLevel == 0;
         this.isMin = divisionLevel == SLICE_COUNT - 1;
         this.format = format;

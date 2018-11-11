@@ -2,9 +2,21 @@ package grondag.acuity.opengl;
 
 public abstract class Fence
 {
-    public abstract boolean isReached();
+    private boolean isSet = false;
+    
+    public final boolean isReached()
+    {
+        return !isSet || isReachedImpl();
+    }
+    
+    protected abstract boolean isReachedImpl();
 
-    public abstract void set();
+    public final void set()
+    {
+        isSet = true;
+        setImpl();
+    }
+    protected abstract void setImpl();
 
     public void deleteGlResources()
     {

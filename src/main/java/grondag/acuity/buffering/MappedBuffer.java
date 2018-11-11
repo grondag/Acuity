@@ -5,33 +5,19 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.Nullable;
 
-import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 
-import grondag.acuity.Configurator;
-import grondag.acuity.api.TextureFormat;
-import grondag.acuity.core.PipelineVertexFormat;
 import grondag.acuity.opengl.GLBufferStore;
 import grondag.acuity.opengl.OpenGlHelperExt;
-import grondag.acuity.opengl.VaoStore;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 public class MappedBuffer
 {
-    /**
-     * VAO Buffer name if enabled and initialized.
-     */
-    private int vaoBufferId = -1;
-    private boolean vaoNeedsRefresh = true;
-    private PipelineVertexFormat format = Configurator.lightingModel.vertexFormat(TextureFormat.SINGLE);
-    
     public final int glBufferId;
     private @Nullable ByteBuffer mapped = null;
     private boolean isMapped = false;
-    private final ConcurrentLinkedQueue<IBufferAllocation> flushes = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<BufferAllocation> flushes = new ConcurrentLinkedQueue<>();
     
     @Nullable BufferAllocation root;
     
@@ -59,11 +45,6 @@ public class MappedBuffer
         isMapped = true;
     }
     
-    public void setFormat(TextureFormat textureFormat)
-    {
-        this.format = Configurator.lightingModel.vertexFormat(textureFormat);
-        this.vaoNeedsRefresh = true;
-    }
     
     /** Called for buffers that are being flushed or reused.*/
     public void remap()
@@ -73,39 +54,10 @@ public class MappedBuffer
         map();
         unbind();
     }
-
-    private void bindVertexAttributesInner()
-    {
-        OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), format.stride, 0);
-        format.bindAttributeLocations(0);
-    }
     
     void bind()
     {
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
-    }
-    
-    public void bindVertexAttributes()
-    {
-        if(vaoNeedsRefresh)
-        {
-            if(OpenGlHelperExt.isVaoEnabled())
-            {
-                if(vaoBufferId != -1)
-                    vaoBufferId = VaoStore.claimVertexArray();
-            }
-            OpenGlHelperExt.glBindVertexArray(vaoBufferId);
-            GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
-            OpenGlHelperExt.enableAttributesVao(format.attributeCount);
-            bindVertexAttributesInner();
-            vaoNeedsRefresh = false;
-        }
-        
-        if(vaoBufferId > -1)
-            OpenGlHelperExt.glBindVertexArray(vaoBufferId);
-        else        
-            // no VAO and must rebind each time
-            bindVertexAttributesInner();
     }
     
     private void unbind()
@@ -120,7 +72,7 @@ public class MappedBuffer
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         
-        IBufferAllocation ref = flushes.poll();
+        BufferAllocation ref = flushes.poll();
         
         if(ref == null)
             return;
@@ -130,7 +82,8 @@ public class MappedBuffer
         bind();
         while(ref != null)
         {
-            OpenGlHelperExt.flushBuffer(ref.byteOffset(), ref.byteCount());
+            System.out.println("flush " + this.toString() + " " + ref.byteOffset + " " + ref.byteCount());
+            OpenGlHelperExt.flushBuffer(ref.byteOffset, ref.byteCount());
             ref = flushes.poll();
         }
         
@@ -143,7 +96,7 @@ public class MappedBuffer
     /**
      * Causes part of buffer to be flushed next time we flush.
      */
-    public void flushLater(IBufferAllocation delegate)
+    public void flushLater(BufferAllocation delegate)
     {
         flushes.add(delegate);
     }
@@ -164,12 +117,6 @@ public class MappedBuffer
         {
             isDisposed = true;
             GLBufferStore.releaseBuffer(glBufferId);
-            
-            if(this.vaoBufferId > 0)
-            {
-                VaoStore.releaseVertexArray(vaoBufferId);
-                vaoBufferId = -1;
-            }
         }
     }
     

@@ -88,7 +88,7 @@ class AppleFence extends Fence
     }
     
     @Override
-    public final boolean isReached()
+    protected final boolean isReachedImpl()
     {
         if(testFenceFunctionPointer == -1)
             return APPLEFence.glTestFenceAPPLE(fencePointer);
@@ -108,7 +108,7 @@ class AppleFence extends Fence
     }
 
     @Override
-    public final void set()
+    protected final void setImpl()
     {
         if(setFenceFunctionPointer == -1)
         {
