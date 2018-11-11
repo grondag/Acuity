@@ -33,14 +33,12 @@ public class MappedBuffer
     private boolean isMapped = false;
     private final ConcurrentLinkedQueue<IBufferAllocation> flushes = new ConcurrentLinkedQueue<>();
     
-    @Nullable BufferAllocation root;
-    
     MappedBuffer()
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         this.glBufferId = OpenGlHelper.glGenBuffers();
         bind();
-        OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, BufferSlice.MAX_BUFFER_BYTES, GL15.GL_DYNAMIC_DRAW);
+        OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, BufferSlice.MAX_BUFFER_BYTES, GL15.GL_STATIC_DRAW);
         OpenGlHelperExt.handleAppleMappedBuffer();
         map();
         unbind();
@@ -122,10 +120,7 @@ public class MappedBuffer
         
         IBufferAllocation ref = flushes.poll();
         
-        if(ref == null)
-            return;
-        
-        assert isMapped;
+        assert ref == null || isMapped;
         
         bind();
         while(ref != null)
