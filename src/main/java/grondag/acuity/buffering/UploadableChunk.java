@@ -20,14 +20,14 @@ public abstract class UploadableChunk<V extends DrawableChunk>
         packingList.forEach((pipeline, vertexCount) ->
         {
             final int stride = pipeline.piplineVertexFormat().stride;
-            MappedBufferStore.claimSolid(pipeline, vertexCount * stride, ref ->
+            MappedBufferStore.claimAllocation(pipeline, vertexCount * stride, ref ->
             {
                 final int byteOffset = ref.byteOffset();
                 final int byteCount = ref.byteCount();
-                
-                final IntBuffer intBuffer = ref.intBuffer();
-                intBuffer.position(byteOffset / 4);
                 final int intLength = byteCount / 4;
+                final IntBuffer intBuffer = ref.intBuffer();
+
+                intBuffer.position(byteOffset / 4);
                 intBuffer.put(collectorList.getIfExists(pipeline.getIndex()).rawData(), intOffset, intLength);
                 intOffset += intLength;
                 final DrawableChunkDelegate delegate = new DrawableChunkDelegate(ref, pipeline, byteCount / stride);

@@ -1023,22 +1023,31 @@ public class OpenGlHelperExt
     /** 
      * Assumes buffer is bound and starting offset is 0. 
      * Maps whole buffer. (Size should be size of buffer.)
+     * If writeFlag true, buffer mapped for writing. If false, mapped for reading.
      */
-    public static @Nullable ByteBuffer mapBufferAsynch(@Nullable ByteBuffer priorMapped, int bufferSize)
+    public static @Nullable ByteBuffer mapBufferAsynch(@Nullable ByteBuffer priorMapped, int bufferSize, boolean writeFlag)
     {
         if(glmapBufferAsynchFunctionPointer == -1)
-            return mapBufferAsynchSlow(priorMapped, bufferSize);
+            return mapBufferAsynchSlow(priorMapped, bufferSize, writeFlag);
         else
             try
             {
                 ByteBuffer result;
                 
-                if(appleMapping)
-                    result = (ByteBuffer) nglmapBufferAsynch.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, GL15.GL_WRITE_ONLY, (long)bufferSize, priorMapped, glmapBufferAsynchFunctionPointer);
+                if(appleMapping || !writeFlag)
+                    result = (ByteBuffer) nglmapBufferAsynch.invokeExact(
+                            OpenGlHelper.GL_ARRAY_BUFFER, 
+                            writeFlag ? GL15.GL_WRITE_ONLY : GL15.GL_READ_ONLY, 
+                            (long)bufferSize, priorMapped, 
+                            glmapBufferAsynchFunctionPointer);
                 else
-                    result = (ByteBuffer) nglmapBufferAsynch.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, 0L, (long)bufferSize, 
+                    result = (ByteBuffer) nglmapBufferAsynch.invokeExact(
+                            OpenGlHelper.GL_ARRAY_BUFFER, 
+                            0L, 
+                            (long)bufferSize, 
                             GL30.GL_MAP_FLUSH_EXPLICIT_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_WRITE_BIT, 
-                            priorMapped, glmapBufferAsynchFunctionPointer);
+                            priorMapped, 
+                            glmapBufferAsynchFunctionPointer);
                 
                 if(result != null)
                     result.order(ByteOrder.nativeOrder());
@@ -1049,16 +1058,20 @@ public class OpenGlHelperExt
             {
                 Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "mapBufferAsynch"), e);
                 glmapBufferAsynchFunctionPointer = -1;
-                return mapBufferAsynchSlow(priorMapped, bufferSize);
+                return mapBufferAsynchSlow(priorMapped, bufferSize, writeFlag);
             }
         
     }
     
-    private static @Nullable ByteBuffer mapBufferAsynchSlow(@Nullable ByteBuffer priorMapped, int bufferSize)
+    private static @Nullable ByteBuffer mapBufferAsynchSlow(@Nullable ByteBuffer priorMapped, int bufferSize, boolean writeFlag)
     {
         if(appleMapping)
         {
-            return GL15.glMapBuffer(OpenGlHelper.GL_ARRAY_BUFFER, GL15.GL_WRITE_ONLY, bufferSize, priorMapped);
+            return GL15.glMapBuffer(
+                    OpenGlHelper.GL_ARRAY_BUFFER, 
+                    writeFlag ? GL15.GL_WRITE_ONLY : GL15.GL_READ_ONLY, 
+                    bufferSize, 
+                    priorMapped);
         }
         else
         {

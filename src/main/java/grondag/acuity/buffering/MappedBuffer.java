@@ -1,14 +1,19 @@
 package grondag.acuity.buffering;
 
 import java.nio.ByteBuffer;
-import java.util.concurrent.ConcurrentLinkedDeque;
+import java.nio.IntBuffer;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL15;
 
 import grondag.acuity.Acuity;
+import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.opengl.GLBufferStore;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -30,7 +35,7 @@ public class MappedBuffer
     private boolean isFinal = false;
     
     private final AtomicInteger retainedBytes = new AtomicInteger();
-    private final ConcurrentLinkedDeque<DrawableChunkDelegate> retainers = new ConcurrentLinkedDeque<>();
+    final Set<DrawableChunkDelegate> retainers = Collections.newSetFromMap(new ConcurrentHashMap<DrawableChunkDelegate, Boolean>());
     
     MappedBuffer()
     {
@@ -38,7 +43,7 @@ public class MappedBuffer
         this.glBufferId = OpenGlHelper.glGenBuffers();
         bind();
         orphan();
-        map();
+        map(true);
         unbind();
         inUse.add(this);
     }
@@ -49,10 +54,10 @@ public class MappedBuffer
         return mapped;
     }
     
-    private void map()
+    void map(boolean writeFlag)
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
-        mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES);
+        mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES, writeFlag);
         isMapped = true;
     }
     
@@ -61,7 +66,7 @@ public class MappedBuffer
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         bind();
-        map();
+        map(true);
         unbind();
     }
     
@@ -160,15 +165,20 @@ public class MappedBuffer
     public void retain(DrawableChunkDelegate drawable)
     {
         retainedBytes.addAndGet(drawable.bufferDelegate().byteCount());
-        retainers.offer(drawable);
+        retainers.add(drawable);
     }
     
     public void release(DrawableChunkDelegate drawable)
     {
+        retainers.remove(drawable);
         final int bytes = drawable.bufferDelegate().byteCount();
         final int newRetained = retainedBytes.addAndGet(-bytes);
         if(newRetained < HALF_CAPACITY && (newRetained + bytes) >= HALF_CAPACITY)
+        {
+            assert isFinal;
+            assert !isMapped;
             MappedBufferStore.scheduleRelease(this);
+        }
     }
     
     public void reportStats()
@@ -217,9 +227,63 @@ public class MappedBuffer
             mapped = null;
         }
         orphan();
-        unbind();
         isFinal = false;
         currentMaxOffset.set(0);
         lastFlushedOffset = 0;
+    }
+
+    private static final ThreadLocal<int[]> transferArray = new ThreadLocal<int[]>()
+    {
+        @Override
+        protected int[] initialValue()
+        {
+            return new int[CAPACITY_BYTES / 4];
+        }
+    };
+    
+    public ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> rebufferRetainers()
+    {
+        assert isMapped;
+        
+        @SuppressWarnings("null")
+        final IntBuffer fromBuffer = mapped.asIntBuffer();
+        final int[] transfer = transferArray.get();
+        ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> swaps = new ObjectArrayList<>();
+        
+        retainers.forEach(delegate -> 
+        {
+            final RenderPipeline pipeline = delegate.getPipeline();
+            final int fromByteCount = delegate.bufferDelegate().byteCount();
+            final int fromIntCount = fromByteCount / 4;
+            final int fromIntOffset = delegate.bufferDelegate().byteOffset() / 4;
+            
+            fromBuffer.position(fromIntOffset);
+            fromBuffer.get(transfer, 0, fromIntCount);
+            
+            MappedBufferStore.claimAllocation(pipeline, fromByteCount, ref ->
+            {
+                final int byteOffset = ref.byteOffset();
+                final int byteCount = ref.byteCount();
+                final int intLength = byteCount / 4;
+                final IntBuffer intBuffer = ref.intBuffer();
+
+                // no splitting, need 1:1
+                assert byteCount == fromByteCount;
+                
+                intBuffer.position(byteOffset / 4);
+                intBuffer.put(transfer, 0, intLength);
+                swaps.add(Pair.of(delegate, ref));
+            });
+        });  
+        return swaps;
+    }
+
+    /**
+     * Called after rebuffered retainers are flushed and swapped with ours.
+     */
+    void clearRetainers()
+    {
+        this.retainedBytes.set(0);
+        this.retainers.clear();
     }
 }
