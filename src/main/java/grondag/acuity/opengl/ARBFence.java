@@ -86,7 +86,7 @@ class ARBFence extends Fence
     static boolean needsErrorNotice = true;
     
     @Override
-    protected final boolean isReachedImpl()
+    public final boolean isReached()
     {
         try
         {
@@ -103,7 +103,7 @@ class ARBFence extends Fence
     }
 
     @Override
-    protected final void setImpl()
+    public final void set()
     {
         try
         {

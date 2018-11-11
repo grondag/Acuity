@@ -7,11 +7,11 @@ import grondag.acuity.opengl.OpenGlHelperExt;
 
 public class DrawableChunkDelegate
 {
-    private final BufferAllocation buffer;
+    private final IBufferAllocation buffer;
     private final RenderPipeline pipeline;
     final int vertexCount;
     
-    public DrawableChunkDelegate(BufferAllocation buffer, RenderPipeline pipeline, int vertexCount)
+    public DrawableChunkDelegate(IBufferAllocation buffer, RenderPipeline pipeline, int vertexCount)
     {
         this.buffer = buffer;
         this.pipeline = pipeline;
@@ -47,7 +47,7 @@ public class DrawableChunkDelegate
         
         if(this.buffer.glBufferId() != lastBufferId)
         {
-            this.buffer.bind();
+            this.buffer.bindForRender();
             lastBufferId = this.buffer.glBufferId();
         }
        
@@ -59,11 +59,9 @@ public class DrawableChunkDelegate
      */
     public void draw()
     {
-        if(buffer.isDisposed())
+        if(this.buffer.isDisposed())
             return;
-        buffer.bindVertexAttributes();
-        OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, 0, vertexCount);
-        buffer.fence.set();
+        OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, buffer.startVertex(), vertexCount);
     }
     
     public void release()

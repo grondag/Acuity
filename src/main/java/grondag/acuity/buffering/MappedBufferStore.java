@@ -25,6 +25,7 @@ public class MappedBufferStore
     
     private static volatile ConcurrentLinkedQueue<BufferAllocation> disposalQueueA = new ConcurrentLinkedQueue<>();
     private static ConcurrentLinkedQueue<BufferAllocation> disposalQueueB = new ConcurrentLinkedQueue<>();
+    private static ConcurrentLinkedQueue<BufferAllocation> disposalQueueC = new ConcurrentLinkedQueue<>();
     
     static
     {
@@ -54,19 +55,13 @@ public class MappedBufferStore
      */
     public static void prepareEmpties()
     {
-        ConcurrentLinkedQueue<BufferAllocation> disposal = disposalQueueA;
-        disposalQueueA = disposalQueueB;
-        disposalQueueB = disposal;
-        BufferAllocation b = disposal.poll();
-        while(b != null)
-        {
-            if(b.fence.isReached())
-                acceptFreeInner(disposal.poll());
-            else
-                disposalQueueA.offer(b);
-            
-            b = disposal.poll();
-        }
+        ConcurrentLinkedQueue<BufferAllocation> disposal = disposalQueueC;
+        while(!disposal.isEmpty())
+            acceptFreeInner(disposal.poll());
+        
+        disposalQueueC = disposalQueueB;
+        disposalQueueB = disposalQueueA;
+        disposalQueueA = disposal;
         
         final int targetBuffers = Math.max(freeBuffers.size() - 4, MIN_BUFFERS - bufferCount);
         
@@ -88,7 +83,6 @@ public class MappedBufferStore
     static int[] freeCounts = new int[BufferSlice.SLICE_COUNT];
     static int byteCount = 0;
     
-    @SuppressWarnings("null")
     private static void doStats()
     {
         if(statCounter++ == 200)
@@ -125,7 +119,6 @@ public class MappedBufferStore
         }
     }
     
-    @SuppressWarnings("null")
     private static void reportAlloc(BufferAllocation alloc)
     {
         if(alloc.isFree.get())
@@ -151,7 +144,7 @@ public class MappedBufferStore
      * All vertices in the buffer(s) will share the same pipeline (and thus vertex format).
      */
     @SuppressWarnings("null")
-    public static void claimAllocation(TextureFormat format, int quadCount, Consumer<BufferAllocation> consumer)
+    public static void claimAllocation(TextureFormat format, int quadCount, Consumer<IBufferAllocation> consumer)
     {
         BufferAllocator allocator = BufferAllocator.findBest(format, quadCount);
         assert allocator.quadCount >= quadCount;
@@ -196,6 +189,7 @@ public class MappedBufferStore
         if(slice.isMax)
         {
             BufferAllocation.Root result = new BufferAllocation.Root(slice, getEmptyMapped());
+            result.buffer.setFormat(slice.format);
             result.buffer.root = result;
             result.claim();
             return result;
@@ -204,8 +198,8 @@ public class MappedBufferStore
         {
             @SuppressWarnings("null")
             BufferAllocation parent = getAllocation(slice.bigger());
-            BufferAllocation.Slice a = new BufferAllocation.Slice(slice, parent.byteOffset, parent);
-            BufferAllocation.Slice b = new BufferAllocation.Slice(slice, parent.byteOffset + slice.bytes, parent);
+            BufferAllocation.Slice a = new BufferAllocation.Slice(slice, parent.startVertex(), parent);
+            BufferAllocation.Slice b = new BufferAllocation.Slice(slice, parent.startVertex() + slice.quadCount * 4, parent);
             parent.childA = a;
             parent.childB = b;
             a.buddy = b;
@@ -253,7 +247,7 @@ public class MappedBufferStore
                 q.offer(free);
             else
             {
-                free.delete();
+                free.isDeleted = true;
                 MappedBuffer buff = ((BufferAllocation.Root) free).buffer;
                 buff.root = null;
                 freeBuffers.offer(buff);

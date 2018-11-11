@@ -10,7 +10,6 @@ import org.apache.logging.log4j.Logger;
 
 import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.IAcuityRuntime;
-import grondag.acuity.opengl.OpenGlFenceExt;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -94,7 +93,6 @@ public class Acuity
         }
         
         OpenGlHelperExt.initialize();
-        OpenGlFenceExt.initialize();
         
         if(!OpenGlHelperExt.areAsynchMappedBuffersSupported())
         {

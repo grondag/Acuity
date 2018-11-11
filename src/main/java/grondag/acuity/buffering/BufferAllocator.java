@@ -100,6 +100,6 @@ public class BufferAllocator
         this.quadCount = primarySlice.quadCount +  (isDouble ? secondarySlice.quadCount : 0);
         this.quadStride = primarySlice.quadStride;
         
-        assert this.bytes >= this.quadCount * this.quadStride;
+        assert this.bytes == this.quadCount * this.quadStride;
     }
 }
