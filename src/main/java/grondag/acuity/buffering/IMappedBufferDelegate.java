@@ -2,7 +2,7 @@ package grondag.acuity.buffering;
 
 import java.nio.IntBuffer;
 
-public interface IMappedBufferReference
+public interface IMappedBufferDelegate
 {
     int byteCount();
     int byteOffset();
@@ -10,6 +10,7 @@ public interface IMappedBufferReference
     IntBuffer intBuffer();
     boolean isDisposed();
     void bind();
-    void release();
     void flush();
+    void release(DrawableChunkDelegate drawableChunkDelegate);
+    void retain(DrawableChunkDelegate drawableChunkDelegate);
 }

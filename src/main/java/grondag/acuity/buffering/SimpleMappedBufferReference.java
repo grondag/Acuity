@@ -2,7 +2,7 @@ package grondag.acuity.buffering;
 
 import java.nio.IntBuffer;
 
-public class SimpleMappedBufferReference implements IMappedBufferReference
+public class SimpleMappedBufferReference implements IMappedBufferDelegate
 {
     private final int byteCount;
     private final int byteOffset;
@@ -13,7 +13,6 @@ public class SimpleMappedBufferReference implements IMappedBufferReference
         this.buffer = buffer;
         this.byteCount = byteCount;
         this.byteOffset = byteOffset;
-        buffer.retain(byteCount);
     }
 
     @Override
@@ -53,14 +52,20 @@ public class SimpleMappedBufferReference implements IMappedBufferReference
     }
 
     @Override
-    public void release()
-    {
-        buffer.release(this.byteCount);
-    }
-
-    @Override
     public void flush()
     {
         buffer.flush();
+    }
+
+    @Override
+    public void release(DrawableChunkDelegate drawableChunkDelegate)
+    {
+        buffer.release(drawableChunkDelegate);
+    }
+
+    @Override
+    public void retain(DrawableChunkDelegate drawableChunkDelegate)
+    {
+        buffer.retain(drawableChunkDelegate);
     }
 }

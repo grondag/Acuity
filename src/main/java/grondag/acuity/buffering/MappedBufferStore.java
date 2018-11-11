@@ -23,12 +23,8 @@ public class MappedBufferStore
     private static final ConcurrentLinkedQueue<MappedBuffer> pendingRelease = new ConcurrentLinkedQueue<>();
     
     private static final Object[] solidLock = new Object[PipelineManager.MAX_PIPELINES];
-    private static final Object translucentLock = new Object();
     
     private static final MappedBuffer[] solidPartial = new MappedBuffer[PipelineManager.MAX_PIPELINES];
-    private static @Nullable MappedBuffer translucentPartial = null;
-    
-    static final Object STORE_RETAINER = new Object();
     
     static
     {
@@ -55,13 +51,13 @@ public class MappedBufferStore
      */
     public static void prepareEmpties()
     {
-        while(!pendingRelease.isEmpty())
-        {
-            MappedBuffer b = pendingRelease.poll();
-            b.reset();
-            if(!b.isDisposed())
-                emptyUnmapped.offer(b);
-        }
+//        while(!pendingRelease.isEmpty())
+//        {
+//            MappedBuffer b = pendingRelease.poll();
+//            b.reset();
+//            if(!b.isDisposed())
+//                emptyUnmapped.offer(b);
+//        }
         
         final int targetBuffers = Math.max(MIN_CAPACITY, TARGET_BUFFERS - MappedBuffer.inUse.size());
         
@@ -106,7 +102,7 @@ public class MappedBufferStore
      * If more than one buffer is needed, break(s) will be at a boundary compatible with all vertex formats.
      * All vertices in the buffer(s) will share the same pipeline (and thus vertex format).
      */
-    public static void claimSolid(RenderPipeline pipeline, int byteCount, Consumer<IMappedBufferReference> consumer)
+    public static void claimSolid(RenderPipeline pipeline, int byteCount, Consumer<IMappedBufferDelegate> consumer)
     {
         synchronized(solidLock[pipeline.getIndex()])
         {
@@ -123,7 +119,7 @@ public class MappedBufferStore
                 
             while(byteCount > 0)
             {
-                IMappedBufferReference result = target.requestBytes(byteCount, quadStride);
+                IMappedBufferDelegate result = target.requestBytes(byteCount, quadStride);
                 if(result == null)
                 {
                     // store no longer knows/cares about it, and it can be released when no longer needed for render
@@ -145,54 +141,12 @@ public class MappedBufferStore
     }
     
     /**
-     * Will give consumer one or more buffers w/ offsets able to contain the given byte count.
-     * If more than one buffer is needed, break will be at a boundary compatible with all vertex formats.
-     * Unlike {@link #claimSolid(RenderPipeline, int, int, IBufferConsumer)} this assumes all pipelines
-     * and potentially multiple vertex formats will be backed into the same space to honor vertex sorting.
-     * Will not split across buffers.
-     */
-    public static void claimTranslucent(int byteCount, Consumer<IMappedBufferReference> consumer)
-    {
-        synchronized(translucentLock)
-        {
-            final MappedBuffer startBuffer = translucentPartial;
-            MappedBuffer target =  startBuffer;
-            
-            if(target == null)
-                target = getEmptyMapped();
-            
-            if(target == null)
-                return;
-                
-            IMappedBufferReference ref = target.requestBytes(byteCount);
-            if(ref == null)
-            {
-                // store no longer knows/cares about it, and it can be released when no longer needed for render
-                target.setFinal();
-                target = getEmptyMapped();
-                if(target == null)
-                    return;
-                ref = target.requestBytes(byteCount);
-            }
-            
-            assert ref != null;
-            
-            if(ref != null)
-                consumer.accept(ref);
-                
-            if(startBuffer != target)
-                translucentPartial = target;
-        }
-    }
-    
-    /**
      * Called by mapped buffers when they are released off thread.
      * Prevents GL calls outside client thread.
      */
     public static void scheduleRelease(MappedBuffer mappedBuffer)
     {
         pendingRelease.offer(mappedBuffer);
-        releaseCount++;
     }
 
     public static void forceReload()
@@ -204,7 +158,6 @@ public class MappedBufferStore
         pendingRelease.clear();
         for(int i = 0; i < PipelineManager.MAX_PIPELINES; i++)
             solidPartial[i] = null;
-        translucentPartial = null;
         releaseCount = 0;
         statCounter = 0;
     }

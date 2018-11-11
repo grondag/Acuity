@@ -11,22 +11,32 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 public class DrawableChunkDelegate
 {
-    private static final int VAO_UNTESTED = -1;
-    private static final int VAO_DISABLED = -2;
-    
-    private final IMappedBufferReference buffer;
+    private IMappedBufferDelegate bufferDelegate;
     private final RenderPipeline pipeline;
     final int vertexCount;
     /**
      * VAO Buffer name if enabled and initialized.
      */
-    int vaoBufferId = VAO_UNTESTED;
+    int vaoBufferId = -1;
+    boolean vaoNeedsRefresh = true;
     
-    public DrawableChunkDelegate(IMappedBufferReference buffer, RenderPipeline pipeline, int vertexCount)
+    public DrawableChunkDelegate(IMappedBufferDelegate bufferDelegate, RenderPipeline pipeline, int vertexCount)
     {
-        this.buffer = buffer;
+        this.bufferDelegate = bufferDelegate;
         this.pipeline = pipeline;
         this.vertexCount = vertexCount;
+        bufferDelegate.retain(this);
+    }
+    
+    public IMappedBufferDelegate bufferDelegate()
+    {
+        return this.bufferDelegate;
+    }
+    
+    public void replaceBufferDelegate(IMappedBufferDelegate newDelegate)
+    {
+        this.bufferDelegate = newDelegate;
+        vaoNeedsRefresh = true;
     }
     
     /**
@@ -36,7 +46,7 @@ public class DrawableChunkDelegate
      */
     public int bufferId()
     {
-        return this.buffer.glBufferId();
+        return this.bufferDelegate.glBufferId();
     }
     
     /**
@@ -53,47 +63,44 @@ public class DrawableChunkDelegate
      */
     public int bind(int lastBufferId)
     {
-        if(this.buffer.isDisposed())
+        if(this.bufferDelegate.isDisposed())
             return lastBufferId;
         
-        if(this.buffer.glBufferId() != lastBufferId)
+        if(this.bufferDelegate.glBufferId() != lastBufferId)
         {
-            this.buffer.bind();
-            lastBufferId = this.buffer.glBufferId();
+            this.bufferDelegate.bind();
+            lastBufferId = this.bufferDelegate.glBufferId();
         }
         
-        if(vaoBufferId > 0)
+        if(vaoNeedsRefresh)
         {
-            OpenGlHelperExt.glBindVertexArray(vaoBufferId);
-            return lastBufferId;
-        }
-        
-        final PipelineVertexFormat format = pipeline.piplineVertexFormat();
-        if(vaoBufferId == VAO_UNTESTED)
-        {
+            final PipelineVertexFormat format = pipeline.piplineVertexFormat();
             if(OpenGlHelperExt.isVaoEnabled())
             {
-                vaoBufferId = VaoStore.claimVertexArray();
+                if(vaoBufferId == -1)
+                    vaoBufferId = VaoStore.claimVertexArray();
                 OpenGlHelperExt.glBindVertexArray(vaoBufferId);
                 GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
                 OpenGlHelperExt.enableAttributesVao(format.attributeCount);
                 bindVertexAttributes(format);
                 return lastBufferId;
             }
-            else
-                vaoBufferId = VAO_DISABLED;
+            vaoNeedsRefresh = false;
         }
         
-        // if get to here, no VAO and must rebind each time
-        bindVertexAttributes(format);
+        if(vaoBufferId > 0)
+            OpenGlHelperExt.glBindVertexArray(vaoBufferId);
+        else
+            bindVertexAttributes(pipeline.piplineVertexFormat());
+        
         return lastBufferId; 
        
     }
     
     private void bindVertexAttributes(PipelineVertexFormat format)
     {
-        OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), format.stride, buffer.byteOffset());
-        format.bindAttributeLocations(buffer.byteOffset());
+        OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), format.stride, bufferDelegate.byteOffset());
+        format.bindAttributeLocations(bufferDelegate.byteOffset());
     }
     
     /**
@@ -101,23 +108,23 @@ public class DrawableChunkDelegate
      */
     public void draw()
     {
-        if(this.buffer.isDisposed())
+        if(this.bufferDelegate.isDisposed())
             return;
         OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, 0, vertexCount);
     }
     
     public void release()
     {
-        buffer.release();
-        if(this.vaoBufferId > 0)
+        bufferDelegate.release(this);
+        if(vaoBufferId != -1)
         {
             VaoStore.releaseVertexArray(vaoBufferId);
-            vaoBufferId = VAO_UNTESTED;
+            vaoBufferId = -1;
         }
     }
 
     public void flush()
     {
-        this.buffer.flush();
+        this.bufferDelegate.flush();
     }
 }
