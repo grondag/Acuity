@@ -3,15 +3,26 @@ package grondag.acuity.buffering;
 import org.lwjgl.opengl.GL11;
 
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.core.PipelineVertexFormat;
 import grondag.acuity.opengl.OpenGlHelperExt;
+import grondag.acuity.opengl.VaoStore;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 public class DrawableChunkDelegate
 {
-    private final IBufferAllocation buffer;
+    private static final int VAO_UNTESTED = -1;
+    private static final int VAO_DISABLED = -2;
+    
+    private final IMappedBufferReference buffer;
     private final RenderPipeline pipeline;
     final int vertexCount;
+    /**
+     * VAO Buffer name if enabled and initialized.
+     */
+    int vaoBufferId = VAO_UNTESTED;
     
-    public DrawableChunkDelegate(IBufferAllocation buffer, RenderPipeline pipeline, int vertexCount)
+    public DrawableChunkDelegate(IMappedBufferReference buffer, RenderPipeline pipeline, int vertexCount)
     {
         this.buffer = buffer;
         this.pipeline = pipeline;
@@ -47,11 +58,42 @@ public class DrawableChunkDelegate
         
         if(this.buffer.glBufferId() != lastBufferId)
         {
-            this.buffer.bindForRender();
+            this.buffer.bind();
             lastBufferId = this.buffer.glBufferId();
         }
-       
+        
+        if(vaoBufferId > 0)
+        {
+            OpenGlHelperExt.glBindVertexArray(vaoBufferId);
+            return lastBufferId;
+        }
+        
+        final PipelineVertexFormat format = pipeline.piplineVertexFormat();
+        if(vaoBufferId == VAO_UNTESTED)
+        {
+            if(OpenGlHelperExt.isVaoEnabled())
+            {
+                vaoBufferId = VaoStore.claimVertexArray();
+                OpenGlHelperExt.glBindVertexArray(vaoBufferId);
+                GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
+                OpenGlHelperExt.enableAttributesVao(format.attributeCount);
+                bindVertexAttributes(format);
+                return lastBufferId;
+            }
+            else
+                vaoBufferId = VAO_DISABLED;
+        }
+        
+        // if get to here, no VAO and must rebind each time
+        bindVertexAttributes(format);
         return lastBufferId; 
+       
+    }
+    
+    private void bindVertexAttributes(PipelineVertexFormat format)
+    {
+        OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), format.stride, buffer.byteOffset());
+        format.bindAttributeLocations(buffer.byteOffset());
     }
     
     /**
@@ -61,21 +103,21 @@ public class DrawableChunkDelegate
     {
         if(this.buffer.isDisposed())
             return;
-        OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, buffer.startVertex(), vertexCount);
+        OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, 0, vertexCount);
     }
     
     public void release()
     {
         buffer.release();
+        if(this.vaoBufferId > 0)
+        {
+            VaoStore.releaseVertexArray(vaoBufferId);
+            vaoBufferId = VAO_UNTESTED;
+        }
     }
 
     public void flush()
     {
         this.buffer.flush();
-    }
-
-    public void flushLater()
-    {
-        this.buffer.flushLater();
     }
 }

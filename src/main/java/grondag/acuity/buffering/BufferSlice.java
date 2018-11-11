@@ -50,7 +50,7 @@ public class BufferSlice
         
         for(int i = 0; i < SLICE_COUNT; i++)
         {
-            slices[i] = new BufferSlice(i, quadStride, quadCount, format);
+            slices[i] = new BufferSlice(i, quadStride, quadCount, formatOrdinal);
             quadCount /= 2;
         }
         
@@ -69,10 +69,9 @@ public class BufferSlice
     public final int quadCount;
     public final int quadStride;
     public final int bytes;
-    public final TextureFormat format;
-    public final int formatOrdinal;
+    private final int formatOrdinal;
     
-    private BufferSlice(int divisionLevel, int quadStride, int quadCount, TextureFormat format)
+    private BufferSlice(int divisionLevel, int quadStride, int quadCount, int formatOrdinal)
     {
         this.divisionLevel = divisionLevel;
         this.quadStride = quadStride;
@@ -80,8 +79,7 @@ public class BufferSlice
         this.bytes = quadStride * quadCount;
         this.isMax = divisionLevel == 0;
         this.isMin = divisionLevel == SLICE_COUNT - 1;
-        this.format = format;
-        this.formatOrdinal = format.ordinal();
+        this.formatOrdinal = formatOrdinal;
     }
     
     public final @Nullable BufferSlice bigger()
