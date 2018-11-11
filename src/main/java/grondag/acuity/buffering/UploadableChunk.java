@@ -20,7 +20,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
         packingList.forEach((pipeline, vertexCount) ->
         {
             final int stride = pipeline.piplineVertexFormat().stride;
-            MappedBufferStore.claimAllocation(pipeline, vertexCount * stride, ref ->
+            AllocationManager.claimAllocation(pipeline, vertexCount * stride, ref ->
             {
                 final int byteOffset = ref.byteOffset();
                 final int byteCount = ref.byteCount();

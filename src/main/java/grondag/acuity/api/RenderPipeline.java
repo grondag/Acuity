@@ -34,7 +34,6 @@ public final class RenderPipeline implements IRenderPipeline
     private VertexFormat vertexFormat;
     
     
-    @SuppressWarnings("null")
     RenderPipeline(int index, String vertexShader, String fragmentShader, TextureFormat textureFormat)
     {
         PipelineVertexShader  vs = PipelineShaderManager.INSTANCE.getOrCreateVertexShader(vertexShader, textureFormat, true);

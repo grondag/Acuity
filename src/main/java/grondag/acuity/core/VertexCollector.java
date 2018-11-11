@@ -59,7 +59,6 @@ public class VertexCollector
         this(128);
     }
     
-    @SuppressWarnings("null")
     public VertexCollector(int initialCapacity)
     {
         data = new int[MathHelper.smallestEncompassingPowerOfTwo(initialCapacity)];

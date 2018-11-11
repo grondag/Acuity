@@ -5,6 +5,7 @@ import java.nio.IntBuffer;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.annotation.Nullable;
@@ -20,21 +21,78 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
 
+/**
+ * Concurrency Notes<br>
+ * Client thread must handle all operations that require GL context.
+ * This include map, flush, bind, etc.<p>
+ * 
+ * Allocation operations will occur on chunk build thread.
+ * An external "check-in/out" mechanism will ensure only a single
+ * thread is ever calling these operations.<p>
+ * 
+ * Some allocation operations may interact with tracking data needed on the client thread.
+ * For these, Atomic variable are preferred over synchronization.
+ *
+ */
 public class MappedBuffer
 {
-    public static final int CAPACITY_BYTES = 0x80000;
+    private static int nextID = 0;
+    
+    public static final int CAPACITY_BYTES = 512 * 1024;
     private static final int HALF_CAPACITY = CAPACITY_BYTES / 2;
     
     public static final ObjectArrayList<MappedBuffer> inUse = new ObjectArrayList<>();
     
     public final int glBufferId;
-    private final AtomicInteger currentMaxOffset = new AtomicInteger();
-    private int lastFlushedOffset = 0;
-    private @Nullable ByteBuffer mapped = null;
-    private boolean isMapped = false;
-    private boolean isFinal = false;
     
+    public final int id = nextID++;
+    
+    /**
+     * Max byte used for buffer flush. Incremented by allocation 
+     * on chunk build threads and decreased by flush on client threads.
+     */
+    private final AtomicInteger currentMaxOffset = new AtomicInteger();
+    
+    /**
+     * Max byte flushed to GPU. Changed by client thread only.
+     */
+    private int lastFlushedOffset = 0;
+    
+    /**
+     * Mapped GL buffer if currently mapped. Set by client thread only
+     * but access by other threads is the point of having it.<p>
+     * 
+     * MAY BE NON-NULL IF NOT MAPPED.  Reuse of buffer instance is an optimization feature of GL.
+     */
+    private @Nullable ByteBuffer mapped = null;
+    
+    /**
+     * True if buffer is actually mapped. If false, and {@link #mapped} is non-null,
+     * the buffer instance is only meant for remap calls. Modified by client thread only.
+     */
+    private boolean isMapped = false;
+    
+    /**
+     * If true, buffer is fully allocated and does not need to be re-mapped after flush.
+     * Changed by allocation thread - which will always be a single thread.
+     */
+    private volatile boolean isFinal = false;
+    
+    /**
+     * Bytes currently being used for render. 
+     */
     private final AtomicInteger retainedBytes = new AtomicInteger();
+    
+    /**
+     * If true, release (or defrag) has been requested because buffer is final
+     * and usage has dropped below 50%.  *Probably* only updated on client thread
+     * but handled as atomic just be sure. 
+     */
+    private final AtomicBoolean isReleaseRequested = new AtomicBoolean(false);
+    
+    /**
+     * DrawableChunkDelegates currently using the buffer for rendering.
+     */
     final Set<DrawableChunkDelegate> retainers = Collections.newSetFromMap(new ConcurrentHashMap<DrawableChunkDelegate, Boolean>());
     
     MappedBuffer()
@@ -68,6 +126,11 @@ public class MappedBuffer
         bind();
         map(true);
         unbind();
+    }
+    
+    public int unallocatedBytes()
+    {
+        return isFinal ? 0 : (CAPACITY_BYTES - currentMaxOffset.get());
     }
     
     /**
@@ -140,7 +203,9 @@ public class MappedBuffer
         if(isMapped)
         {
             OpenGlHelperExt.unmapBuffer();
-            if(isFinal)
+            
+            // need to check again because another thread could have set us final or add vertices after we started
+            if(isFinal && currentMaxOffset.get() == lastFlushedOffset)
             {
                 isMapped = false;
                 mapped = null;
@@ -170,22 +235,35 @@ public class MappedBuffer
     
     public void release(DrawableChunkDelegate drawable)
     {
-        retainers.remove(drawable);
-        final int bytes = drawable.bufferDelegate().byteCount();
-        final int newRetained = retainedBytes.addAndGet(-bytes);
-        if(newRetained < HALF_CAPACITY && (newRetained + bytes) >= HALF_CAPACITY)
+        // retainer won't be found if release was already scheduled and collection has been cleared
+        if(retainers.remove(drawable))
         {
-            assert isFinal;
-            assert !isMapped;
-            MappedBufferStore.scheduleRelease(this);
+            final int bytes = drawable.bufferDelegate().byteCount();
+            final int newRetained = retainedBytes.addAndGet(-bytes);
+            if(newRetained < HALF_CAPACITY && isFinal && isReleaseRequested.compareAndSet(false, true))
+            {
+                assert !isMapped;
+                MappedBufferStore.scheduleRelease(this);
+            }
         }
+        else
+        {
+            // if not found, then should have been cleared after requesting release
+            assert isReleaseRequested.get();
+            assert retainers.isEmpty();
+        }
+        
     }
     
     public void reportStats()
     {
-        Acuity.INSTANCE.getLog().info(String.format("Buffer %d: Count=%d  Bytes=%d (%d)",
-                this.glBufferId, this.retainers.size(), this.retainedBytes.get(),
-                this.retainedBytes.get() * 100 / CAPACITY_BYTES));
+        String status = "" + (this.isFinal ? "FINAL" : "OPEN") + (this.isMapped ? "-MAPPED" : "") + (this.isReleaseRequested.get() ? "-RELEASING" : "");
+        Acuity.INSTANCE.getLog().info(String.format("Buffer %d: Count=%d  Bytes=%d (%d) Status=%s",
+                this.id, 
+                this.retainers.size(), 
+                this.retainedBytes.get(),
+                this.retainedBytes.get() * 100 / CAPACITY_BYTES,
+                status));
     }
     
     /** called by store on render reload to recycle GL buffer */
@@ -228,6 +306,7 @@ public class MappedBuffer
         }
         orphan();
         isFinal = false;
+        isReleaseRequested.set(false);
         currentMaxOffset.set(0);
         lastFlushedOffset = 0;
     }
@@ -260,7 +339,7 @@ public class MappedBuffer
             fromBuffer.position(fromIntOffset);
             fromBuffer.get(transfer, 0, fromIntCount);
             
-            MappedBufferStore.claimAllocation(pipeline, fromByteCount, ref ->
+            AllocationManager.claimAllocation(pipeline, fromByteCount, ref ->
             {
                 final int byteOffset = ref.byteOffset();
                 final int byteCount = ref.byteCount();
@@ -272,6 +351,7 @@ public class MappedBuffer
                 
                 intBuffer.position(byteOffset / 4);
                 intBuffer.put(transfer, 0, intLength);
+                ref.retain(delegate);
                 swaps.add(Pair.of(delegate, ref));
             });
         });  

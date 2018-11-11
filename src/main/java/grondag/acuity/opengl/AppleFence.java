@@ -16,19 +16,15 @@ import net.minecraft.util.text.translation.I18n;
 class AppleFence extends Fence
 {
     static private long testFenceFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle testFenceHandle = null;
     
     static private long setFenceFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle setFenceHandle = null;
     
 //    static private long genFenceFunctionPointer = -1;
-//    @SuppressWarnings("null")
 //    static private MethodHandle genFenceHandle = null;
 //    
 //    static private long deleteFenceFunctionPointer = -1;
-//    @SuppressWarnings("null")
 //    static private MethodHandle deleteFenceHandle = null;
     
     

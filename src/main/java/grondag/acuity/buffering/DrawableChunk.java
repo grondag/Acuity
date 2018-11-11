@@ -57,6 +57,7 @@ public abstract class DrawableChunk
         final int limit = delegates.size();
         for(int i = 0; i < limit; i++)
             delegates.get(i).release();
+        delegates.clear();
     }
     
     public static class Solid extends DrawableChunk

@@ -40,7 +40,6 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
     private final int[][] lightmap = new int[4][2];
     private final float[][] tex = new float[4][2];
     
-    @SuppressWarnings("null")
     public FluidBuilder()
     {   
         // parent buffer is never used

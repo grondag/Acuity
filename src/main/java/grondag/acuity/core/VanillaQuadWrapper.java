@@ -133,7 +133,6 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         
     }
     
-    @SuppressWarnings("null")
     @Override
     public BlockRenderLayer getRenderLayer()
     {

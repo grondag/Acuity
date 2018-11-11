@@ -25,7 +25,6 @@ import net.minecraft.util.math.BlockPos;
 @Mixin(RenderGlobal.class)
 public abstract class MixinRenderGlobal
 {
-    @SuppressWarnings("null")
     @Shadow private ViewFrustum viewFrustum;
     
     /**

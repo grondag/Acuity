@@ -217,7 +217,6 @@ public final class PipelineManager implements IPipelineManager
      * pipelines before any chunks are rendered.   Our render list will call
      * us right before it render chunks.
      */
-    @SuppressWarnings("null")
     public void onRenderTick(RenderTickEvent event)
     {
         MappedBufferStore.prepareEmpties();

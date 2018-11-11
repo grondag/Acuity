@@ -34,7 +34,6 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     
     protected IPipelinedQuad currentQuad;
     
-    @SuppressWarnings("null")
     protected PipelinedVertexLighter(IRenderPipeline pipeline)
     {
         this.pipeline = (RenderPipeline) pipeline;

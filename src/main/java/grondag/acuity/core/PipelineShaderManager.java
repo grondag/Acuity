@@ -18,7 +18,6 @@ public final class PipelineShaderManager
     public final String DEFAULT_VERTEX_SOURCE = "/assets/acuity/shader/default.vert";
     public final String DEFAULT_FRAGMENT_SOURCE = "/assets/acuity/shader/default.frag";
     
-    @SuppressWarnings("null")
     PipelineShaderManager()
     {
         this.loadLibrarySources();

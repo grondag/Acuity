@@ -20,6 +20,8 @@ public class DrawableChunkDelegate
     int vaoBufferId = -1;
     boolean vaoNeedsRefresh = true;
     
+    private boolean isReleased = false;
+    
     public DrawableChunkDelegate(IMappedBufferDelegate bufferDelegate, RenderPipeline pipeline, int vertexCount)
     {
         this.bufferDelegate = bufferDelegate;
@@ -35,8 +37,14 @@ public class DrawableChunkDelegate
     
     public void replaceBufferDelegate(IMappedBufferDelegate newDelegate)
     {
-        this.bufferDelegate = newDelegate;
-        vaoNeedsRefresh = true;
+        // possible we have been released after rebuffer happened
+        if(isReleased)
+            newDelegate.release(this);
+        else
+        {
+            this.bufferDelegate = newDelegate;
+            vaoNeedsRefresh = true;
+        }
     }
     
     /**
@@ -108,6 +116,8 @@ public class DrawableChunkDelegate
      */
     public void draw()
     {
+        assert !isReleased;
+        
         if(this.bufferDelegate.isDisposed())
             return;
         OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, 0, vertexCount);
@@ -115,16 +125,21 @@ public class DrawableChunkDelegate
     
     public void release()
     {
-        bufferDelegate.release(this);
-        if(vaoBufferId != -1)
+        if(!isReleased)
         {
-            VaoStore.releaseVertexArray(vaoBufferId);
-            vaoBufferId = -1;
+            isReleased = true;
+            bufferDelegate.release(this);
+            if(vaoBufferId != -1)
+            {
+                VaoStore.releaseVertexArray(vaoBufferId);
+                vaoBufferId = -1;
+            }
         }
     }
 
     public void flush()
     {
+        assert !isReleased;
         this.bufferDelegate.flush();
     }
 }

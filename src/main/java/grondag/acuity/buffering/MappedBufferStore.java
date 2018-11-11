@@ -3,15 +3,12 @@ package grondag.acuity.buffering;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.tuple.Pair;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.PipelineManager;
-import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
@@ -43,11 +40,6 @@ public class MappedBufferStore
      */
     private static final ConcurrentLinkedQueue<Pair<MappedBuffer, ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>>>> releaseResetQueue = new ConcurrentLinkedQueue<>();
     
-    
-    private static final Object[] solidLock = new Object[PipelineManager.MAX_PIPELINES];
-    
-    private static final MappedBuffer[] solidPartial = new MappedBuffer[PipelineManager.MAX_PIPELINES];
-    
     private static final Thread DEFRAG_THREAD;
     private static final Runnable DEFRAGGER = new Runnable()
     {
@@ -76,15 +68,12 @@ public class MappedBufferStore
     
     static
     {
-        for(int i = 0; i < PipelineManager.MAX_PIPELINES; i++)
-            solidLock[i] = new Object();
-        
         DEFRAG_THREAD = new Thread(DEFRAGGER, "Acuity Vertex Buffer Defrag Thread");
         DEFRAG_THREAD.setDaemon(true);
         DEFRAG_THREAD.start();
     }
     
-    private static @Nullable MappedBuffer getEmptyMapped()
+    static @Nullable MappedBuffer getEmptyMapped()
     {
         try
         {
@@ -184,7 +173,7 @@ public class MappedBufferStore
     
     private static void doStats()
     {
-        if(statCounter++ == 2400)
+        if(statCounter++ == 24000)
         {
             statCounter = 0;
             final int extantCount = MappedBuffer.inUse.size();
@@ -197,51 +186,7 @@ public class MappedBufferStore
             Acuity.INSTANCE.getLog().info("");
         }
     }
-    
-    /**
-     * Will give consumer one or more buffers w/ offsets able to contain the given byte count.
-     * If more than one buffer is needed, break(s) will be at a boundary compatible with all vertex formats.
-     * All vertices in the buffer(s) will share the same pipeline (and thus vertex format).
-     */
-    public static void claimAllocation(RenderPipeline pipeline, int byteCount, Consumer<IMappedBufferDelegate> consumer)
-    {
-        //PERF - avoid synch
-        synchronized(solidLock[pipeline.getIndex()])
-        {
-            final MappedBuffer startBuffer = solidPartial[pipeline.getIndex()];
-            MappedBuffer target =  startBuffer;
-            
-            if(target == null)
-                target = getEmptyMapped();
-            
-            if(target == null)
-                return;
-            
-            final int quadStride = pipeline.piplineVertexFormat().stride * 4;
-                
-            while(byteCount > 0)
-            {
-                IMappedBufferDelegate result = target.requestBytes(byteCount, quadStride);
-                if(result == null)
-                {
-                    // store no longer knows/cares about it, and it can be released when no longer needed for render
-                    target.setFinal();
-                    target = getEmptyMapped();
-                    if(target == null)
-                        return;
-                }
-                else
-                {
-                    consumer.accept(result);
-                    byteCount -= result.byteCount();
-                }
-            }
-            
-            if(startBuffer != target)
-                solidPartial[pipeline.getIndex()] = target;
-        }
-    }
-    
+ 
     /**
      * Called by mapped buffers when they are released off thread.
      * Prevents GL calls outside client thread.
@@ -259,8 +204,7 @@ public class MappedBufferStore
         emptyUnmapped.clear();
         releaseRebufferQueue.clear();
         releaseRemapQueue.clear();
-        for(int i = 0; i < PipelineManager.MAX_PIPELINES; i++)
-            solidPartial[i] = null;
+        releaseResetQueue.clear();
         releaseCount = 0;
         statCounter = 0;
     }

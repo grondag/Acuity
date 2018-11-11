@@ -46,35 +46,27 @@ public class OpenGlHelperExt
 {
     
     static private long glVertexAttribPointerFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglVertexAttribPointerBO = null;
     
     static private long glTexCoordPointerFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglTexCoordPointerBO = null;
     
     static private long glVertexPointerFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglVertexPointerBO = null;
 
     static private long glColorPointerFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglColorPointerBO = null;
     
     static private long glClientActiveTextureFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglClientActiveTexturePointer = null;
     
     static private long glDrawArraysFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglDrawArrays = null;
     
     static private long glBindBufferFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglBindBuffer = null;
     
     static private long glUseProgramFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglUseProgram = null;
     
     static private boolean vaoEnabled = false;
@@ -84,45 +76,34 @@ public class OpenGlHelperExt
     }
     
     static private long glBindVertexArrayFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglBindVertexArray = null;
     
     static private long glGenVertexArraysFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglGenVertexArrays = null;
     
     static private long glDeleteVertexArraysFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglDeleteVertexArrays = null;
     
     static private long glPushMatrixFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglPushMatrix = null;
     
     static private long glPopMatrixFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglPopMatrix = null;
     
     static private long glTranslatefFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglTranslatef = null;
     
     static private long glMultMatrixfFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglMultMatrixf = null;
     
     static private long glUniformMatrix4fvFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglUniformMatrix4fv = null;
     
-    @SuppressWarnings("null")
     static private MethodHandle nioCopyFromArray = null;
-    @SuppressWarnings("null")
     static private MethodHandle nioCopyFromIntArray = null;
     static private boolean fastNioCopy = true;
     static private long nioFloatArrayBaseOffset;
     static private boolean nioFloatNeedsFlip;
-    @SuppressWarnings("null")
     static private MethodHandle fastMatrixBufferCopyHandler;
     
     static private final MethodHandles.Lookup lookup = MethodHandles.lookup();
@@ -986,7 +967,6 @@ public class OpenGlHelperExt
     }
     
     static private long glBufferDataFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglBufferData = null;
     public static void glBufferData(int target, int size, int usage)
     {
@@ -1018,7 +998,6 @@ public class OpenGlHelperExt
     }
     
     static private long glmapBufferAsynchFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglmapBufferAsynch = null;
     /** 
      * Assumes buffer is bound and starting offset is 0. 
@@ -1082,7 +1061,6 @@ public class OpenGlHelperExt
     }
     
     static private long glBufferParameteriAPPLEFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglBufferParameteriAPPLE = null;
     /**
      * Call on buffers that will be mapped and should be unsynchronized / explicitly flushed.
@@ -1118,11 +1096,9 @@ public class OpenGlHelperExt
     }
 
     static private long glFlushMappedBufferRangeFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglFlushMappedBufferRange = null;
     
     static private long glUnmapBufferFunctionPointer = -1;
-    @SuppressWarnings("null")
     static private MethodHandle nglUnmapBuffer = null;
     
     public static void flushBuffer(long offset, long length)
@@ -1193,7 +1169,6 @@ public class OpenGlHelperExt
         }
     }
     
-    @SuppressWarnings("null")
     private static MethodHandle nativeMethod(Class<?> glClass, String methodName, Class<?>... args)
     {
         try

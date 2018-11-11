@@ -17,7 +17,6 @@ import net.minecraft.util.BlockRenderLayer;
 @Mixin(VboRenderList.class)
 public abstract class MixinVboRenderList extends ChunkRenderContainer
 {
-    @SuppressWarnings("null")
     private AbstractPipelinedRenderList ext;
     
     @Inject(method = "<init>*", at = @At("RETURN"), require = 1)
