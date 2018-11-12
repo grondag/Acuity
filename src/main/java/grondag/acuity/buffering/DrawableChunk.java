@@ -29,7 +29,7 @@ public abstract class DrawableChunk
 {
     protected boolean isCleared = false;
     
-    protected final ObjectArrayList<DrawableChunkDelegate> delegates;
+    protected ObjectArrayList<DrawableChunkDelegate> delegates;
     
     public DrawableChunk(ObjectArrayList<DrawableChunkDelegate> delegates)
     {
@@ -53,11 +53,26 @@ public abstract class DrawableChunk
      */
     public final void clear()
     {
-        isCleared = true;
-        final int limit = delegates.size();
-        for(int i = 0; i < limit; i++)
-            delegates.get(i).release();
-        delegates.clear();
+        if(!isCleared)
+        {
+            isCleared = true;
+            assert delegates != null;
+            if(!delegates.isEmpty())
+            {
+                final int limit = delegates.size();
+                for(int i = 0; i < limit; i++)
+                    delegates.get(i).release();
+                delegates.clear();
+            }
+            DelegateLists.releaseDelegateList(delegates);
+            delegates = null;
+        }
+    }
+    
+    @Override
+    protected void finalize()
+    {
+        clear();
     }
     
     public static class Solid extends DrawableChunk

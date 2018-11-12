@@ -329,8 +329,8 @@ public class MappedBuffer
     public ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> rebufferRetainers()
     {
         assert isMapped;
+        assert mapped != null;
         
-        @SuppressWarnings("null")
         final IntBuffer fromBuffer = mapped.asIntBuffer();
         final int[] transfer = transferArray.get();
         ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> swaps = new ObjectArrayList<>();

@@ -1,23 +1,38 @@
 package grondag.acuity.buffering;
 
 import java.nio.IntBuffer;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.tuple.Pair;
+
+import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.VertexCollectorList;
 import grondag.acuity.core.VertexPackingList;
+import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public abstract class UploadableChunk<V extends DrawableChunk>
 {
     protected final VertexPackingList packingList;
-    protected ObjectArrayList<DrawableChunkDelegate> delegates = new ObjectArrayList<>();
-    protected int intOffset = 0;
+    protected final ObjectArrayList<DrawableChunkDelegate> delegates = DelegateLists.getReadyDelegateList();
     
-    protected UploadableChunk(VertexPackingList packingList, VertexCollectorList collectorList)
+    private static class UploadConsumer implements VertexPackingConsumer
     {
-        this.packingList = packingList;
-        packingList.forEach((pipeline, vertexCount) ->
+        ObjectArrayList<DrawableChunkDelegate> delegates;
+        VertexCollectorList collectorList;
+        int intOffset = 0;
+        
+        void prepare(ObjectArrayList<DrawableChunkDelegate> delegates, VertexCollectorList collectorList)
+        {
+            this.delegates = delegates;
+            this.collectorList = collectorList;
+            intOffset = 0;
+        }
+        
+        @Override
+        public void accept(RenderPipeline pipeline, int vertexCount)
         {
             final int stride = pipeline.piplineVertexFormat().stride;
             AllocationManager.claimAllocation(pipeline, vertexCount * stride, ref ->
@@ -32,8 +47,32 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                 intOffset += intLength;
                 final DrawableChunkDelegate delegate = new DrawableChunkDelegate(ref, pipeline, byteCount / stride);
                 delegates.add(delegate);
-            });
-        });
+            });            
+        }
+    }
+    
+    ThreadLocal<UploadConsumer> uploadConsumer = new ThreadLocal<UploadConsumer>()
+    {
+        @Override
+        protected UploadConsumer initialValue()
+        {
+            return new UploadConsumer();
+        }
+    };
+    
+    protected UploadableChunk(VertexPackingList packingList, VertexCollectorList collectorList)
+    {
+        this.packingList = packingList;
+        UploadConsumer uc = uploadConsumer.get();
+        uc.prepare(delegates, collectorList);
+        packingList.forEach(uc);
+    }
+    
+    @Override
+    protected void finalize()
+    {
+        assert this.delegates != null;
+        
     }
     
     /**
@@ -47,7 +86,10 @@ public abstract class UploadableChunk<V extends DrawableChunk>
      */
     public final void cancel()
     {
-        delegates.forEach(d -> d.release());
+        final int limit = delegates.size();
+        for(int i = 0; i < limit; i++)
+            delegates.get(i).release();
+        
         delegates.clear();
     }
     
@@ -61,7 +103,9 @@ public abstract class UploadableChunk<V extends DrawableChunk>
         @Override
         public @Nullable DrawableChunk.Solid produceDrawable()
         {
-            delegates.forEach(d -> d.flush());
+            final int limit = delegates.size();
+            for(int i = 0; i < limit; i++)
+                delegates.get(i).flush();
             return new DrawableChunk.Solid(delegates);
         }
     }
@@ -76,7 +120,9 @@ public abstract class UploadableChunk<V extends DrawableChunk>
         @Override
         public @Nullable DrawableChunk.Translucent produceDrawable()
         {
-            delegates.forEach(d -> d.flush());
+            final int limit = delegates.size();
+            for(int i = 0; i < limit; i++)
+                delegates.get(i).flush();
             return new DrawableChunk.Translucent(delegates);
         }
     }
