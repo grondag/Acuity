@@ -114,6 +114,8 @@ public class MappedBuffer
     
     void map(boolean writeFlag)
     {
+        if(isDisposed)
+            return;
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES, writeFlag);
         isMapped = true;
@@ -122,6 +124,8 @@ public class MappedBuffer
     /** Called for buffers that are being reused.  Should already have been orphaned earlier.*/
     public void remap()
     {
+        if(isDisposed)
+            return;
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         bind();
         map(true);
@@ -184,6 +188,9 @@ public class MappedBuffer
      */
     public void flush()
     {
+        if(isDisposed)
+            return;
+        
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         
         final int currentMax = currentMaxOffset.get();
@@ -242,7 +249,6 @@ public class MappedBuffer
             final int newRetained = retainedBytes.addAndGet(-bytes);
             if(newRetained < HALF_CAPACITY && isFinal && isReleaseRequested.compareAndSet(false, true))
             {
-                assert !isMapped;
                 MappedBufferStore.scheduleRelease(this);
             }
         }

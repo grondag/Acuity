@@ -1,7 +1,5 @@
 package grondag.acuity.core;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
-
 import javax.annotation.Nullable;
 
 import com.google.common.primitives.Doubles;
@@ -10,38 +8,16 @@ import grondag.acuity.api.RenderPipeline;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.MathHelper;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public class VertexCollector
 {
-    /**
-     * Cache instantiated buffers for reuse.<p>
-     */
-    private static final ConcurrentLinkedQueue<VertexCollector> collectors = new ConcurrentLinkedQueue<>();
-
-    public @Nullable VertexCollectorList parent; 
-    
-    public static VertexCollector claimAndPrepare(RenderPipeline pipeline)
-    {
-        VertexCollector result = collectors.poll();
-        if(result == null)
-            result = new VertexCollector(1024);
-        result.prepare(pipeline);
-        return result;
-    }
-    
-    public static void release(VertexCollector collector)
-    {
-        collector.parent = null;
-        collectors.offer(collector);
-    }
-    
     private int[] data;
     private int integerSize = 0;
-    private RenderPipeline pipeline;
+    private final RenderPipeline pipeline;
+    private final @Nullable VertexCollectorList parent; 
     
     /**
      * Holds per-quad distance after {@link #sortQuads(double, double, double)} is called
@@ -54,20 +30,16 @@ public class VertexCollector
      */
     private int sortReadIndex = 0;
     
-    public VertexCollector()
+    public VertexCollector(RenderPipeline pipeline, VertexCollectorList parent)
     {
-        this(128);
+        data = new int[0x10000];
+        this.parent = parent;
+        this.pipeline = pipeline;
     }
     
-    public VertexCollector(int initialCapacity)
-    {
-        data = new int[MathHelper.smallestEncompassingPowerOfTwo(initialCapacity)];
-    }
-    
-    public void prepare(RenderPipeline pipeline)
+    public void clear()
     {
         this.integerSize = 0;
-        this.pipeline = pipeline;
     }
     
     public RenderPipeline pipeline()
@@ -98,18 +70,21 @@ public class VertexCollector
     @Override
     public VertexCollector clone()
     {
-        VertexCollector result = new VertexCollector(this.data.length);
-        System.arraycopy(this.data, 0, result.data, 0, this.integerSize);
-        result.integerSize = this.integerSize;
-        result.pipeline = this.pipeline;
-        return result;
+        throw new UnsupportedOperationException();
+//        VertexCollector result = new VertexCollector(this.data.length);
+//        System.arraycopy(this.data, 0, result.data, 0, this.integerSize);
+//        result.integerSize = this.integerSize;
+//        result.pipeline = this.pipeline;
+//        return result;
     }
     
     private final void checkForSize(int toBeAdded)
     {
         if ((integerSize + toBeAdded) > data.length)
         {
-            final int copy[] = new int[integerSize * 2];
+            final int curCap = data.length;
+            final int newCap = curCap >= 0x40000 ? curCap + 0x40000 : curCap * 2;
+            final int copy[] = new int[newCap];
             System.arraycopy(data, 0, copy, 0, integerSize);
             data  = copy;
         }
@@ -247,5 +222,25 @@ public class VertexCollector
             sortReadIndex++;
         }
         return result;
+    }
+
+    public int[] saveState()
+    {
+        int[] result = new int[integerSize];
+        if(integerSize > 0)
+            System.arraycopy(data, 0, result, 0, integerSize);
+        return result;
+    }
+    
+    public void loadState(int[] stateData)
+    {
+        final int newSize = stateData.length;
+        integerSize = 0;
+        if(newSize > 0)
+        {
+            checkForSize(newSize);
+            integerSize = newSize;
+            System.arraycopy(stateData, 0, data, 0, newSize);
+        }
     }
 }

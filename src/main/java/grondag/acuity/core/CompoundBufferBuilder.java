@@ -4,6 +4,8 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import javax.annotation.Nullable;
 
+import org.apache.commons.lang3.tuple.Pair;
+
 import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.buffering.DrawableChunk;
@@ -18,16 +20,25 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class CompoundBufferBuilder extends BufferBuilder
 {
+    
+    /**
+     * Left is solid, right is translucent.
+     */
+    static final ThreadLocal<Pair<VertexCollectorList, VertexCollectorList>> collectors = new ThreadLocal<Pair<VertexCollectorList, VertexCollectorList>>()
+    {
+        @Override
+        protected Pair<VertexCollectorList, VertexCollectorList> initialValue()
+        {
+            return Pair.of(new VertexCollectorList(), new VertexCollectorList());
+        }
+    };
+    
     /**
      * Holds vertex data and packing data for next upload if we have it.
      * Buffer is obtained from BufferStore and will be released back to store by upload.
      */
     private AtomicReference<UploadableChunk<?>>  uploadState  = new AtomicReference<>();
     
-    /**
-     * During drawing collects vertex info. Should be null other times.
-     */
-    @Nullable VertexCollectorList collectors;
     
     /**
      * Tells us which block layer we are buffering.
@@ -40,12 +51,12 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     private class CompoundState extends State
     {
-        private final VertexCollectorList stateCollectors;
+        private final int[][] collectorState;
         
-        public CompoundState(int[] buffer, VertexFormat format, VertexCollectorList collectors)
+        public CompoundState(int[] buffer, VertexFormat format, int[][] collectorState)
         {
             super(buffer, format);
-            this.stateCollectors = collectors;
+            this.collectorState = collectorState;
         }
     }
     
@@ -95,20 +106,18 @@ public class CompoundBufferBuilder extends BufferBuilder
     {
         if(Acuity.isModEnabled())
         {
-            assert this.collectors != null : "getVertexState called more than one for same collector state.";
             assert this.proxy == null;
             assert this.layer == BlockRenderLayer.TRANSLUCENT;
             
             State inner = super.getVertexState();
-            @SuppressWarnings("null")
-            CompoundState result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat(), this.collectors);
+            CompoundState result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat(), 
+                    collectors.get().getRight().getCollectorState());
             return result;
         }
         else
             return super.getVertexState();
     }
 
-    @SuppressWarnings("null")
     @Override
     public void setVertexState(State state)
     {
@@ -117,12 +126,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         {
             assert this.proxy == null;
             assert this.layer == BlockRenderLayer.TRANSLUCENT;
-            assert this.collectors.isEmpty() : "Non-empty collector state when restoring vertex state.";
-            
-            VertexCollectorList.release(this.collectors);
-            this.collectors = ((CompoundState)state).stateCollectors;
-            
-            assert this.collectors != null;
+            collectors.get().getRight().loadCollectorState(((CompoundState)state).collectorState);
         }
     }
 
@@ -132,18 +136,23 @@ public class CompoundBufferBuilder extends BufferBuilder
         super.reset();
         if(Acuity.isModEnabled())
         {
-            assert this.collectors == null : "CompoundBufferBuilder reset before vertex collector list consumed";
-            this.collectors = VertexCollectorList.claim();
+            assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
+            
+            if(this.layer == BlockRenderLayer.SOLID)
+                collectors.get().getLeft().clear();
+            else
+                collectors.get().getRight().clear();
         }
     }
     
-    @SuppressWarnings("null")
     public VertexCollector getVertexCollector(RenderPipeline pipeline)
     {
         if(Acuity.isModEnabled() && this.proxy != null)
             return this.proxy.getVertexCollector(pipeline);
         
-        return this.collectors.getOrCreate(pipeline);
+        return this.layer == BlockRenderLayer.SOLID
+                ? collectors.get().getLeft().get(pipeline)
+                : collectors.get().getRight().get(pipeline);
     }
     
     public void beginIfNotAlreadyDrawing(int glMode, VertexFormat format)
@@ -179,24 +188,17 @@ public class CompoundBufferBuilder extends BufferBuilder
                 {
                     case SOLID:
                     {
-                        UploadableChunk<?> abandoned = this.uploadState.getAndSet(collectors.packUploadSolid());
+                        UploadableChunk<?> abandoned = this.uploadState.getAndSet(collectors.get().getLeft().packUploadSolid());
                         if(abandoned != null)
                             abandoned.cancel();
-                        
-                        VertexCollectorList.release(collectors);
-                        collectors = null;
                         return;
                     }
                     
                     case TRANSLUCENT:
                     {
-                        UploadableChunk<?> abandoned = this.uploadState.getAndSet(collectors.packUploadTranslucent());
+                        UploadableChunk<?> abandoned = this.uploadState.getAndSet(collectors.get().getRight().packUploadTranslucent());
                         if(abandoned != null)
                             abandoned.cancel();
-                        
-                        // can't release collector list because retained in vertex state
-                        // but remove reference to prevent mishap
-                        collectors = null;
                         return;
                     }
                     
@@ -251,7 +253,6 @@ public class CompoundBufferBuilder extends BufferBuilder
 //        chunkOriginPos = new BlockPos((MathHelper.fastFloor(-x) >> 4) << 4, (MathHelper.fastFloor(-y) >> 4) << 4, (MathHelper.fastFloor(-z) >> 4) << 4);
 //    }
     
-    @SuppressWarnings("null")
     @Override
     public void sortVertexData(float x, float y, float z)
     {
@@ -259,7 +260,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         
         if(Acuity.isModEnabled())
             // save sort perspective coordinate for use during packing.  Actual sort occurs then.
-            collectors.setViewCoordinates(x, y, z);
+            collectors.get().getRight().setViewCoordinates(x, y, z);
         else
             super.sortVertexData(x, y, z);
     }

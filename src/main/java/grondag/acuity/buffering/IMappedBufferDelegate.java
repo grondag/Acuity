@@ -2,6 +2,7 @@ package grondag.acuity.buffering;
 
 import java.nio.IntBuffer;
 
+//TODO: consolidate w/ implementation
 public interface IMappedBufferDelegate
 {
     int byteCount();

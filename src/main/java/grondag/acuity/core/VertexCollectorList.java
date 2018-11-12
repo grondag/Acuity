@@ -2,7 +2,6 @@ package grondag.acuity.core;
 
 import java.util.Comparator;
 import java.util.PriorityQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 
 import javax.annotation.Nullable;
@@ -14,25 +13,6 @@ import net.minecraft.util.math.MathHelper;
 
 public class VertexCollectorList
 {
-    /**
-     * Cache instantiated buffers for reuse.<p>
-     */
-    private static final ConcurrentLinkedQueue<VertexCollectorList> lists = new ConcurrentLinkedQueue<>();
-
-    public static VertexCollectorList claim()
-    {
-        VertexCollectorList result = lists.poll();
-        if(result == null)
-            result = new VertexCollectorList();
-        return result;
-    }
-
-    public static void release(VertexCollectorList list)
-    {
-        list.clear();
-        lists.offer(list);
-    }
-
     private static final Comparator<VertexCollector> vertexCollectionComparator = new Comparator<VertexCollector>() 
     {
         @SuppressWarnings("null")
@@ -64,7 +44,7 @@ public class VertexCollectorList
     /**
      * Fast lookup of buffers by pipeline index. Null in CUTOUT layer buffers.
      */
-    private VertexCollector[] vertexCollectors  = new VertexCollector[PipelineManager.MAX_PIPELINES];
+    private VertexCollector[] vertexCollectors  = new VertexCollector[PipelineManager.INSTANCE.pipelineCount()];
 
     private int maxIndex = -1;
 
@@ -82,15 +62,16 @@ public class VertexCollectorList
     /** used in transparency layer sorting - updated with origin of render cube */
     private int renderOriginZ = Integer.MIN_VALUE;
 
-    private VertexCollectorList()
+    VertexCollectorList()
     {
-        //
+        for(int i = 0; i < vertexCollectors.length; i++)
+            vertexCollectors[i] = new VertexCollector(PipelineManager.INSTANCE.getPipeline(i), this);
     }
 
     /**
      * Releases any held vertex collectors and resets state
      */
-    private void clear()
+    void clear()
     {
         renderOriginX = Integer.MIN_VALUE;
         renderOriginY = Integer.MIN_VALUE;
@@ -102,13 +83,7 @@ public class VertexCollectorList
 
         maxIndex = -1;
         for(int i = 0; i <= limit; i++)
-        {
-            VertexCollector vc = vertexCollectors[i];
-            if(vc == null)
-                continue;
-            VertexCollector.release(vc);
-            vertexCollectors[i] = null;
-        }
+            vertexCollectors[i].clear();
     }
 
     @Override
@@ -166,25 +141,12 @@ public class VertexCollectorList
         return vertexCollectors[pipelineIndex];
     }
 
-    public final VertexCollector getIfExists(RenderPipeline pipeline)
+    public final VertexCollector get(RenderPipeline pipeline)
     {
-        return vertexCollectors[pipeline.getIndex()];
-    }
-
-    public final VertexCollector getOrCreate(RenderPipeline pipeline)
-    {
-        final int i = pipeline.getIndex();
-        VertexCollector result = vertexCollectors[i];
-        if(result == null)
-        {
-            if(i > maxIndex)
-                maxIndex = i;
-
-            result = VertexCollector.claimAndPrepare(pipeline);
-            result.parent = this;
-            vertexCollectors[i] = result;
-        }
-        return result;
+        final int index = pipeline.getIndex();
+        if(index > maxIndex)
+            maxIndex = index;
+        return vertexCollectors[index];
     }
 
     public final void forEachExisting(Consumer<VertexCollector> consumer)
@@ -268,5 +230,22 @@ public class VertexCollectorList
         }
 
         return packing.size() == 0 ? null : new UploadableChunk.Translucent(packing, this);
+    }
+
+    public int[][] getCollectorState()
+    {
+        int[][] result = new int[maxIndex + 1][0];
+        
+        for(int i = 0; i <= maxIndex; i++)
+            result[i] = this.vertexCollectors[i].saveState();
+        
+       return result;
+    }
+    
+    public void loadCollectorState(int[][] stateData)
+    {
+        maxIndex = stateData.length - 1;
+        for(int i = 0; i <= maxIndex; i++)
+            this.vertexCollectors[i].loadState(stateData[i]);
     }
 }

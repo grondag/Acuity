@@ -5,6 +5,8 @@ import java.util.function.Consumer;
 
 import grondag.acuity.api.RenderPipeline;
 
+
+//PERF: provide diff buffers by vertex format and handle VAO binding 1X per buffer bind in buffers
 public class AllocationManager
 {
     private static final ConcurrentSkipListMap<Long, MappedBuffer> BUFFERS = new ConcurrentSkipListMap<>();
