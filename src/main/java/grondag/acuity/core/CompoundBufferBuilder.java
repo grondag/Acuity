@@ -51,7 +51,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     private class CompoundState extends State
     {
-        private final int[][] collectorState;
+        private int[][] collectorState;
         
         public CompoundState(int[] buffer, VertexFormat format, int[][] collectorState)
         {
@@ -95,6 +95,8 @@ public class CompoundBufferBuilder extends BufferBuilder
         return bufferSizeIn;
     }
     
+    private @Nullable CompoundState loadedState;
+    
     /**
      * Used to retrieve and save collector state for later resorting of translucency.<p>
      * 
@@ -110,14 +112,24 @@ public class CompoundBufferBuilder extends BufferBuilder
             assert this.layer == BlockRenderLayer.TRANSLUCENT;
             
             State inner = super.getVertexState();
-            CompoundState result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat(), 
-                    collectors.get().getRight().getCollectorState());
+            CompoundState result = loadedState;
+            if(result == null)
+            {
+                result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat(), 
+                    collectors.get().getRight().getCollectorState(null));
+            }
+            else
+            {
+                result.collectorState = collectors.get().getRight().getCollectorState(result.collectorState);
+                loadedState = null;
+            }
             return result;
         }
         else
             return super.getVertexState();
     }
 
+    @SuppressWarnings("null")
     @Override
     public void setVertexState(State state)
     {
@@ -126,7 +138,9 @@ public class CompoundBufferBuilder extends BufferBuilder
         {
             assert this.proxy == null;
             assert this.layer == BlockRenderLayer.TRANSLUCENT;
-            collectors.get().getRight().loadCollectorState(((CompoundState)state).collectorState);
+            assert loadedState == null;
+            loadedState = (CompoundState)state;
+            collectors.get().getRight().loadCollectorState(loadedState.collectorState);
         }
     }
 

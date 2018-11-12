@@ -255,9 +255,12 @@ public class VertexCollector
         return result;
     }
 
-    public int[] saveState()
+    public int[] saveState(@Nullable int[] priorState)
     {
-        int[] result = new int[integerSize];
+        int[] result = priorState;
+        if(result == null || result.length != integerSize)
+            result = new int[integerSize];
+        
         if(integerSize > 0)
             System.arraycopy(data, 0, result, 0, integerSize);
         return result;

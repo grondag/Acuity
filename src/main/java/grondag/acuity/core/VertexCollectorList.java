@@ -232,12 +232,15 @@ public class VertexCollectorList
         return packing.size() == 0 ? null : new UploadableChunk.Translucent(packing, this);
     }
 
-    public int[][] getCollectorState()
+    public int[][] getCollectorState(@Nullable int[][] priorState)
     {
-        int[][] result = new int[maxIndex + 1][0];
+        int[][] result = priorState;
+        
+        if(result == null || result.length != maxIndex + 1)
+            result = new int[maxIndex + 1][0];
         
         for(int i = 0; i <= maxIndex; i++)
-            result[i] = this.vertexCollectors[i].saveState();
+            result[i] = this.vertexCollectors[i].saveState(result[i]);
         
        return result;
     }
