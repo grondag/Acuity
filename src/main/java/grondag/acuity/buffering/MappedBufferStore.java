@@ -52,7 +52,8 @@ public class MappedBufferStore
                 {
                     MappedBuffer buff = releaseRebufferQueue.poll(27, TimeUnit.DAYS);
                     ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> swaps = buff.rebufferRetainers();
-                    releaseResetQueue.offer(Pair.of(buff, swaps));
+                    if(swaps != null)
+                        releaseResetQueue.offer(Pair.of(buff, swaps));
                 }
                 catch (InterruptedException e)
                 {

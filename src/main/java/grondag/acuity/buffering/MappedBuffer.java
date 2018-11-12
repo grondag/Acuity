@@ -333,6 +333,9 @@ public class MappedBuffer
     
     public ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> rebufferRetainers()
     {
+        if(isDisposed)
+            return null;
+        
         assert isMapped;
         assert mapped != null;
         
