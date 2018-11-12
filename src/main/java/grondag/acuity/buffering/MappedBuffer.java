@@ -182,6 +182,11 @@ public class MappedBuffer
         OpenGlHelperExt.handleAppleMappedBuffer();
     }
     
+    public boolean isFlushPending()
+    {
+        return isMapped && lastFlushedOffset != currentMaxOffset.get();
+    }
+    
     /**
      * Called each tick to send updates to GPU. 
      * TODO: locking to prevent content upload during flush.

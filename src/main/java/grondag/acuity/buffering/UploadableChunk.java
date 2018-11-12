@@ -1,11 +1,8 @@
 package grondag.acuity.buffering;
 
 import java.nio.IntBuffer;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import javax.annotation.Nullable;
-
-import org.apache.commons.lang3.tuple.Pair;
 
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.VertexCollectorList;

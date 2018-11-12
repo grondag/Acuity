@@ -93,10 +93,13 @@ public class MappedBufferStore
             while(!releaseRemapQueue.isEmpty() && releaseRebufferQueue.size() < 64)
             {
                 MappedBuffer buff = releaseRemapQueue.poll();
+                
                 if(buff.retainers.isEmpty())
                     releaseResetQueue.offer(Pair.of(buff, null));
                 else
                 {
+                    if(buff.isFlushPending())
+                        buff.flush();
                     buff.bind();
                     buff.map(false);
                     releaseRebufferQueue.offer(buff);

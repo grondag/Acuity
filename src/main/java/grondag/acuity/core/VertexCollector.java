@@ -112,32 +112,25 @@ public class VertexCollector
         this.add(RenderCube.renderCubeRelative(pos.getZ()) + modelZ);
     }
     
-    @SuppressWarnings("serial")
-    public void sortQuads(double x, double y, double z)
+    private static class QuadSorter
     {
-         // works because 4 bytes per int
-        final int quadIntStride = this.pipeline.piplineVertexFormat().stride;
-        final int vertexIntStride = quadIntStride / 4;
-        final int quadCount = this.vertexCount() / 4;
-        final double[] perQuadDistance = new double[quadCount];
-        final int[] quadSwap = new int[quadIntStride];
+        double[] perQuadDistance = new double[512];
+        int[] quadSwap = new int[64];
         
-        for (int j = 0; j < quadCount; ++j)
-        {
-            perQuadDistance[j] = getDistanceSq(x, y, z, vertexIntStride, j);
-        }
-
-        // sort the indexes by distance - farthest first
-        it.unimi.dsi.fastutil.Arrays.quickSort(0, quadCount, 
-        new AbstractIntComparator()
+        int data[];
+        int quadIntStride;
+        
+        @SuppressWarnings("serial")
+        private final AbstractIntComparator comparator = new AbstractIntComparator()
         {
             @Override
             public int compare(int a, int b)
             {
                 return Doubles.compare(perQuadDistance[b], perQuadDistance[a]);
             }
-        },
-        new Swapper()
+        };
+        
+        private final Swapper swapper = new Swapper()
         {
             @Override
             public void swap(int a, int b)
@@ -150,9 +143,47 @@ public class VertexCollector
                 System.arraycopy(data, b * quadIntStride, data, a * quadIntStride, quadIntStride);
                 System.arraycopy(quadSwap, 0, data, b * quadIntStride, quadIntStride);
             }
-        });
+        };
         
-        this.perQuadDistance = perQuadDistance;
+        @SuppressWarnings("null")
+        private void doSort(VertexCollector caller, double x, double y, double z)
+        {
+         // works because 4 bytes per int
+            data = caller.data;
+            quadIntStride = caller.pipeline.piplineVertexFormat().stride;
+            final int vertexIntStride = quadIntStride / 4;
+            final int quadCount = caller.vertexCount() / 4;
+            if(perQuadDistance.length < quadCount)
+                perQuadDistance = new double[quadCount];
+            if(quadSwap.length < quadIntStride)
+                quadSwap = new int[quadIntStride];
+            
+            for (int j = 0; j < quadCount; ++j)
+            {
+                perQuadDistance[j] = caller.getDistanceSq(x, y, z, vertexIntStride, j);
+            }
+
+            // sort the indexes by distance - farthest first
+            it.unimi.dsi.fastutil.Arrays.quickSort(0, quadCount, comparator, swapper);
+            
+            if(caller.perQuadDistance == null || caller.perQuadDistance.length < quadCount)
+                caller.perQuadDistance = new double[quadCount];
+            System.arraycopy(perQuadDistance, 0, caller.perQuadDistance, 0, quadCount);
+        }
+    }
+    
+    private static final ThreadLocal<QuadSorter> quadSorter = new ThreadLocal<QuadSorter>()
+    {
+        @Override
+        protected QuadSorter initialValue()
+        {
+            return new QuadSorter();
+        }
+    };
+    
+    public void sortQuads(double x, double y, double z)
+    {
+        quadSorter.get().doSort(this, x, y, z);
         this.sortReadIndex = 0;
     }
     
