@@ -2,8 +2,6 @@ package grondag.acuity.core;
 
 import java.nio.FloatBuffer;
 import java.util.ArrayDeque;
-import java.util.Arrays;
-import java.util.Comparator;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
@@ -17,6 +15,9 @@ import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.buffering.DrawableChunkDelegate;
 import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.opengl.OpenGlHelperExt;
+import it.unimi.dsi.fastutil.Arrays;
+import it.unimi.dsi.fastutil.Swapper;
+import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
 import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -235,15 +236,27 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         cubeStore.offer(rendercube);
     }
     
-    private static final Comparator<Object> BUFFER_SORT = new Comparator<Object>()
+    @SuppressWarnings("serial")
+    private static class SortThingy extends AbstractIntComparator implements Swapper
     {
-        @SuppressWarnings("null")
+        Object[] delegates;
+        
         @Override
-        public int compare(Object o1, Object o2)
+        public int compare(int a, int b)
         {
-            return Integer.compare(((DrawableChunkDelegate)o1).bufferId(), ((DrawableChunkDelegate)o2).bufferId());
+            return Integer.compare(((DrawableChunkDelegate)delegates[a]).bufferId(), ((DrawableChunkDelegate)delegates[b]).bufferId());
+        }
+        
+        @Override
+        public void swap(int a, int b)
+        {
+            Object swap = delegates[a];
+            delegates[a] = delegates[b];
+            delegates[b] = swap;
         }
     };
+    
+    private static final SortThingy SORT_THINGY = new SortThingy();
     
     /**
      * Renders solid chunks in vertex buffer order to minimize bind calls.
@@ -256,9 +269,10 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         if(limit == 0)
             return;
         
-        final Object[] delegates = list.elements();
+        Object[] delegates = list.elements();
         
-        Arrays.sort(delegates, 0, limit, BUFFER_SORT);
+        SORT_THINGY.delegates = delegates;
+        Arrays.quickSort(0, limit, SORT_THINGY, SORT_THINGY);
         
         ((DrawableChunkDelegate)delegates[0]).getPipeline().activate(true);
 
