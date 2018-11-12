@@ -4,6 +4,8 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.LongAccumulator;
 
+import javax.annotation.Nullable;
+
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListenableFutureTask;
@@ -98,11 +100,16 @@ public class PipelineHooks
     
     public static void linkBuilders(RegionRenderCacheBuilder cache)
     {
-        for(BlockRenderLayer layer : BlockRenderLayer.values())
-        {
-            CompoundBufferBuilder builder = (CompoundBufferBuilder) cache.getWorldRendererByLayer(layer);
-            builder.setupLinks(cache, layer);
-        }
+        linkBuildersInner(cache, BlockRenderLayer.SOLID);
+        linkBuildersInner(cache, BlockRenderLayer.CUTOUT);
+        linkBuildersInner(cache, BlockRenderLayer.CUTOUT_MIPPED);
+        linkBuildersInner(cache, BlockRenderLayer.TRANSLUCENT);
+    }
+    
+    private static void linkBuildersInner(RegionRenderCacheBuilder cache, BlockRenderLayer layer)
+    {
+        CompoundBufferBuilder builder = (CompoundBufferBuilder) cache.getWorldRendererByLayer(layer);
+        builder.setupLinks(cache, layer);
     }
     
     /**
@@ -256,26 +263,33 @@ public class PipelineHooks
             final BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
             
             lighter.prepare((CompoundBufferBuilder)bufferIn, layer, worldIn, stateIn, posIn, checkSides);
-            
             wrapper.prepare(layer, modelIn.isAmbientOcclusion() && stateIn.getLightValue(worldIn, posIn) == 0);
             
-            //scoping
-            {
-                List<BakedQuad> quads = modelIn.getQuads(stateIn, null, lighter.positionRandom());
-                final int limit = quads.size();
-                for(int i = 0; i < limit; i ++)
-                    wrapper.wrapAndLight(lighter, quads.get(i));
-            }
+            renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, null);
             
-            for(EnumFacing face : EnumFacing.VALUES)
+            if(checkSides)
             {
-                List<BakedQuad> list = modelIn.getQuads(stateIn, face, lighter.positionRandom());
-                if (!list.isEmpty() && (!checkSides || stateIn.shouldSideBeRendered(worldIn, posIn, face)))
-                {
-                    final int limit = list.size();
-                    for(int i = 0; i < limit; i ++)
-                        wrapper.wrapAndLight(lighter, list.get(i));
-                }
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.DOWN))
+                        renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.DOWN);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.UP))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.UP);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.EAST))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.EAST);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.WEST))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.WEST);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.NORTH))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.NORTH);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.SOUTH))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.SOUTH);
+            }
+            else
+            {
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.DOWN);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.UP);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.EAST);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.WEST);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.NORTH);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.SOUTH);
             }
             
             return lighter.didOutput();
@@ -287,6 +301,18 @@ public class PipelineHooks
             CrashReportCategory.addBlockInfo(crashreportcategory, posIn, stateIn);
             throw new ReportedException(crashreport);
         }
+    }
+    
+    private static void renderVanillaModelInner(IBakedModel modelIn, IBlockState stateIn, CompoundVertexLighter lighter, VanillaQuadWrapper wrapper, @Nullable EnumFacing face)
+    {
+        List<BakedQuad> quads = modelIn.getQuads(stateIn, face, lighter.positionRandom());
+        final int limit = quads.size();
+        
+        if(limit == 0)
+            return;
+        
+        for(int i = 0; i < limit; i ++)
+            wrapper.wrapAndLight(lighter, quads.get(i));
     }
     
     public static boolean isFirstOrUV(int index, VertexFormatElement.EnumUsage usage)

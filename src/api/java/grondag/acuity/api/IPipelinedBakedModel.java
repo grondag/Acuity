@@ -1,5 +1,10 @@
 package grondag.acuity.api;
 
+import java.util.List;
+
+import javax.annotation.Nullable;
+
+import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
@@ -27,11 +32,25 @@ public interface IPipelinedBakedModel extends IBakedModel
      */
     public default void produceQuads(IPipelinedQuadConsumer quadConsumer)
     {
-        this.getQuads(quadConsumer.blockState(), null, quadConsumer.positionRandom()).forEach(q -> quadConsumer.accept((IPipelinedQuad)q));
-        for(EnumFacing face : EnumFacing.VALUES)
+        produceQuadsInner(quadConsumer, null);
+        produceQuadsInner(quadConsumer, EnumFacing.DOWN);
+        produceQuadsInner(quadConsumer, EnumFacing.EAST);
+        produceQuadsInner(quadConsumer, EnumFacing.NORTH);
+        produceQuadsInner(quadConsumer, EnumFacing.SOUTH);
+        produceQuadsInner(quadConsumer, EnumFacing.UP);
+        produceQuadsInner(quadConsumer, EnumFacing.WEST);
+    }
+    
+    public default void produceQuadsInner(IPipelinedQuadConsumer quadConsumer, @Nullable EnumFacing face)
+    {
+        if(face == null || quadConsumer.shouldOutputSide(face))
         {
-            if(quadConsumer.shouldOutputSide(face))
-                this.getQuads(quadConsumer.blockState(), face, quadConsumer.positionRandom()).forEach(q -> quadConsumer.accept((IPipelinedQuad)q));
+            final List<BakedQuad> quads = this.getQuads(quadConsumer.blockState(), face, quadConsumer.positionRandom());
+            final int limit = quads.size();
+            if(limit == 0)
+                return;
+            for(int i = 0; i < limit; i++)
+                quadConsumer.accept((IPipelinedQuad)quads.get(i));
         }
     }
 }
