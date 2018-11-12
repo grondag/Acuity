@@ -142,6 +142,7 @@ public class MappedBuffer
      */
     public @Nullable IMappedBufferDelegate requestBytes(int byteCount, int stride)
     {
+        assert !isDisposed;
         assert mapped != null;
         
         int oldOffset, newOffset, filled;

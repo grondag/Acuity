@@ -167,13 +167,12 @@ public class MappedBufferStore
             emptyMapped.offer(empty);
         }
         
-        doStats();
+        //doStats();
     }
     
     //TODO: disable
     
     static int statCounter = 0;
-    static int releaseCount = 0;
     
     private static void doStats()
     {
@@ -186,7 +185,6 @@ public class MappedBufferStore
             Acuity.INSTANCE.getLog().info("Extant Mapped Capacity (MB): " + extantCount * MappedBuffer.CAPACITY_BYTES / 0x100000);
             Acuity.INSTANCE.getLog().info("Ready Buffers: " + emptyMapped.size());
             Acuity.INSTANCE.getLog().info("Idle Buffers: " + emptyUnmapped.size());
-            Acuity.INSTANCE.getLog().info("Release Count (Lifetime): " + releaseCount);
             Acuity.INSTANCE.getLog().info("");
         }
     }
@@ -202,14 +200,14 @@ public class MappedBufferStore
 
     public static void forceReload()
     {
-        MappedBuffer.inUse.forEach(b -> b.dispose());
-        MappedBuffer.inUse.clear();
         emptyMapped.clear();
+        AllocationManager.forceReload();
         emptyUnmapped.clear();
         releaseRebufferQueue.clear();
         releaseRemapQueue.clear();
         releaseResetQueue.clear();
-        releaseCount = 0;
+        MappedBuffer.inUse.forEach(b -> b.dispose());
+        MappedBuffer.inUse.clear();
         statCounter = 0;
     }
     

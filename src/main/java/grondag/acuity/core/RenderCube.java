@@ -71,12 +71,4 @@ public class RenderCube
     {
         return ((long)(x + WORLD_BOUNDARY) & X_MASK) << X_SHIFT | ((long)y & Y_MASK) << Y_SHIFT | ((long)(z + WORLD_BOUNDARY) & Z_MASK);
     }
-    
-    public static final BlockPos unpack(long packedValue)
-    {
-        int i = (int)((packedValue >> X_SHIFT) & X_MASK) - WORLD_BOUNDARY;
-        int j = (int)((packedValue >> Y_SHIFT) & Y_MASK);
-        int k = (int)(packedValue & Z_MASK) - WORLD_BOUNDARY;
-        return new BlockPos(i, j, k);
-    }
 }
