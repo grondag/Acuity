@@ -24,7 +24,12 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     private final IRenderPipeline SIMPLE = PipelineManager.INSTANCE.getDefaultPipeline(TextureFormat.SINGLE);
     private @Nullable BakedQuad wrapped;
     private @Nullable BlockRenderLayer layer;
-    private float[][] positions = new float[4][3];
+    private final float[][] positions = new float[4][3];
+    private final float[] unpack = new float[3];
+    private final Vector3f v0 = new Vector3f();
+    private final Vector3f v1 = new Vector3f();
+    private final Vector3f v2 = new Vector3f();
+    
     protected boolean enableAmbientOcclusion = true;
     
     public void prepare(BlockRenderLayer layer, boolean enableAmbientOcclusion)
@@ -87,20 +92,26 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         
         if(normalIndex == -1)
         {
-            Vector3f v1 = new Vector3f(pos[3]);
-            Vector3f t = new Vector3f(pos[1]);
-            Vector3f v2 = new Vector3f(pos[2]);
-            v1.sub(t);
-            t.set(pos[0]);
-            v2.sub(t);
-            v1.cross(v2, v1);
-            v1.normalize();
-            normX = v1.x;
-            normY = v1.y;
-            normZ = v1.z;
+            final Vector3f v0 = this.v0;
+            final Vector3f v1 = this.v1;
+            final Vector3f v2 = this.v2;
+            
+            v0.set(pos[3]);
+            v1.set(pos[1]);
+            v2.set(pos[2]);
+            
+            v0.sub(v1);
+            
+            v1.set(pos[0]);
+            v2.sub(v1);
+            v0.cross(v2, v0);
+            v0.normalize();
+            normX = v0.x;
+            normY = v0.y;
+            normZ = v0.z;
         }
         
-        float[] unpack = new float[3];
+        float[] unpack = this.unpack;
         
         for(int i = 0; i < 4; i++)
         {

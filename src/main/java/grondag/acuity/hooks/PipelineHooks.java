@@ -259,12 +259,23 @@ public class PipelineHooks
             
             wrapper.prepare(layer, modelIn.isAmbientOcclusion() && stateIn.getLightValue(worldIn, posIn) == 0);
             
-            modelIn.getQuads(stateIn, null, lighter.positionRandom()).forEach(q -> wrapper.wrapAndLight(lighter, q));
+            //scoping
+            {
+                List<BakedQuad> quads = modelIn.getQuads(stateIn, null, lighter.positionRandom());
+                final int limit = quads.size();
+                for(int i = 0; i < limit; i ++)
+                    wrapper.wrapAndLight(lighter, quads.get(i));
+            }
+            
             for(EnumFacing face : EnumFacing.VALUES)
             {
                 List<BakedQuad> list = modelIn.getQuads(stateIn, face, lighter.positionRandom());
                 if (!list.isEmpty() && (!checkSides || stateIn.shouldSideBeRendered(worldIn, posIn, face)))
-                   list.forEach(q -> wrapper.wrapAndLight(lighter, q));
+                {
+                    final int limit = list.size();
+                    for(int i = 0; i < limit; i ++)
+                        wrapper.wrapAndLight(lighter, list.get(i));
+                }
             }
             
             return lighter.didOutput();
