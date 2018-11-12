@@ -15,6 +15,7 @@
     "MixinOpenGlHelper",
     "MixinMinecraft",
     "MixinEntityRenderer",
-    "MixinBlock"
+    "MixinBlock",
+    "MixinSetVisibility"
   ]
 }

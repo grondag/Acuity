@@ -10,14 +10,13 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.core.SetVisibilityExt;
+import grondag.acuity.hooks.ISetVisibility;
 import grondag.acuity.hooks.PipelineHooks;
 import grondag.acuity.hooks.VisiblityHooks;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.ViewFrustum;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.chunk.SetVisibility;
 import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -39,11 +38,11 @@ public abstract class MixinRenderGlobal
             RenderChunk renderChunk = viewFrustum.getRenderChunk(eyePos);
             if(renderChunk != null)
             {
-                SetVisibility rawVis = renderChunk.compiledChunk.setVisibility;
+                Object visData = ((ISetVisibility)renderChunk.compiledChunk.setVisibility).getVisibilityData();
                 // unbuilt chunks won't have extended info
-                if(rawVis instanceof SetVisibilityExt)
+                if(visData != null)
                 {
-                    ci.setReturnValue(VisiblityHooks.getVisibleFacingsExt((SetVisibilityExt)rawVis, eyePos));
+                    ci.setReturnValue(VisiblityHooks.getVisibleFacingsExt(visData, eyePos));
                 }
             }
         }

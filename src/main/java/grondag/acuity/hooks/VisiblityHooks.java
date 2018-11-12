@@ -6,7 +6,6 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import grondag.acuity.core.SetVisibilityExt;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -19,16 +18,15 @@ import net.minecraft.util.math.BlockPos;
 public class VisiblityHooks
 {
     @SuppressWarnings("unchecked")
-    public static Set<EnumFacing> getVisibleFacingsExt(SetVisibilityExt rawVis, BlockPos eyePos)
+    public static Set<EnumFacing> getVisibleFacingsExt(Object visData, BlockPos eyePos)
     {
-        final Object facings = ((SetVisibilityExt)rawVis).visibility;
         Set<EnumFacing> result;
         
-        if(facings instanceof Set)
-            result = (Set<EnumFacing>)facings;
+        if(visData instanceof Set)
+            result = (Set<EnumFacing>)visData;
         else
         {
-            Int2ObjectOpenHashMap<Set<EnumFacing>> facingMap = (Int2ObjectOpenHashMap<Set<EnumFacing>>)facings;
+            Int2ObjectOpenHashMap<Set<EnumFacing>> facingMap = (Int2ObjectOpenHashMap<Set<EnumFacing>>)visData;
             result = facingMap.get(VisGraph.getIndex(eyePos));
             if(result == null)
                 result = EnumFacingSet.NONE;
@@ -40,17 +38,17 @@ public class VisiblityHooks
     
     public static SetVisibility computeVisiblityExt(VisGraph visgraph)
     {
-        SetVisibilityExt setvisibility = new SetVisibilityExt();
+        SetVisibility setvisibility = new SetVisibility();
 
         if (4096 - visgraph.empty < 256)
         {
             setvisibility.setAllVisible(true);
-            setvisibility.visibility = EnumSet.<EnumFacing>allOf(EnumFacing.class);
+            ((ISetVisibility)setvisibility).setVisibilityData(EnumFacingSet.ALL);
         }
         else if (visgraph.empty == 0)
         {
             setvisibility.setAllVisible(false);
-            setvisibility.visibility = EnumSet.<EnumFacing>noneOf(EnumFacing.class);
+            ((ISetVisibility)setvisibility).setVisibilityData(EnumFacingSet.NONE);
         }
         else
         {
@@ -69,7 +67,7 @@ public class VisiblityHooks
                         facingMap.put(it.nextInt(), fillSet);
                 }
             }
-            setvisibility.visibility = facingMap;
+            ((ISetVisibility)setvisibility).setVisibilityData(facingMap);
         }
 
         return setvisibility;
