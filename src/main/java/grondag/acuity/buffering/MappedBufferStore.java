@@ -174,20 +174,20 @@ public class MappedBufferStore
     
     static int statCounter = 0;
     
-    private static void doStats()
-    {
-        if(statCounter++ == 24000)
-        {
-            statCounter = 0;
-            final int extantCount = MappedBuffer.inUse.size();
-            MappedBuffer.inUse.forEach(b -> b.reportStats());
-            Acuity.INSTANCE.getLog().info("Extant Mapped Buffers: " + extantCount);
-            Acuity.INSTANCE.getLog().info("Extant Mapped Capacity (MB): " + extantCount * MappedBuffer.CAPACITY_BYTES / 0x100000);
-            Acuity.INSTANCE.getLog().info("Ready Buffers: " + emptyMapped.size());
-            Acuity.INSTANCE.getLog().info("Idle Buffers: " + emptyUnmapped.size());
-            Acuity.INSTANCE.getLog().info("");
-        }
-    }
+//    private static void doStats()
+//    {
+//        if(statCounter++ == 24000)
+//        {
+//            statCounter = 0;
+//            final int extantCount = MappedBuffer.inUse.size();
+//            MappedBuffer.inUse.forEach(b -> b.reportStats());
+//            Acuity.INSTANCE.getLog().info("Extant Mapped Buffers: " + extantCount);
+//            Acuity.INSTANCE.getLog().info("Extant Mapped Capacity (MB): " + extantCount * MappedBuffer.CAPACITY_BYTES / 0x100000);
+//            Acuity.INSTANCE.getLog().info("Ready Buffers: " + emptyMapped.size());
+//            Acuity.INSTANCE.getLog().info("Idle Buffers: " + emptyUnmapped.size());
+//            Acuity.INSTANCE.getLog().info("");
+//        }
+//    }
  
     /**
      * Called by mapped buffers when they are released off thread.

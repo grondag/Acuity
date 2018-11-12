@@ -22,20 +22,21 @@ public class VisiblityHooks
     public static Set<EnumFacing> getVisibleFacingsExt(SetVisibilityExt rawVis, BlockPos eyePos)
     {
         final Object facings = ((SetVisibilityExt)rawVis).visibility;
-        EnumSet<EnumFacing> result;
+        Set<EnumFacing> result;
         
-        if(facings instanceof EnumSet)
-            result = (EnumSet<EnumFacing>)facings;
+        if(facings instanceof Set)
+            result = (Set<EnumFacing>)facings;
         else
         {
-            Int2ObjectOpenHashMap<EnumSet<EnumFacing>> facingMap = (Int2ObjectOpenHashMap<EnumSet<EnumFacing>>)facings;
+            Int2ObjectOpenHashMap<Set<EnumFacing>> facingMap = (Int2ObjectOpenHashMap<Set<EnumFacing>>)facings;
             result = facingMap.get(VisGraph.getIndex(eyePos));
             if(result == null)
-                result = EnumSet.<EnumFacing>noneOf(EnumFacing.class);
+                result = EnumFacingSet.NONE;
         }
         
         return result;
     }
+    
     
     public static SetVisibility computeVisiblityExt(VisGraph visgraph)
     {
@@ -54,14 +55,14 @@ public class VisiblityHooks
         else
         {
             final BitSet bitSet = visgraph.bitSet;
-            Int2ObjectOpenHashMap<EnumSet<EnumFacing>> facingMap = new Int2ObjectOpenHashMap<EnumSet<EnumFacing>>();
+            Int2ObjectOpenHashMap<Set<EnumFacing>> facingMap = new Int2ObjectOpenHashMap<Set<EnumFacing>>();
             
             for (int i : VisGraph.INDEX_OF_EDGES)
             {
                 if (!bitSet.get(i))
                 {
-                    final Pair<EnumSet<EnumFacing>, IntArrayList> floodResult = floodFill(visgraph, i);
-                    final EnumSet<EnumFacing> fillSet = floodResult.getLeft();
+                    final Pair<Set<EnumFacing>, IntArrayList> floodResult = floodFill(visgraph, i);
+                    final Set<EnumFacing> fillSet = floodResult.getLeft();
                     setvisibility.setManyVisible(fillSet);
                     IntListIterator it = floodResult.getRight().iterator();
                     while(it.hasNext())
@@ -74,11 +75,34 @@ public class VisiblityHooks
         return setvisibility;
     }
 
-    private static Pair<EnumSet<EnumFacing>, IntArrayList> floodFill(VisGraph visgraph, int pos)
+    private static class Helpers
     {
-        EnumSet<EnumFacing> set = EnumSet.<EnumFacing>noneOf(EnumFacing.class);
-        IntArrayList list = new IntArrayList();
-        IntArrayFIFOQueue queue = new IntArrayFIFOQueue();
+        final EnumSet<EnumFacing> faces = EnumSet.noneOf(EnumFacing.class);
+        final IntArrayList list = new IntArrayList();
+        final IntArrayFIFOQueue queue = new IntArrayFIFOQueue();
+    }
+    
+    private static final ThreadLocal<Helpers> helpers = new ThreadLocal<Helpers>()
+    {
+        @Override
+        protected Helpers initialValue()
+        {
+            return new Helpers();
+        }
+    };
+    
+    private static Pair<Set<EnumFacing>, IntArrayList> floodFill(VisGraph visgraph, int pos)
+    {
+        final Helpers help = helpers.get();
+        Set<EnumFacing> set = help.faces;
+        set.clear();
+        
+        final IntArrayList list = help.list;
+        list.clear();
+        
+        final IntArrayFIFOQueue queue = help.queue;
+        queue.clear();
+        
         queue.enqueue(pos);
         list.add(pos);
         
@@ -102,6 +126,6 @@ public class VisiblityHooks
             }
         }
 
-        return Pair.of(set, list);
+        return Pair.of(EnumFacingSet.sharedInstance(set), list);
     }
 }
