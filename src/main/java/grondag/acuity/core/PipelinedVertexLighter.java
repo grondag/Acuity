@@ -5,12 +5,12 @@ import grondag.acuity.api.IPipelinedVertexConsumer;
 import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
+import grondag.acuity.hooks.IBlockInfo;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.text.translation.I18n;
-import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -40,7 +40,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     }
     
     @Override
-    public abstract BlockInfo getBlockInfo();
+    public abstract IBlockInfo getBlockInfo();
     
     public abstract VertexCollector getVertexCollector();
     
@@ -251,7 +251,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float v0);
     
     
-    protected int calcPackedLight(BlockInfo blockInfo, float normX, float normY, float normZ, float x, float y, float z)
+    protected int calcPackedLight(IBlockInfo blockInfo, float normX, float normY, float normZ, float x, float y, float z)
     {
         final float e1 = 1f - 1e-2f;
         final float e2 = 0.95f;
@@ -268,7 +268,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 
         int i = side == null ? 0 : side.ordinal() + 1;
         
-        return blockInfo.getPackedLight()[i];
+        return blockInfo.getPackedLightFast()[i];
     }
     
     protected float calcLightmap(float[][][][] light, float x, float y, float z)
@@ -370,7 +370,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         return l;
     }
     
-    protected float getAo(BlockInfo blockInfo, float x, float y, float z)
+    protected float getAo(IBlockInfo blockInfo, float x, float y, float z)
     {
         int sx = x < 0 ? 1 : 2;
         int sy = y < 0 ? 1 : 2;
@@ -381,7 +381,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         if(z < 0) z++;
 
         float a = 0;
-        float[][][] ao = blockInfo.getAo();
+        float[][][] ao = blockInfo.getAoFast();
         a += ao[sx - 1][sy - 1][sz - 1] * (1 - x) * (1 - y) * (1 - z);
         a += ao[sx - 1][sy - 1][sz - 0] * (1 - x) * (1 - y) * (0 + z);
         a += ao[sx - 1][sy - 0][sz - 1] * (1 - x) * (0 + y) * (1 - z);

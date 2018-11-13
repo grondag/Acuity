@@ -1,6 +1,6 @@
 package grondag.acuity.api;
 
-import net.minecraftforge.client.model.pipeline.BlockInfo;
+import grondag.acuity.hooks.IBlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
@@ -68,7 +68,7 @@ public interface IPipelinedVertexConsumer
             );
     
     @SideOnly(Side.CLIENT)
-    public BlockInfo getBlockInfo();
+    public IBlockInfo getBlockInfo();
     
     /**
      * Call before calling any of the acceptVertex methods. Emissive will be false at start of each quad.<p>

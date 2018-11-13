@@ -3,8 +3,8 @@ package grondag.acuity.core;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.hooks.IBlockInfo;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -28,7 +28,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
         }
 
         @Override
-        public final BlockInfo getBlockInfo()
+        public final IBlockInfo getBlockInfo()
         {
             return blockInfo;
         }
@@ -95,15 +95,15 @@ public class VanillaVertexLighter extends CompoundVertexLighter
                 float v0)
         {
                 
-            final BlockInfo blockInfo = getBlockInfo();
+            final IBlockInfo blockInfo = getBlockInfo();
             
             // local position is vertex, + block-state-driven shift (if any);
-            posX += blockInfo.getShx();
-            posY += blockInfo.getShy();
-            posZ += blockInfo.getShz();
+            posX += blockInfo.shiftX();
+            posY += blockInfo.shiftY();
+            posZ += blockInfo.shiftZ();
             
             final VertexCollector output = getVertexCollector();
-            final BlockPos pos = blockInfo.getBlockPos();
+            final BlockPos pos = blockInfo.blockPos();
     
             // Compute light
             int blockLight = 0, skyLight = 0;

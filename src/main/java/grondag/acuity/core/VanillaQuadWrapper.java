@@ -3,17 +3,17 @@ package grondag.acuity.core;
 import javax.annotation.Nullable;
 import javax.vecmath.Vector3f;
 
-import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedQuadConsumer;
 import grondag.acuity.api.IPipelinedVertexConsumer;
 import grondag.acuity.api.IRenderPipeline;
+import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
+import grondag.acuity.hooks.IBlockInfo;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 import net.minecraft.util.BlockRenderLayer;
-import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.client.model.pipeline.LightUtil;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -156,10 +156,10 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         lighter.accept(this); 
     }
 
-    public int getColorMultiplier(BlockInfo blockInfo)
+    public int getColorMultiplier(IBlockInfo iBlockInfo)
     {
         @SuppressWarnings("null")
         final int tint = wrapped.getTintIndex();
-        return tint == -1 ? 0xFFFFFFFF : (0xFF000000 | blockInfo.getColorMultiplier(tint)); 
+        return tint == -1 ? 0xFFFFFFFF : (0xFF000000 | iBlockInfo.getColorMultiplier(tint)); 
     }
 }

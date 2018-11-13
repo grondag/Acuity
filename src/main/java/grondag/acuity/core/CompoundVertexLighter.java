@@ -6,6 +6,7 @@ import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedQuadConsumer;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.hooks.IBlockInfo;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.BlockRenderLayer;
@@ -13,13 +14,14 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.IBlockAccess;
+import net.minecraftforge.client.model.pipeline.BlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
 @SideOnly(Side.CLIENT)
 public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
 {
-    protected final LazyBlockInfo blockInfo;
+    protected final IBlockInfo blockInfo;
     
     private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[PipelineManager.MAX_PIPELINES];
 
@@ -29,6 +31,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
 
     
     protected @Nullable IBlockState blockState;
+    
     protected long positionRandom = Long.MIN_VALUE;
     protected int sideFlags;
     
@@ -39,7 +42,6 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
         this.didOutput = false;
         this.positionRandom = Long.MIN_VALUE;
         this.blockInfo.prepare(world, blockState, pos);
-        this.blockInfo.updateShift();
         this.blockState = blockState;
         this.sideFlags = checkSides ? getSideFlags() : 0xFFFF;
     }
@@ -65,7 +67,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     
     public CompoundVertexLighter()
     {
-        this.blockInfo = new LazyBlockInfo(Minecraft.getMinecraft().getBlockColors());
+        this.blockInfo = (IBlockInfo)(new BlockInfo(Minecraft.getMinecraft().getBlockColors()));
     }
     
     protected abstract PipelinedVertexLighter createChildLighter(RenderPipeline pipeline);
@@ -106,13 +108,13 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     @Override
     public final BlockPos pos()
     {
-        return this.blockInfo.getBlockPos();
+        return this.blockInfo.blockPos();
     }
 
     @Override
     public final IBlockAccess world()
     {
-        return this.blockInfo.getWorld();
+        return this.blockInfo.world();
     }
 
     @Override
@@ -128,7 +130,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
         long result = this.positionRandom;
         if(result == Long.MIN_VALUE)
         {
-            result = MathHelper.getPositionRandom(this.blockInfo.getBlockPos());
+            result = MathHelper.getPositionRandom(this.blockInfo.blockPos());
             this.positionRandom = result;
         }
         return result;

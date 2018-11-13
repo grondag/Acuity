@@ -16,6 +16,7 @@
     "MixinMinecraft",
     "MixinEntityRenderer",
     "MixinBlock",
-    "MixinSetVisibility"
+    "MixinSetVisibility",
+    "MixinBlockInfo"
   ]
 }
