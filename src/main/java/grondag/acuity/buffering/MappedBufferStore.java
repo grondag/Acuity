@@ -95,6 +95,8 @@ public class MappedBufferStore
             {
                 MappedBuffer buff = releaseRemapQueue.poll();
                 
+                assert buff.isFinal();
+                
                 if(buff.retainers.isEmpty())
                     releaseResetQueue.offer(Pair.of(buff, null));
                 else
@@ -103,6 +105,7 @@ public class MappedBufferStore
                         buff.flush();
                     buff.bind();
                     buff.map(false);
+                    assert buff.isMapped();
                     releaseRebufferQueue.offer(buff);
                 }
             }

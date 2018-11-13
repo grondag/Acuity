@@ -78,6 +78,9 @@ public class MappedBuffer
      */
     private volatile boolean isFinal = false;
     
+    
+    private boolean isMappedReadonly = false;
+    
     /**
      * Bytes currently being used for render. 
      */
@@ -119,6 +122,7 @@ public class MappedBuffer
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES, writeFlag);
         isMapped = true;
+        isMappedReadonly = !writeFlag;
     }
     
     /** Called for buffers that are being reused.  Should already have been orphaned earlier.*/
@@ -209,6 +213,8 @@ public class MappedBuffer
         if(bytes != 0)
         {
             assert isMapped;
+            assert !isMappedReadonly;
+            
             OpenGlHelperExt.flushBuffer(lastFlushedOffset, bytes);
             lastFlushedOffset = currentMax;
         }
@@ -380,5 +386,15 @@ public class MappedBuffer
     {
         this.retainedBytes.set(0);
         this.retainers.clear();
+    }
+
+    public boolean isFinal()
+    {
+        return this.isFinal;
+    }
+
+    public boolean isMapped()
+    {
+        return this.isMapped;
     }
 }

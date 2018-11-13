@@ -3,7 +3,6 @@ package grondag.acuity.hooks;
 import java.util.BitSet;
 import java.util.EnumSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -16,24 +15,6 @@ import net.minecraft.util.math.BlockPos;
 
 public class VisibilityHooks
 {
-    private static ConcurrentLinkedQueue<byte[]> visibilityMaps = new ConcurrentLinkedQueue<>();
-    private static final byte[] EMPTY_MAP = new byte[4096];
-    
-    private static byte[] claimVisibilityMap()
-    {
-        byte[] result = visibilityMaps.poll();
-        if(result == null)
-            result = new byte[4096];
-        else
-            System.arraycopy(EMPTY_MAP, 0, result, 0, 4096);
-        return result;
-    }
-    
-    public static void releaseVisibilityMap(byte[] map)
-    {
-        visibilityMaps.offer(map);
-    }
-    
     @SuppressWarnings("unchecked")
     public static Set<EnumFacing> getVisibleFacingsExt(Object visData, BlockPos eyePos)
     {
@@ -41,8 +22,7 @@ public class VisibilityHooks
             return (Set<EnumFacing>)visData;
         else
         {
-            byte[] facingMap = (byte[])visData;
-            return EnumFacingSet.sharedInstance(facingMap[VisGraph.getIndex(eyePos)]);
+            return ((VisibilityMap)visData).getFaceSet(VisGraph.getIndex(eyePos));
         }
     }
     
@@ -63,7 +43,7 @@ public class VisibilityHooks
         else
         {
             final BitSet bitSet = visgraph.bitSet;
-            byte[] facingMap = claimVisibilityMap();
+            VisibilityMap facingMap = VisibilityMap.claim();
             
             for (int i : VisGraph.INDEX_OF_EDGES)
             {
@@ -76,7 +56,7 @@ public class VisibilityHooks
                     final IntArrayList list = floodResult.getRight();
                     final int limit = list.size();
                     for(int j = 0; j < limit; j++)
-                        facingMap[list.getInt(j)] = setIndex;
+                        facingMap.setIndex(list.getInt(j), setIndex);
                 }
             }
             ((ISetVisibility)setvisibility).setVisibilityData(facingMap);
