@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import grondag.acuity.Acuity;
 import grondag.acuity.hooks.ISetVisibility;
 import grondag.acuity.hooks.PipelineHooks;
-import grondag.acuity.hooks.VisiblityHooks;
+import grondag.acuity.hooks.VisibilityHooks;
 import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.ViewFrustum;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
@@ -42,7 +42,7 @@ public abstract class MixinRenderGlobal
                 // unbuilt chunks won't have extended info
                 if(visData != null)
                 {
-                    ci.setReturnValue(VisiblityHooks.getVisibleFacingsExt(visData, eyePos));
+                    ci.setReturnValue(VisibilityHooks.getVisibleFacingsExt(visData, eyePos));
                 }
             }
         }

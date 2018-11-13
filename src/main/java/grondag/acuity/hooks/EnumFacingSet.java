@@ -14,37 +14,7 @@ public class EnumFacingSet
     
     public static final Set<EnumFacing> ALL;
     public static final Set<EnumFacing> NONE;
-    
-    public static Set<EnumFacing> forBits(int bits)
-    {
-        return ALL_SETS[bits];
-    }
-    
-    public static int addFaceToBit(int bits, EnumFacing face)
-    {
-        return bits | (1 << face.ordinal());
-    }
-    
-    public static Set<EnumFacing> sharedInstance(Set<EnumFacing> fromSet)
-    {
-        if(fromSet.isEmpty())
-            return NONE;
-        else if(fromSet.size() == 6)
-            return ALL;
-        else
-        {
-            int bits = 0;
-            if(fromSet.contains(EnumFacing.DOWN)) bits |= (1 << DOWN.ordinal());
-            if(fromSet.contains(EnumFacing.UP)) bits |= (1 << UP.ordinal());
-            if(fromSet.contains(EnumFacing.EAST)) bits |= (1 << EAST.ordinal());
-            if(fromSet.contains(EnumFacing.WEST)) bits |= (1 << WEST.ordinal());
-            if(fromSet.contains(EnumFacing.NORTH)) bits |= (1 << NORTH.ordinal());
-            if(fromSet.contains(EnumFacing.SOUTH)) bits |= (1 << SOUTH.ordinal());
-            
-            return ALL_SETS[bits];
-        }
-    }
-    
+  
     static
     {
         for(int i = 0; i < 64; i++)
@@ -61,6 +31,41 @@ public class EnumFacingSet
         }
         ALL = ALL_SETS[63];
         NONE = ALL_SETS[0];
+    }
+    
+    public static int addFaceToBit(int bits, EnumFacing face)
+    {
+        return bits | (1 << face.ordinal());
+    }
+    
+    public static int sharedIndex(Set<EnumFacing> fromSet)
+    {
+        if(fromSet.isEmpty())
+            return 0;
+        else if(fromSet.size() == 6)
+            return 63;
+        else
+        {
+            int bits = 0;
+            if(fromSet.contains(EnumFacing.DOWN)) bits |= (1 << DOWN.ordinal());
+            if(fromSet.contains(EnumFacing.UP)) bits |= (1 << UP.ordinal());
+            if(fromSet.contains(EnumFacing.EAST)) bits |= (1 << EAST.ordinal());
+            if(fromSet.contains(EnumFacing.WEST)) bits |= (1 << WEST.ordinal());
+            if(fromSet.contains(EnumFacing.NORTH)) bits |= (1 << NORTH.ordinal());
+            if(fromSet.contains(EnumFacing.SOUTH)) bits |= (1 << SOUTH.ordinal());
+            
+            return bits;
+        }    
+    }
+    
+    public static Set<EnumFacing> sharedInstance(Set<EnumFacing> fromSet)
+    {
+        return sharedInstance(sharedIndex(fromSet));
+    }
+    
+    public static Set<EnumFacing> sharedInstance(int fromIndex)
+    {
+        return ALL_SETS[fromIndex];
     }
     
 }

@@ -3,38 +3,48 @@ package grondag.acuity.hooks;
 import java.util.BitSet;
 import java.util.EnumSet;
 import java.util.Set;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.apache.commons.lang3.tuple.Pair;
 
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
-import it.unimi.dsi.fastutil.ints.IntListIterator;
 import net.minecraft.client.renderer.chunk.SetVisibility;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
 
-public class VisiblityHooks
+public class VisibilityHooks
 {
-    @SuppressWarnings("unchecked")
-    public static Set<EnumFacing> getVisibleFacingsExt(Object visData, BlockPos eyePos)
+    private static ConcurrentLinkedQueue<byte[]> visibilityMaps = new ConcurrentLinkedQueue<>();
+    private static final byte[] EMPTY_MAP = new byte[4096];
+    
+    private static byte[] claimVisibilityMap()
     {
-        Set<EnumFacing> result;
-        
-        if(visData instanceof Set)
-            result = (Set<EnumFacing>)visData;
+        byte[] result = visibilityMaps.poll();
+        if(result == null)
+            result = new byte[4096];
         else
-        {
-            Int2ObjectOpenHashMap<Set<EnumFacing>> facingMap = (Int2ObjectOpenHashMap<Set<EnumFacing>>)visData;
-            result = facingMap.get(VisGraph.getIndex(eyePos));
-            if(result == null)
-                result = EnumFacingSet.NONE;
-        }
-        
+            System.arraycopy(EMPTY_MAP, 0, result, 0, 4096);
         return result;
     }
     
+    public static void releaseVisibilityMap(byte[] map)
+    {
+        visibilityMaps.offer(map);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static Set<EnumFacing> getVisibleFacingsExt(Object visData, BlockPos eyePos)
+    {
+        if(visData instanceof Set)
+            return (Set<EnumFacing>)visData;
+        else
+        {
+            byte[] facingMap = (byte[])visData;
+            return EnumFacingSet.sharedInstance(facingMap[VisGraph.getIndex(eyePos)]);
+        }
+    }
     
     public static SetVisibility computeVisiblityExt(VisGraph visgraph)
     {
@@ -53,7 +63,7 @@ public class VisiblityHooks
         else
         {
             final BitSet bitSet = visgraph.bitSet;
-            Int2ObjectOpenHashMap<Set<EnumFacing>> facingMap = new Int2ObjectOpenHashMap<Set<EnumFacing>>();
+            byte[] facingMap = claimVisibilityMap();
             
             for (int i : VisGraph.INDEX_OF_EDGES)
             {
@@ -62,9 +72,11 @@ public class VisiblityHooks
                     final Pair<Set<EnumFacing>, IntArrayList> floodResult = floodFill(visgraph, i);
                     final Set<EnumFacing> fillSet = floodResult.getLeft();
                     setvisibility.setManyVisible(fillSet);
-                    IntListIterator it = floodResult.getRight().iterator();
-                    while(it.hasNext())
-                        facingMap.put(it.nextInt(), fillSet);
+                    byte setIndex = (byte) EnumFacingSet.sharedIndex(fillSet);
+                    final IntArrayList list = floodResult.getRight();
+                    final int limit = list.size();
+                    for(int j = 0; j < limit; j++)
+                        facingMap[list.getInt(j)] = setIndex;
                 }
             }
             ((ISetVisibility)setvisibility).setVisibilityData(facingMap);

@@ -6,7 +6,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.hooks.VisiblityHooks;
+import grondag.acuity.hooks.VisibilityHooks;
 import net.minecraft.client.renderer.chunk.RenderChunk;
 import net.minecraft.client.renderer.chunk.SetVisibility;
 import net.minecraft.client.renderer.chunk.VisGraph;
@@ -22,6 +22,6 @@ public abstract class MixinVisGraph
     public void onComputeVisibility(CallbackInfoReturnable<SetVisibility> ci)
     {
         if(Acuity.isModEnabled())
-            ci.setReturnValue(VisiblityHooks.computeVisiblityExt((VisGraph)(Object)this));
+            ci.setReturnValue(VisibilityHooks.computeVisiblityExt((VisGraph)(Object)this));
     }
 }
