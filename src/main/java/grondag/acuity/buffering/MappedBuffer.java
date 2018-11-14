@@ -321,6 +321,7 @@ public class MappedBuffer
             OpenGlHelperExt.unmapBuffer();
             isMapped = false;
             mapped = null;
+            isMappedReadonly = false;
         }
         orphan();
         isFinal = false;
@@ -344,6 +345,7 @@ public class MappedBuffer
             return null;
         
         assert isMapped;
+        assert isMappedReadonly;
         assert mapped != null;
         
         final IntBuffer fromBuffer = mapped.asIntBuffer();
@@ -396,5 +398,10 @@ public class MappedBuffer
     public boolean isMapped()
     {
         return this.isMapped;
+    }
+    
+    public boolean isMappedReadOnly()
+    {
+        return this.isMappedReadonly;
     }
 }

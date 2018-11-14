@@ -373,6 +373,8 @@ public class PipelineHooks
     public static ListenableFuture<Object> uploadChunk(ChunkRenderDispatcher chunkRenderDispatcher, BlockRenderLayer blockRenderLayer,
             BufferBuilder bufferBuilder, RenderChunk renderChunk, CompiledChunk compiledChunk, double distanceSq)
     {
+        assert blockRenderLayer == BlockRenderLayer.SOLID || blockRenderLayer == BlockRenderLayer.TRANSLUCENT;
+        
         if (Minecraft.getMinecraft().isCallingFromMinecraftThread())
         {
             if(blockRenderLayer == BlockRenderLayer.SOLID)

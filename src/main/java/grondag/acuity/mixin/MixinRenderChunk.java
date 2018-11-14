@@ -17,6 +17,7 @@ import grondag.acuity.Acuity;
 import grondag.acuity.buffering.DrawableChunk.Solid;
 import grondag.acuity.buffering.DrawableChunk.Translucent;
 import grondag.acuity.hooks.ChunkRebuildHelper;
+import grondag.acuity.hooks.CompiledChunkStore;
 import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.hooks.ISetVisibility;
 import grondag.acuity.hooks.PipelineHooks;
@@ -76,14 +77,6 @@ public abstract class MixinRenderChunk implements IRenderChunk
         PipelineHooks.renderChunkInitModelViewMatrix(renderChunk);
     }
 
-//    @Redirect(method = "rebuildChunk", require = 1,
-//            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;setVisibility(Lnet/minecraft/client/renderer/chunk/SetVisibility;)V"))
-//    private void onSetVisibility(CompiledChunk compiledChunk, SetVisibility setVisibility)
-//    {
-//        compiledChunk.setVisibility(setVisibility);
-//        PipelineHooks.mergeRenderLayers(compiledChunk);
-//    }
-
     @Inject(method = "deleteGlResources*", at = @At("RETURN"), require = 1)
     private void onDeleteGlResources(CallbackInfo ci)
     {
@@ -92,16 +85,24 @@ public abstract class MixinRenderChunk implements IRenderChunk
 
     @Inject(method = "setCompiledChunk", require = 1, 
             at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;compiledChunk"))
-    private void onSetCompiledChunk(CallbackInfo ci)
+    private void onSetCompiledChunk(CompiledChunk compiledChunkIn, CallbackInfo ci)
     {
+        if(compiledChunk == null || compiledChunk == CompiledChunk.DUMMY || compiledChunkIn == compiledChunk)
+            return;
+        
         ((ISetVisibility)compiledChunk.setVisibility).releaseVisibilityData();
+        CompiledChunkStore.release(compiledChunk);
     }
 
     @Inject(method = "stopCompileTask", require = 1, 
             at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;compiledChunk"))
     private void onStopCompiledChunk(CallbackInfo ci)
     {
+        if(compiledChunk == null || compiledChunk == CompiledChunk.DUMMY)
+            return;
+        
         ((ISetVisibility)compiledChunk.setVisibility).releaseVisibilityData();
+        CompiledChunkStore.release(compiledChunk);
     }
 
     @Override
@@ -137,13 +138,11 @@ public abstract class MixinRenderChunk implements IRenderChunk
     {
         if(!Acuity.isModEnabled())
             return;
-
         
         final ChunkRebuildHelper help = ChunkRebuildHelper.get();
         help.clear();
 
-        //PERF: reuse
-        final CompiledChunk compiledChunk = new CompiledChunk();
+        final CompiledChunk compiledChunk = CompiledChunkStore.claim();
         final MutableBlockPos minPos = this.position;
 
         generator.getLock().lock();
@@ -206,7 +205,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
                             }
                         }
                         
-                        for(int i = 0; i < help.layerCount; i++)
+                        for(int i = 0; i < ChunkRebuildHelper.BLOCK_RENDER_LAYER_COUNT; i++)
                         {
                             final BlockRenderLayer layer = help.layers[i];
                             if(!block.canRenderInLayer(iblockstate, layer)) 
@@ -231,7 +230,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
             }
            
 
-            for(int i = 0; i < help.layerCount; i++)
+            for(int i = 0; i < ChunkRebuildHelper.BLOCK_RENDER_LAYER_COUNT; i++)
             {
                 final BlockRenderLayer layer = help.layers[i];
                 if (layerFlags[i])

@@ -13,6 +13,9 @@ import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 public class ChunkRebuildHelper
 {
+    public static final int BLOCK_RENDER_LAYER_COUNT = BlockRenderLayer.values().length;
+    public static final boolean[] EMPTY_RENDER_LAYER_FLAGS = new boolean[BLOCK_RENDER_LAYER_COUNT];
+    
     private static final ThreadLocal<ChunkRebuildHelper> HELPERS = new ThreadLocal<ChunkRebuildHelper>()
     {
         @Override
@@ -28,14 +31,12 @@ public class ChunkRebuildHelper
     }
     
     public final BlockRenderLayer[] layers = BlockRenderLayer.values().clone();
-    public final int layerCount = layers.length;
-    private final boolean[] emptyFlagsDoNotUse = new boolean[layerCount];
-    public final boolean[] layerFlags = new boolean[layerCount];
+    public final boolean[] layerFlags = new boolean[BLOCK_RENDER_LAYER_COUNT];
     public final MutableBlockPos searchPos = new MutableBlockPos();
     public final HashSet<TileEntity> tileEntities = Sets.newHashSet();
     public final Set<TileEntity> tileEntitiesToAdd = Sets.newHashSet();
     public final Set<TileEntity> tileEntitiesToRemove = Sets.newHashSet();
-    private final BufferBuilder[] builders = new BufferBuilder[layerCount];
+    private final BufferBuilder[] builders = new BufferBuilder[BLOCK_RENDER_LAYER_COUNT];
     
     public BufferBuilder[] builders(RegionRenderCacheBuilder regionCache)
     {
@@ -48,7 +49,7 @@ public class ChunkRebuildHelper
 
     public void clear()
     {
-        System.arraycopy(emptyFlagsDoNotUse, 0, layerFlags, 0, layerCount);
+        System.arraycopy(EMPTY_RENDER_LAYER_FLAGS, 0, layerFlags, 0, BLOCK_RENDER_LAYER_COUNT);
         tileEntities.clear();
         tileEntitiesToAdd.clear();
         tileEntitiesToRemove.clear();

@@ -204,24 +204,4 @@ public abstract class MixinBlockInfo implements IBlockInfo
     {
         return shz;
     }
-
-//    @Override
-//    public boolean isFullCube()
-//    {
-//        return false;
-//    }
-//
-//    @Override
-//    public float[][][][] getSkyLight()
-//    {
-//        // TODO Auto-generated method stub
-//        return null;
-//    }
-//
-//    @Override
-//    public float[][][][] getBlockLight()
-//    {
-//        // TODO Auto-generated method stub
-//        return null;
-//    }
 }

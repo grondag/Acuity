@@ -123,6 +123,9 @@ public class MappedBufferStore
             {
                 MappedBuffer buff = pair.getLeft();
 
+                assert buff.isMapped();
+                assert buff.isMappedReadOnly();
+                
                 ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> list = pair.getRight();
                 if(list != null && !list.isEmpty())
                 {
