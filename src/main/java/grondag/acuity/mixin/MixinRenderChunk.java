@@ -159,8 +159,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
             generator.getLock().unlock();
         }
 
-        //PERF: reuse
-        final VisGraph visGraph = new VisGraph();
+        final VisGraph visGraph = help.visGraph;
         final HashSet<TileEntity> tileEntities = help.tileEntities;
 
         if (!this.worldView.isEmpty())
