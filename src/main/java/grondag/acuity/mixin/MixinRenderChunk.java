@@ -30,6 +30,7 @@ import net.minecraft.client.renderer.RenderGlobal;
 import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.renderer.chunk.SetVisibility;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
 import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
@@ -89,9 +90,18 @@ public abstract class MixinRenderChunk implements IRenderChunk
     {
         if(compiledChunk == null || compiledChunk == CompiledChunk.DUMMY || compiledChunkIn == compiledChunk)
             return;
-        
+
         ((ISetVisibility)compiledChunk.setVisibility).releaseVisibilityData();
         CompiledChunkStore.release(compiledChunk);
+    }
+
+    // shouldn't be necessary if rebuild chunk hook works, but insurance if not
+    @Redirect(method = "rebuildChunk", require = 1,       
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;setVisibility(Lnet/minecraft/client/renderer/chunk/SetVisibility;)V"))       
+    private void onSetVisibility(CompiledChunk compiledChunk, SetVisibility setVisibility)       
+    {        
+        compiledChunk.setVisibility(setVisibility);      
+        PipelineHooks.mergeRenderLayers(compiledChunk);      
     }
 
     @Inject(method = "stopCompileTask", require = 1, 
@@ -100,7 +110,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
     {
         if(compiledChunk == null || compiledChunk == CompiledChunk.DUMMY)
             return;
-        
+
         ((ISetVisibility)compiledChunk.setVisibility).releaseVisibilityData();
         CompiledChunkStore.release(compiledChunk);
     }
@@ -138,7 +148,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
     {
         if(!Acuity.isModEnabled())
             return;
-        
+
         final ChunkRebuildHelper help = ChunkRebuildHelper.get();
         help.clear();
 
@@ -172,7 +182,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
             final int yMin = minPos.getY();
             final int zMin = minPos.getZ();
             final BufferBuilder[] builders = help.builders(generator.getRegionRenderCacheBuilder());
-            
+
             for(int xPos = 0; xPos < 16; xPos++)
             {
                 for(int yPos = 0; yPos < 16; yPos++)
@@ -203,13 +213,13 @@ public abstract class MixinRenderChunk implements IRenderChunk
                                 }
                             }
                         }
-                        
+
                         for(int i = 0; i < ChunkRebuildHelper.BLOCK_RENDER_LAYER_COUNT; i++)
                         {
                             final BlockRenderLayer layer = help.layers[i];
                             if(!block.canRenderInLayer(iblockstate, layer)) 
                                 continue;
-                            
+
                             net.minecraftforge.client.ForgeHooksClient.setRenderLayer(layer);
 
                             if (block.getDefaultState().getRenderType() != EnumBlockRenderType.INVISIBLE)
@@ -227,7 +237,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
                     }
                 }
             }
-           
+
 
             for(int i = 0; i < ChunkRebuildHelper.BLOCK_RENDER_LAYER_COUNT; i++)
             {
@@ -241,9 +251,9 @@ public abstract class MixinRenderChunk implements IRenderChunk
         }
 
         compiledChunk.setVisibility(visGraph.computeVisibility());
-        
+
         PipelineHooks.mergeRenderLayers(compiledChunk);
-        
+
         this.lockCompileTask.lock();
 
         try
@@ -262,7 +272,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
         {
             this.lockCompileTask.unlock();
         }
-        
+
         ci.cancel();
     }
 }
