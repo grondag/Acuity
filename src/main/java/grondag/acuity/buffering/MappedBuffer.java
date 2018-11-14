@@ -183,6 +183,7 @@ public class MappedBuffer
     private void orphan()
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
+        mapped = null;
         OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, CAPACITY_BYTES, GL15.GL_STATIC_DRAW);
         OpenGlHelperExt.handleAppleMappedBuffer();
     }
@@ -190,6 +191,27 @@ public class MappedBuffer
     public boolean isFlushPending()
     {
         return isMapped && lastFlushedOffset != currentMaxOffset.get();
+    }
+    
+    /**
+     * Discards any pending flush and unmaps buffer.
+     */
+    public void unmap()
+    {
+        if(isDisposed)
+            return;
+        
+        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
+        
+        if(isMapped)
+        {
+            assert !isMappedReadonly;
+            lastFlushedOffset = currentMaxOffset.get();
+            isMapped = false;
+            bind();
+            OpenGlHelperExt.unmapBuffer();
+            unbind();
+        }
     }
     
     /**
@@ -225,10 +247,7 @@ public class MappedBuffer
             
             // need to check again because another thread could have set us final or add vertices after we started
             if(isFinal && currentMaxOffset.get() == lastFlushedOffset)
-            {
                 isMapped = false;
-                mapped = null;
-            }
             else
                 remap();
         }
@@ -342,6 +361,9 @@ public class MappedBuffer
     public ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> rebufferRetainers()
     {
         if(isDisposed)
+            return null;
+        
+        if(retainers.isEmpty())
             return null;
         
         assert isMapped;

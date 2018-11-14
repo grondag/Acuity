@@ -51,6 +51,10 @@ public class MappedBufferStore
                 try
                 {
                     MappedBuffer buff = releaseRebufferQueue.poll(27, TimeUnit.DAYS);
+                    
+                    if(buff.isDisposed())
+                        continue;
+                    
                     ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> swaps = buff.rebufferRetainers();
                     if(swaps != null)
                         releaseResetQueue.offer(Pair.of(buff, swaps));
@@ -95,10 +99,17 @@ public class MappedBufferStore
             {
                 MappedBuffer buff = releaseRemapQueue.poll();
                 
+                if(buff.isDisposed())
+                    continue;
+                
                 assert buff.isFinal();
                 
                 if(buff.retainers.isEmpty())
+                {
+                    if(buff.isMapped())
+                        buff.unmap();
                     releaseResetQueue.offer(Pair.of(buff, null));
+                }
                 else
                 {
                     if(buff.isFlushPending())
@@ -122,9 +133,11 @@ public class MappedBufferStore
             while(pair != null)
             {
                 MappedBuffer buff = pair.getLeft();
+                
+                if(buff.isDisposed())
+                    continue;
 
-                assert buff.isMapped();
-                assert buff.isMappedReadOnly();
+                assert !buff.isMapped() || buff.isMappedReadOnly();
                 
                 ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> list = pair.getRight();
                 if(list != null && !list.isEmpty())
