@@ -20,14 +20,14 @@ public class AllocationManager
      * If more than one buffer is needed, break(s) will be at a boundary compatible with all vertex formats.
      * All vertices in the buffer(s) will share the same pipeline (and thus vertex format).
      */
-    public static void claimAllocation(RenderPipeline pipeline, int byteCount, Consumer<IMappedBufferDelegate> consumer)
+    public static void claimAllocation(RenderPipeline pipeline, int byteCount, Consumer<MappedBufferDelegate> consumer)
     {
         while(byteCount >= MappedBuffer.CAPACITY_BYTES)
         {
                 MappedBuffer target = MappedBufferStore.getEmptyMapped();
                 if(target == null)
                     return;
-                IMappedBufferDelegate result = target.requestBytes(byteCount, pipeline.piplineVertexFormat().stride * 4);
+                MappedBufferDelegate result = target.requestBytes(byteCount, pipeline.piplineVertexFormat().stride * 4);
                 assert result != null;
                 if(result == null)
                     return;
@@ -40,7 +40,7 @@ public class AllocationManager
             claimPartialAllocation(byteCount, consumer);
     }
     
-    private static void claimPartialAllocation(final int byteCount, Consumer<IMappedBufferDelegate> consumer)
+    private static void claimPartialAllocation(final int byteCount, Consumer<MappedBufferDelegate> consumer)
     {
         final long byteKey = ((long)byteCount) << KEY_SHIFT_BITS;
         
@@ -55,7 +55,7 @@ public class AllocationManager
                 continue;
             }
             
-            IMappedBufferDelegate result = target.requestBytes(byteCount, byteCount);
+            MappedBufferDelegate result = target.requestBytes(byteCount, byteCount);
             assert result != null;
             if(result == null)
                 return;
@@ -70,7 +70,7 @@ public class AllocationManager
         MappedBuffer target = MappedBufferStore.getEmptyMapped();
         if(target == null)
             return;
-        IMappedBufferDelegate result = target.requestBytes(byteCount, byteCount);
+        MappedBufferDelegate result = target.requestBytes(byteCount, byteCount);
         assert result != null;
         if(result == null)
             return;

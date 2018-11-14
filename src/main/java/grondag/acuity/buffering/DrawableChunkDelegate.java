@@ -11,7 +11,7 @@ import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 public class DrawableChunkDelegate
 {
-    private IMappedBufferDelegate bufferDelegate;
+    private MappedBufferDelegate bufferDelegate;
     private final RenderPipeline pipeline;
     final int vertexCount;
     /**
@@ -22,7 +22,7 @@ public class DrawableChunkDelegate
     
     private boolean isReleased = false;
     
-    public DrawableChunkDelegate(IMappedBufferDelegate bufferDelegate, RenderPipeline pipeline, int vertexCount)
+    public DrawableChunkDelegate(MappedBufferDelegate bufferDelegate, RenderPipeline pipeline, int vertexCount)
     {
         this.bufferDelegate = bufferDelegate;
         this.pipeline = pipeline;
@@ -30,12 +30,12 @@ public class DrawableChunkDelegate
         bufferDelegate.retain(this);
     }
     
-    public IMappedBufferDelegate bufferDelegate()
+    public MappedBufferDelegate bufferDelegate()
     {
         return this.bufferDelegate;
     }
     
-    public void replaceBufferDelegate(IMappedBufferDelegate newDelegate)
+    public void replaceBufferDelegate(MappedBufferDelegate newDelegate)
     {
         // possible we have been released after rebuffer happened
         if(isReleased)

@@ -144,7 +144,7 @@ public class MappedBuffer
     /**
      * Won't break stride.
      */
-    public @Nullable IMappedBufferDelegate requestBytes(int byteCount, int stride)
+    public @Nullable MappedBufferDelegate requestBytes(int byteCount, int stride)
     {
         assert !isDisposed;
         assert mapped != null;
@@ -165,7 +165,7 @@ public class MappedBuffer
             newOffset = oldOffset + filled;
             
             if(currentMaxOffset.compareAndSet(oldOffset, newOffset))
-                return new SimpleMappedBufferReference(this, oldOffset, filled);
+                return new MappedBufferDelegate(this, oldOffset, filled);
         }
     }
 
@@ -358,7 +358,7 @@ public class MappedBuffer
         }
     };
     
-    public ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> rebufferRetainers()
+    public ObjectArrayList<Pair<DrawableChunkDelegate, MappedBufferDelegate>> rebufferRetainers()
     {
         if(isDisposed)
             return null;
@@ -372,7 +372,7 @@ public class MappedBuffer
         
         final IntBuffer fromBuffer = mapped.asIntBuffer();
         final int[] transfer = transferArray.get();
-        ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> swaps = new ObjectArrayList<>();
+        ObjectArrayList<Pair<DrawableChunkDelegate, MappedBufferDelegate>> swaps = new ObjectArrayList<>();
         
         retainers.forEach(delegate -> 
         {

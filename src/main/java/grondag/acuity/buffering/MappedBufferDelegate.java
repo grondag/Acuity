@@ -2,69 +2,60 @@ package grondag.acuity.buffering;
 
 import java.nio.IntBuffer;
 
-public class SimpleMappedBufferReference implements IMappedBufferDelegate
+public class MappedBufferDelegate
 {
     private final int byteCount;
     private final int byteOffset;
     private final MappedBuffer buffer;
     
-    public SimpleMappedBufferReference(MappedBuffer buffer, int byteOffset, int byteCount)
+    public MappedBufferDelegate(MappedBuffer buffer, int byteOffset, int byteCount)
     {
         this.buffer = buffer;
         this.byteCount = byteCount;
         this.byteOffset = byteOffset;
     }
 
-    @Override
-    public int byteCount()
+    public final int byteCount()
     {
         return this.byteCount;
     }
 
-    @Override
-    public int byteOffset()
+    public final int byteOffset()
     {
         return this.byteOffset;
     }
 
-    @Override
-    public int glBufferId()
+    public final int glBufferId()
     {
         return buffer.glBufferId;
     }
 
-    @Override
-    public IntBuffer intBuffer()
+    public final IntBuffer intBuffer()
     {
         return buffer.byteBuffer().asIntBuffer();
     }
 
-    @Override
-    public boolean isDisposed()
+    public final boolean isDisposed()
     {
         return buffer.isDisposed();
     }
 
-    @Override
-    public void bind()
+    public final void bind()
     {
         buffer.bind();
     }
 
-    @Override
-    public void flush()
+    public final void flush()
     {
         buffer.flush();
     }
 
-    @Override
-    public void release(DrawableChunkDelegate drawableChunkDelegate)
+    public final void release(DrawableChunkDelegate drawableChunkDelegate)
     {
         buffer.release(drawableChunkDelegate);
     }
 
-    @Override
-    public void retain(DrawableChunkDelegate drawableChunkDelegate)
+    public final void retain(DrawableChunkDelegate drawableChunkDelegate)
     {
         buffer.retain(drawableChunkDelegate);
     }

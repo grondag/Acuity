@@ -38,7 +38,7 @@ public class MappedBufferStore
      * Buffers that have been defragged and thus need to be unmapped and reset.
      * New buffers also need to be flushed and swapped for old.
      */
-    private static final ConcurrentLinkedQueue<Pair<MappedBuffer, ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>>>> releaseResetQueue = new ConcurrentLinkedQueue<>();
+    private static final ConcurrentLinkedQueue<Pair<MappedBuffer, ObjectArrayList<Pair<DrawableChunkDelegate, MappedBufferDelegate>>>> releaseResetQueue = new ConcurrentLinkedQueue<>();
     
     private static final Thread DEFRAG_THREAD;
     private static final Runnable DEFRAGGER = new Runnable()
@@ -55,7 +55,7 @@ public class MappedBufferStore
                     if(buff.isDisposed())
                         continue;
                     
-                    ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> swaps = buff.rebufferRetainers();
+                    ObjectArrayList<Pair<DrawableChunkDelegate, MappedBufferDelegate>> swaps = buff.rebufferRetainers();
                     if(swaps != null)
                         releaseResetQueue.offer(Pair.of(buff, swaps));
                 }
@@ -128,7 +128,7 @@ public class MappedBufferStore
     {
         if(!releaseResetQueue.isEmpty())
         {
-            Pair<MappedBuffer, ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>>> pair = releaseResetQueue.poll();
+            Pair<MappedBuffer, ObjectArrayList<Pair<DrawableChunkDelegate, MappedBufferDelegate>>> pair = releaseResetQueue.poll();
             
             while(pair != null)
             {
@@ -139,14 +139,14 @@ public class MappedBufferStore
 
                 assert !buff.isMapped() || buff.isMappedReadOnly();
                 
-                ObjectArrayList<Pair<DrawableChunkDelegate, IMappedBufferDelegate>> list = pair.getRight();
+                ObjectArrayList<Pair<DrawableChunkDelegate, MappedBufferDelegate>> list = pair.getRight();
                 if(list != null && !list.isEmpty())
                 {
                     final int limit = list.size();
                     for(int i = 0; i < limit; i++)
                     {
-                        Pair<DrawableChunkDelegate, IMappedBufferDelegate> swap = list.get(i);
-                        IMappedBufferDelegate bufferDelegate = swap.getRight();
+                        Pair<DrawableChunkDelegate, MappedBufferDelegate> swap = list.get(i);
+                        MappedBufferDelegate bufferDelegate = swap.getRight();
                         bufferDelegate.flush();
                         swap.getLeft().replaceBufferDelegate(bufferDelegate);
                     }
