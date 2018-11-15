@@ -20,6 +20,7 @@
     "MixinBlockInfo",
     "MixinChunkCache",
     "MixinBiomeColorHelper",
-    "MixinBlockLiquid"
+    "MixinBlockLiquid",
+    "MixinChunk"
   ]
 }
