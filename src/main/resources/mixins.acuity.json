@@ -18,6 +18,8 @@
     "MixinBlock",
     "MixinSetVisibility",
     "MixinBlockInfo",
-    "MixinChunkCache"
+    "MixinChunkCache",
+    "MixinBiomeColorHelper",
+    "MixinBlockLiquid"
   ]
 }
