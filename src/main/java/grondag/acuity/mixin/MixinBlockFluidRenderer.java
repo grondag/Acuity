@@ -39,7 +39,7 @@ public class MixinBlockFluidRenderer
     };
     
     // prevents significant garbage build up during chunk rebuild
-    @Redirect(method = "getFluidHeight", require = 1, at = @At(value = "INVOKE", 
+    @Redirect(method = "getFluidHeight", at = @At(value = "INVOKE", 
             target = "Lnet/minecraft/util/math/BlockPos;add(III)Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos onGetFluidHeightAdd(BlockPos pos, int x, int y, int z)
     {
@@ -47,7 +47,7 @@ public class MixinBlockFluidRenderer
     }
     
     // prevents significant garbage build up during chunk rebuild
-    @Redirect(method = "getFluidHeight", require = 1, at = @At(value = "INVOKE", 
+    @Redirect(method = "getFluidHeight", at = @At(value = "INVOKE", 
             target = "Lnet/minecraft/util/math/BlockPos;up()Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos onGetFluidHeightUp(BlockPos pos)
     {
@@ -55,7 +55,7 @@ public class MixinBlockFluidRenderer
     }
     
     // prevents significant garbage build up during chunk rebuild
-    @Redirect(method = "renderFluid", require = 1, at = @At(value = "INVOKE", 
+    @Redirect(method = "renderFluid", at = @At(value = "INVOKE", 
             target = "Lnet/minecraft/util/math/BlockPos;up()Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos onRenderFluidUp(BlockPos pos)
     {
@@ -63,7 +63,7 @@ public class MixinBlockFluidRenderer
     }
     
     // prevents significant garbage build up during chunk rebuild
-    @Redirect(method = "renderFluid", require = 1, at = @At(value = "INVOKE", 
+    @Redirect(method = "renderFluid", at = @At(value = "INVOKE", 
             target = "Lnet/minecraft/util/math/BlockPos;down()Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos onRenderFluidDown(BlockPos pos)
     {
@@ -71,7 +71,7 @@ public class MixinBlockFluidRenderer
     }
     
     // prevents significant garbage build up during chunk rebuild
-    @Redirect(method = "renderFluid", require = 1, at = @At(value = "INVOKE", 
+    @Redirect(method = "renderFluid", at = @At(value = "INVOKE", 
             target = "Lnet/minecraft/util/math/BlockPos;east()Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos onRenderFluidEast(BlockPos pos)
     {
@@ -79,7 +79,7 @@ public class MixinBlockFluidRenderer
     }
     
     // prevents significant garbage build up during chunk rebuild
-    @Redirect(method = "renderFluid", require = 1, at = @At(value = "INVOKE", 
+    @Redirect(method = "renderFluid", at = @At(value = "INVOKE", 
             target = "Lnet/minecraft/util/math/BlockPos;south()Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos onRenderFluidSouth(BlockPos pos)
     {
@@ -87,7 +87,7 @@ public class MixinBlockFluidRenderer
     }
     
     // prevents significant garbage build up during chunk rebuild
-    @Redirect(method = "renderFluid", require = 1, at = @At(value = "INVOKE", 
+    @Redirect(method = "renderFluid", at = @At(value = "INVOKE", 
             target = "Lnet/minecraft/util/math/BlockPos;add(III)Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos onRenderFluidAdd(BlockPos pos, int x, int y, int z)
     {
