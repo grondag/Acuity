@@ -21,6 +21,7 @@
     "MixinChunkCache",
     "MixinBiomeColorHelper",
     "MixinBlockLiquid",
-    "MixinChunk"
+    "MixinChunk",
+    "MixinBlockFluidRenderer"
   ]
 }
