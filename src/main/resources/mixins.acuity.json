@@ -22,7 +22,13 @@
     "MixinBiomeColorHelper",
     "MixinBlockLiquid",
     "MixinChunk",
+    "MixinBlock",
     "MixinBlockFluidRenderer",
+    "MixinBlockLiquid",
+    "MixinBlockSnow"
+  ],
+  "mixins": [
+    "MixinChunk",
     "MixinBlockGrass"
   ]
 }

@@ -23,7 +23,7 @@ public class MixinBlockGrass
     // prevents significant garbage build up during chunk rebuild
     @Redirect(method = "getActualState", at = @At(value = "INVOKE", 
             target = "Lnet/minecraft/util/math/BlockPos;up()Lnet/minecraft/util/math/BlockPos;"))
-    private BlockPos onGetFluidHeightUp(BlockPos pos)
+    private BlockPos onGetActualStateUp(BlockPos pos)
     {
         return getUpPos.get().setPos(pos.getX(), pos.getY() + 1, pos.getZ());
     }
