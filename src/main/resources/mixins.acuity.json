@@ -25,10 +25,12 @@
     "MixinBlock",
     "MixinBlockFluidRenderer",
     "MixinBlockLiquid",
-    "MixinBlockSnow"
+    "MixinBlockSnow",
+    "MixinForgeHooksClient"
   ],
   "mixins": [
     "MixinChunk",
-    "MixinBlockGrass"
+    "MixinBlockGrass",
+    "MixinWalkNodeProcessor"
   ]
 }
