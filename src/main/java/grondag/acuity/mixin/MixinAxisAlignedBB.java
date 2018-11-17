@@ -62,6 +62,39 @@ public abstract class MixinAxisAlignedBB implements IMutableAxisAlignedBB
     }
     
     @Override
+    public IMutableAxisAlignedBB expandMutable(double x, double y, double z)
+    {
+        if (x < 0.0D)
+        {
+            this.minX += x;
+        }
+        else if (x > 0.0D)
+        {
+            this.maxX += x;
+        }
+
+        if (y < 0.0D)
+        {
+            this.minY += y;
+        }
+        else if (y > 0.0D)
+        {
+            this.maxY += y;
+        }
+
+        if (z < 0.0D)
+        {
+            this.minZ += z;
+        }
+        else if (z > 0.0D)
+        {
+            this.maxZ += z;
+        }
+        
+        return this;
+    }
+    
+    @Override
     public AxisAlignedBB cast()
     {
         return (AxisAlignedBB)(Object)this;

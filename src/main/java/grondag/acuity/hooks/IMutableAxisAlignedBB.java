@@ -17,4 +17,6 @@ public interface IMutableAxisAlignedBB
 
     AxisAlignedBB cast();
 
+    IMutableAxisAlignedBB expandMutable(double x, double y, double z);
+
 }

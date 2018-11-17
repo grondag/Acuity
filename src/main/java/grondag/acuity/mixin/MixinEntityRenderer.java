@@ -5,9 +5,11 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import grondag.acuity.Acuity;
+import grondag.acuity.hooks.IRenderGlobal;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.client.renderer.EntityRenderer;
 import net.minecraft.client.renderer.RenderGlobal;
+import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.client.renderer.texture.ITextureObject;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.BlockRenderLayer;
@@ -54,5 +56,19 @@ public class MixinEntityRenderer
     {
         if(!Acuity.isModEnabled())
             tex.restoreLastBlurMipmap();
+    }
+    
+    //    "net/minecraft/client/renderer/RenderGlobal", "setupTerrain", "(Lnet/minecraft/entity/Entity;DLnet/minecraft/client/renderer/culling/ICamera;IZ)V"
+
+    @Redirect(method = "renderWorldPass",
+            expect = 1,
+            at = @At(value = "INVOKE", 
+            target = "Lnet/minecraft/client/renderer/RenderGlobal;setupTerrain(Lnet/minecraft/entity/Entity;DLnet/minecraft/client/renderer/culling/ICamera;IZ)V"))
+    private void onSetupTerrain(RenderGlobal renderGlobal, Entity viewEntity, double partialTicks, ICamera camera, int frameCount, boolean playerSpectator)
+    {
+        if(Acuity.isModEnabled())
+            ((IRenderGlobal)renderGlobal).setupTerrainFast(viewEntity, partialTicks, camera, frameCount, playerSpectator);
+        else
+            renderGlobal.setupTerrain(viewEntity, partialTicks, camera, frameCount, playerSpectator);
     }
 }
