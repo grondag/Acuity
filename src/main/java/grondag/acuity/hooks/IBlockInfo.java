@@ -6,7 +6,6 @@ import net.minecraft.world.IBlockAccess;
 
 public interface IBlockInfo
 {
-
     void prepare(IBlockAccess world, IBlockState state, BlockPos pos);
 
     float[][][] getAoFast();
@@ -28,5 +27,4 @@ public interface IBlockInfo
     float[][][][] getBlockLight();
 
     int getColorMultiplier(int tint);
-    
 }
