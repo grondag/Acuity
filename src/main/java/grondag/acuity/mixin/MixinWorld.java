@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import grondag.acuity.hooks.IMutableAxisAlignedBB;
+import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
@@ -46,5 +47,39 @@ public abstract class MixinWorld
     private BlockPos onIsFlammableWithin(int x, int y, int z) 
     {
         return mutablePos.get().setPos(x, y, z);
+    }
+    
+    // prevents significant garbage build up
+    @Redirect(method = "getRawLight",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/EnumFacing;values()[Lnet/minecraft/util/EnumFacing;"))
+    private EnumFacing[] onGetRawLightFaces() 
+    {
+        return EnumFacing.VALUES;
+    }
+    
+    // prevents significant garbage build up
+    @Redirect(method = "checkLightFor",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/EnumFacing;values()[Lnet/minecraft/util/EnumFacing;"))
+    private EnumFacing[] onCheckLightForFaces() 
+    {
+        return EnumFacing.VALUES;
+    }
+    
+    
+    private static ThreadLocal<MutableBlockPos> checkLightPos = new ThreadLocal<MutableBlockPos>()
+    {
+        @Override
+        protected MutableBlockPos initialValue()
+        {
+            return new MutableBlockPos();
+        }
+    };
+    
+    // prevents significant garbage build up
+    @Redirect(method = "checkLightFor",
+            at = @At(value = "NEW", args = "class=net/minecraft/util/math/BlockPos") )
+    private BlockPos onCheckLightForPos(int x, int y, int z) 
+    {
+        return checkLightPos.get().setPos(x, y, z);
     }
 }

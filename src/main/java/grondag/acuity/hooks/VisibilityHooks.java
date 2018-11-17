@@ -103,8 +103,10 @@ public class VisibilityHooks
             int i = queue.dequeueInt();
             visgraph.addEdges(i, set);
 
-            for (EnumFacing enumfacing : EnumFacing.values())
+            for(int f = 0; f < 6; f++)
             {
+                final EnumFacing enumfacing = EnumFacing.VALUES[f];
+                
                 int j = visgraph.getNeighborIndexAtFace(i, enumfacing);
 
                 if (j >= 0 && !visgraph.bitSet.get(j))

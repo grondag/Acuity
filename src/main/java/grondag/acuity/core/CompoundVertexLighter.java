@@ -50,8 +50,9 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     private int getSideFlags()
     {
         int result = 0;
-        for (EnumFacing face : EnumFacing.values())
+        for(int f = 0; f < 6; f++)
         {
+            final EnumFacing face = EnumFacing.VALUES[f];
             if(this.blockState.shouldSideBeRendered(this.world(), this.pos(), face))
                 result |= (1 << face.ordinal());
         }

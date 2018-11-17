@@ -53,6 +53,10 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class PipelineHooks
 {
+    // these have to be somewhere other than the static initialize for EnumFacing/mixins thereof
+    public static final EnumFacing[] HORIZONTAL_FACES = {EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST};
+    public static final EnumFacing[] VERTICAL_FACES = {EnumFacing.UP, EnumFacing.DOWN};
+    
     private static ThreadLocal<CompoundVertexLighter> lighters;
     private static ThreadLocal<FluidBuilder> fluidBuilders;
     

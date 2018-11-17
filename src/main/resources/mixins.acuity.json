@@ -35,6 +35,7 @@
     "MixinAxisAlignedBB",
     "MixinBlockCommon",
     "MixinWorld",
-    "MixinEntity"
+    "MixinEntity",
+    "MixinPlane"
   ]
 }

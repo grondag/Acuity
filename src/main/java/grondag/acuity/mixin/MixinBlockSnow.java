@@ -22,7 +22,8 @@ public class MixinBlockSnow
     };
     
     // prevents significant garbage build up during chunk rebuild
-    @Redirect(method = "shouldSideBeRendered", require = 1, at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;offset(Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;"))
+    @Redirect(method = "shouldSideBeRendered", expect = 1, 
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;offset(Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos onOffset(BlockPos pos, EnumFacing facing)
     {
         return shouldSideBeRenderedPos.get().setPos(pos).move(facing);
