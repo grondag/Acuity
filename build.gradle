@@ -73,7 +73,7 @@ repositories {
 }
 
 dependencies {
-compile("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
+	compile("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
         exclude module: "asm-commons"
         exclude module: "asm-tree"
         exclude module: "guava"
