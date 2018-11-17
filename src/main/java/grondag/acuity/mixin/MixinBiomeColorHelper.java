@@ -10,7 +10,7 @@ import net.minecraft.world.IBlockAccess;
 import net.minecraft.world.biome.BiomeColorHelper;
 
 @Mixin(BiomeColorHelper.class)
-public class MixinBiomeColorHelper
+public abstract class MixinBiomeColorHelper
 {
     //TODO: make this configurable/optional
     

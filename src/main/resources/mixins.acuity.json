@@ -15,14 +15,14 @@
     "MixinOpenGlHelper",
     "MixinMinecraft",
     "MixinEntityRenderer",
-    "MixinBlock",
+    "MixinBlockClient",
     "MixinSetVisibility",
     "MixinBlockInfo",
     "MixinChunkCache",
     "MixinBiomeColorHelper",
     "MixinBlockLiquid",
     "MixinChunk",
-    "MixinBlock",
+    "MixinBlockClient",
     "MixinBlockFluidRenderer",
     "MixinBlockLiquid",
     "MixinBlockSnow",
@@ -31,6 +31,10 @@
   "mixins": [
     "MixinChunk",
     "MixinBlockGrass",
-    "MixinWalkNodeProcessor"
+    "MixinWalkNodeProcessor",
+    "MixinAxisAlignedBB",
+    "MixinBlockCommon",
+    "MixinWorld",
+    "MixinEntity"
   ]
 }

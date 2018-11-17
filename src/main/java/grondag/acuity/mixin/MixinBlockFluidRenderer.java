@@ -9,7 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 @Mixin(BlockFluidRenderer.class)
-public class MixinBlockFluidRenderer
+public abstract class MixinBlockFluidRenderer
 {
     private static ThreadLocal<MutableBlockPos> getFluidHeightAddPos = new ThreadLocal<MutableBlockPos>()
     {

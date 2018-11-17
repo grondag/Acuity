@@ -10,7 +10,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 @Mixin(Block.class)
-public abstract class MixinBlock
+public abstract class MixinBlockClient
 {
     private static ThreadLocal<MutableBlockPos> offsetPos = new ThreadLocal<MutableBlockPos>()
     {
