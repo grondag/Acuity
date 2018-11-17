@@ -1,9 +1,9 @@
 package grondag.acuity.core;
 
+import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.RenderPipeline;
-import grondag.acuity.hooks.IBlockInfo;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.model.pipeline.LightUtil;
 import net.minecraftforge.fml.relauncher.Side;

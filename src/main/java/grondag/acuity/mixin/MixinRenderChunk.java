@@ -6,6 +6,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.annotation.Nullable;
 
+import org.spongepowered.asm.lib.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -72,7 +73,8 @@ public abstract class MixinRenderChunk implements IRenderChunk
     }
 
     @Redirect(method = "setPosition", require = 1,
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;initModelviewMatrix()V"))
+            at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;initModelviewMatrix()V"))
     private void onInitModelviewMatrix(RenderChunk renderChunk)
     {
         PipelineHooks.renderChunkInitModelViewMatrix(renderChunk);
@@ -83,9 +85,10 @@ public abstract class MixinRenderChunk implements IRenderChunk
     {
         releaseDrawables();
     }
-
+    
     @Inject(method = "setCompiledChunk", require = 1, 
-            at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;compiledChunk"))
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD,
+            target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;compiledChunk:Lnet/minecraft/client/renderer/chunk/CompiledChunk;"))
     private void onSetCompiledChunk(CompiledChunk compiledChunkIn, CallbackInfo ci)
     {
         if(compiledChunk == null || compiledChunk == CompiledChunk.DUMMY || compiledChunkIn == compiledChunk)
@@ -97,15 +100,16 @@ public abstract class MixinRenderChunk implements IRenderChunk
 
     // shouldn't be necessary if rebuild chunk hook works, but insurance if not
     @Redirect(method = "rebuildChunk", require = 1,       
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;setVisibility(Lnet/minecraft/client/renderer/chunk/SetVisibility;)V"))       
+            at = @At(value = "INVOKE",
+            target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;setVisibility(Lnet/minecraft/client/renderer/chunk/SetVisibility;)V"))       
     private void onSetVisibility(CompiledChunk compiledChunk, SetVisibility setVisibility)       
     {        
         compiledChunk.setVisibility(setVisibility);      
         PipelineHooks.mergeRenderLayers(compiledChunk);      
     }
-
     @Inject(method = "stopCompileTask", require = 1, 
-            at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;compiledChunk"))
+            at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD,
+            target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;compiledChunk:Lnet/minecraft/client/renderer/chunk/CompiledChunk;"))
     private void onStopCompiledChunk(CallbackInfo ci)
     {
         if(compiledChunk == null || compiledChunk == CompiledChunk.DUMMY)

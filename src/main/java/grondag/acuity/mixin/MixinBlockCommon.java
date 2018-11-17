@@ -24,6 +24,10 @@ public abstract class MixinBlockCommon
         }
     };
     
+    /**
+     * @reason Use threadlocal AABB for intersection test to prevent garbage.  Same logic as vanilla.
+     * @author grondag
+     */
     @Overwrite
     protected static void addCollisionBoxToList(BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable AxisAlignedBB blockBox)
     {

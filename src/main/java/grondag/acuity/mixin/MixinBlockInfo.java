@@ -4,7 +4,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.hooks.IBlockInfo;
+import grondag.acuity.api.IBlockInfo;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
@@ -15,23 +15,23 @@ import net.minecraftforge.client.model.pipeline.BlockInfo;
 @Mixin(BlockInfo.class)
 public abstract class MixinBlockInfo implements IBlockInfo
 {
-    @Shadow private IBlockAccess world;
-    @Shadow private IBlockState state;
-    @Shadow private BlockPos blockPos;
+    @Shadow(remap=false) private IBlockAccess world;
+    @Shadow(remap=false)  private IBlockState state;
+    @Shadow(remap=false)  private BlockPos blockPos;
     
-    @Shadow private boolean[][][] t;
-    @Shadow private int[][][] s;
-    @Shadow private int[][][] b;
-    @Shadow private float[][][][] skyLight;
-    @Shadow private float[][][][] blockLight;
-    @Shadow private float[][][] ao;
-    @Shadow private int[] packed;
-    @Shadow private boolean full;
-    @Shadow private float shx;
-    @Shadow private float shy;
-    @Shadow private float shz;
+    @Shadow(remap=false)  private boolean[][][] t;
+    @Shadow(remap=false)  private int[][][] s;
+    @Shadow(remap=false)  private int[][][] b;
+    @Shadow(remap=false)  private float[][][][] skyLight;
+    @Shadow(remap=false)  private float[][][][] blockLight;
+    @Shadow(remap=false)  private float[][][] ao;
+    @Shadow(remap=false)  private int[] packed;
+    @Shadow(remap=false)  private boolean full;
+    @Shadow(remap=false)  private float shx;
+    @Shadow(remap=false)  private float shy;
+    @Shadow(remap=false)  private float shz;
     
-    @Shadow protected abstract float combine(int c, int s1, int s2, int s3, boolean t0, boolean t1, boolean t2, boolean t3);
+    @Shadow(remap=false)  protected abstract float combine(int c, int s1, int s2, int s3, boolean t0, boolean t1, boolean t2, boolean t3);
     
     private boolean needsFlatLightUpdate = true;
     private boolean needsAoLightUpdate = true;

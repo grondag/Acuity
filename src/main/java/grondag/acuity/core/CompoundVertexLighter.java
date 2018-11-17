@@ -2,11 +2,11 @@ package grondag.acuity.core;
 
 import javax.annotation.Nullable;
 
+import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedQuadConsumer;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
-import grondag.acuity.hooks.IBlockInfo;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.util.BlockRenderLayer;

@@ -14,7 +14,10 @@ import net.minecraft.util.EnumFacing.Plane;
 @Mixin(Plane.class)
 public abstract class MixinPlane
 {
-    // don't make garbage for no reason
+    /**
+     * @reason Use static array instance for iterator to avoid making garbage.
+     * @author grondag
+     */
     @Overwrite
     public Iterator<EnumFacing> iterator()
     {

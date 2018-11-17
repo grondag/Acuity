@@ -1,4 +1,4 @@
-package grondag.acuity.hooks;
+package grondag.acuity.api;
 
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;

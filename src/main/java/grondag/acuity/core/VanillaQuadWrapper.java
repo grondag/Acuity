@@ -3,13 +3,13 @@ package grondag.acuity.core;
 import javax.annotation.Nullable;
 import javax.vecmath.Vector3f;
 
+import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedQuadConsumer;
 import grondag.acuity.api.IPipelinedVertexConsumer;
 import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
-import grondag.acuity.hooks.IBlockInfo;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.vertex.VertexFormat;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;

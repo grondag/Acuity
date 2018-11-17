@@ -23,7 +23,7 @@ public abstract class MixinChunkCache
     @Shadow protected World world;
     @Shadow public abstract IBlockState getBlockState(BlockPos pos);
     @Shadow public abstract int getLightFor(EnumSkyBlock type, BlockPos pos);
-    @Shadow protected abstract boolean withinBounds(int x, int z);
+    @Shadow(remap=false) protected abstract boolean withinBounds(int x, int z);
     
     private static final ThreadLocal<MutableBlockPos> fastPos = new ThreadLocal<MutableBlockPos>()
     {

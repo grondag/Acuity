@@ -1,6 +1,5 @@
 package grondag.acuity.api;
 
-import grondag.acuity.hooks.IBlockInfo;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
 
