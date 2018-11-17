@@ -9,7 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 @Mixin(WalkNodeProcessor.class)
-public class MixinWalkNodeProcessor
+public abstract class MixinWalkNodeProcessor
 {
     private static ThreadLocal<MutableBlockPos> pathNodePos = new ThreadLocal<MutableBlockPos>()
     {

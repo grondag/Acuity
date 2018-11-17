@@ -10,7 +10,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 @Mixin(BlockLiquid.class)
-public class MixinBlockLiquid
+public abstract class MixinBlockLiquid
 {
     
     private static ThreadLocal<MutableBlockPos> shouldSideBeRenderedPos = new ThreadLocal<MutableBlockPos>()

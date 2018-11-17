@@ -9,7 +9,7 @@ import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.chunk.Chunk;
 
 @Mixin(Chunk.class)
-public class MixinChunk
+public abstract class MixinChunk
 {
     private static ThreadLocal<MutableBlockPos> getLightOpacityPos = new ThreadLocal<MutableBlockPos>()
     {

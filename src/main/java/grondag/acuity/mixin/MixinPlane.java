@@ -12,7 +12,7 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.util.EnumFacing.Plane;
 
 @Mixin(Plane.class)
-public class MixinPlane
+public abstract class MixinPlane
 {
     // don't make garbage for no reason
     @Overwrite

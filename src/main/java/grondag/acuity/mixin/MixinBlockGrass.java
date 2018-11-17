@@ -9,7 +9,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 @Mixin(BlockGrass.class)
-public class MixinBlockGrass
+public abstract class MixinBlockGrass
 {
     private static ThreadLocal<MutableBlockPos> getUpPos = new ThreadLocal<MutableBlockPos>()
     {

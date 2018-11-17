@@ -15,7 +15,7 @@ import net.minecraft.entity.Entity;
 import net.minecraft.util.BlockRenderLayer;
 
 @Mixin(EntityRenderer.class)
-public class MixinEntityRenderer
+public abstract class MixinEntityRenderer
 {
     @Redirect(method = "renderWorldPass", expect = 4,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/RenderGlobal;renderBlockLayer(Lnet/minecraft/util/BlockRenderLayer;DILnet/minecraft/entity/Entity;)I"))

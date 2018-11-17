@@ -9,7 +9,7 @@ import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraftforge.client.ForgeHooksClient;
 
 @Mixin(ForgeHooksClient.class)
-public class MixinForgeHooksClient
+public abstract class MixinForgeHooksClient
 {
     private static ThreadLocal<MutableBlockPos> posAdd = new ThreadLocal<MutableBlockPos>()
     {
