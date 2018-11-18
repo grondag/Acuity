@@ -98,6 +98,8 @@ public class MappedBuffer
      */
     final Set<DrawableChunkDelegate> retainers = Collections.newSetFromMap(new ConcurrentHashMap<DrawableChunkDelegate, Boolean>());
     
+//    final ArrayList<String> traceLog = new ArrayList<>();
+    
     MappedBuffer()
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
@@ -117,10 +119,12 @@ public class MappedBuffer
     
     void map(boolean writeFlag)
     {
+//        traceLog.add("map(" + writeFlag + ")");
         if(isDisposed)
             return;
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES, writeFlag);
+        assert mapped != null;
         isMapped = true;
         isMappedReadonly = !writeFlag;
     }
@@ -128,6 +132,7 @@ public class MappedBuffer
     /** Called for buffers that are being reused.  Should already have been orphaned earlier.*/
     public void remap()
     {
+//        traceLog.add("reMap()");
         if(isDisposed)
             return;
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
@@ -146,6 +151,7 @@ public class MappedBuffer
      */
     public @Nullable MappedBufferDelegate requestBytes(int byteCount, int stride)
     {
+//        traceLog.add(String.format("requestBytes(%d, %d)", byteCount, stride));
         assert !isDisposed;
         assert mapped != null;
         
@@ -182,6 +188,7 @@ public class MappedBuffer
     /** assumes buffer is bound */
     private void orphan()
     {
+//        traceLog.add("orphan()");
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         mapped = null;
         OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, CAPACITY_BYTES, GL15.GL_STATIC_DRAW);
@@ -198,6 +205,7 @@ public class MappedBuffer
      */
     public void unmap()
     {
+//        traceLog.add("unmap()");
         if(isDisposed)
             return;
         
@@ -228,29 +236,26 @@ public class MappedBuffer
         final int currentMax = currentMaxOffset.get();
         final int bytes = currentMax - lastFlushedOffset;
         
-        if(bytes == 0 && !isMapped)
+        if(bytes == 0)
             return;
         
-        bind();
-        if(bytes != 0)
-        {
-            assert isMapped;
-            assert !isMappedReadonly;
-            
-            OpenGlHelperExt.flushBuffer(lastFlushedOffset, bytes);
-            lastFlushedOffset = currentMax;
-        }
+        assert isMapped;
+        assert !isMappedReadonly;
+
+//        traceLog.add("flush()");
         
-        if(isMapped)
-        {
-            OpenGlHelperExt.unmapBuffer();
+        bind();
             
-            // need to check again because another thread could have set us final or add vertices after we started
-            if(isFinal && currentMaxOffset.get() == lastFlushedOffset)
-                isMapped = false;
-            else
-                remap();
-        }
+        OpenGlHelperExt.flushBuffer(lastFlushedOffset, bytes);
+        lastFlushedOffset = currentMax;
+        
+        OpenGlHelperExt.unmapBuffer();
+        
+        // need to check again because another thread could have set us final or add vertices after we started
+        if(isFinal && currentMaxOffset.get() == lastFlushedOffset)
+            isMapped = false;
+        else
+            remap();
         
         unbind();
     }
@@ -267,12 +272,14 @@ public class MappedBuffer
      */
     public void retain(DrawableChunkDelegate drawable)
     {
+//        traceLog.add(String.format("retain(%s)", drawable.toString()));
         retainedBytes.addAndGet(drawable.bufferDelegate().byteCount());
         retainers.add(drawable);
     }
     
     public void release(DrawableChunkDelegate drawable)
     {
+//        traceLog.add(String.format("release(%s)", drawable.toString()));
         // retainer won't be found if release was already scheduled and collection has been cleared
         if(retainers.remove(drawable))
         {
@@ -306,6 +313,7 @@ public class MappedBuffer
     /** called by store on render reload to recycle GL buffer */
     void dispose()
     {
+//        traceLog.add("dispose()");
         if(isMapped)
         {
             bind();
@@ -331,17 +339,17 @@ public class MappedBuffer
     
     public void reset()
     {
+//        traceLog.add("reset()");
         assert retainedBytes.get() == 0;
         assert retainers.isEmpty();
         
         bind();
         if(isMapped)
-        {
             OpenGlHelperExt.unmapBuffer();
-            isMapped = false;
-            mapped = null;
-            isMappedReadonly = false;
-        }
+        
+        isMapped = false;
+        mapped = null;
+        isMappedReadonly = false;
         orphan();
         isFinal = false;
         isReleaseRequested.set(false);
@@ -360,6 +368,7 @@ public class MappedBuffer
     
     public ObjectArrayList<Pair<DrawableChunkDelegate, MappedBufferDelegate>> rebufferRetainers()
     {
+//        traceLog.add("rebufferRetainers()");
         if(isDisposed)
             return null;
         
@@ -408,6 +417,7 @@ public class MappedBuffer
      */
     void clearRetainers()
     {
+//        traceLog.add("clearRetainers()");
         this.retainedBytes.set(0);
         this.retainers.clear();
     }
