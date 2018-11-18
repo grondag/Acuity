@@ -19,11 +19,13 @@ public abstract class UploadableChunk<V extends DrawableChunk>
     {
         ObjectArrayList<DrawableChunkDelegate> delegates;
         VertexCollectorList collectorList;
+        int intOffset = 0;
         
         void prepare(ObjectArrayList<DrawableChunkDelegate> delegates, VertexCollectorList collectorList)
         {
             this.delegates = delegates;
             this.collectorList = collectorList;
+            intOffset = 0;
         }
         
         @Override
@@ -38,7 +40,8 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                 final IntBuffer intBuffer = ref.intBuffer();
 
                 intBuffer.position(byteOffset / 4);
-                intBuffer.put(collectorList.getIfExists(pipeline.getIndex()).rawData(), 0, intLength);
+                intBuffer.put(collectorList.getIfExists(pipeline.getIndex()).rawData(), intOffset, intLength);
+                intOffset += intLength;
                 final DrawableChunkDelegate delegate = new DrawableChunkDelegate(ref, pipeline, byteCount / stride);
                 delegates.add(delegate);
             });            
