@@ -27,7 +27,8 @@
     "MixinBlockFluidRenderer",
     "MixinBlockLiquid",
     "MixinBlockSnow",
-    "MixinForgeHooksClient"
+    "MixinForgeHooksClient",
+    "MixinGlStateManager"
   ],
   "mixins": [
     "MixinChunk",

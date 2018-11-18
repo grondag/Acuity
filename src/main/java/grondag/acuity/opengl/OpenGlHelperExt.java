@@ -35,8 +35,10 @@ import org.lwjgl.util.vector.Matrix4f;
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
 import grondag.acuity.api.PipelineManager;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.crash.CrashReport;
 import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.fml.relauncher.Side;
 import net.minecraftforge.fml.relauncher.SideOnly;
@@ -92,6 +94,9 @@ public class OpenGlHelperExt
     
     static private long glTranslatefFunctionPointer = -1;
     static private MethodHandle nglTranslatef = null;
+    
+    static private long glTranslatedFunctionPointer = -1;
+    static private MethodHandle nglTranslated = null;
     
     static private long glMultMatrixfFunctionPointer = -1;
     static private MethodHandle nglMultMatrixf = null;
@@ -390,6 +395,23 @@ public class OpenGlHelperExt
         try
         {
             ContextCapabilities caps = GLContext.getCapabilities();
+            Field pointer = ContextCapabilities.class.getDeclaredField("glTranslated");
+            pointer.setAccessible(true);
+            glTranslatedFunctionPointer = pointer.getLong(caps);
+            BufferChecks.checkFunctionAddress(glTranslatedFunctionPointer);
+            Method nglTranslated = GL11.class.getDeclaredMethod("nglTranslated", double.class, double.class, double.class, long.class);
+            nglTranslated.setAccessible(true);
+            OpenGlHelperExt.nglTranslated = lookup.unreflect(nglTranslated);
+        }
+        catch(Exception e)
+        {
+            glTranslatefFunctionPointer = -1;
+            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glTranslatef"), e);
+        }
+        
+        try
+        {
+            ContextCapabilities caps = GLContext.getCapabilities();
             Field pointer = ContextCapabilities.class.getDeclaredField("glMultMatrixf");
             pointer.setAccessible(true);
             glMultMatrixfFunctionPointer = pointer.getLong(caps);
@@ -504,67 +526,37 @@ public class OpenGlHelperExt
     
     public static void glGenVertexArrays(IntBuffer arrays)
     {
-        if(vaoEnabled) try
+        try
         {
             nglGenVertexArrays.invokeExact(arrays.remaining(), MemoryUtil.getAddress(arrays), glGenVertexArraysFunctionPointer);
         }
         catch(Throwable e)
         {
-            vaoEnabled = false;
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
         }
     }
     
     public static void glBindVertexArray(int array)
     {
-        if(vaoEnabled) try
+        try
         {
             nglBindVertexArray.invokeExact(array, glBindVertexArrayFunctionPointer);
         }
         catch(Throwable e)
         {
-            vaoEnabled = false;
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
         }
     }
     
     public static void glDeleteVertexArrays(IntBuffer arrays)
     {
-        if(vaoEnabled) try
+        try
         {
             nglDeleteVertexArrays.invokeExact(arrays.remaining(), MemoryUtil.getAddress(arrays), glDeleteVertexArraysFunctionPointer);
         }
         catch(Throwable e)
         {
-            vaoEnabled = false;
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "Vertex Array Objects"), e);
-        }
-    }
-    
-    /**
-     * Allocates buffer of given size without uploading.
-     */
-    public static void glBufferData(int target, long data_size, int usage)
-    {
-        if (OpenGlHelper.arbVbo)
-        {
-            ARBVertexBufferObject.glBufferDataARB(target, data_size, usage);
-        }
-        else
-        {
-            GL15.glBufferData(target, data_size, usage);
-        }
-    }
-    
-    public static void glBufferSubData(int target, long offset, ByteBuffer data)
-    {
-        if (OpenGlHelper.arbVbo)
-        {
-            ARBVertexBufferObject.glBufferSubDataARB(target, offset, data);
-        }
-        else
-        {
-            GL15.glBufferSubData(target, offset, data);
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
         }
     }
 
@@ -675,19 +667,14 @@ public class OpenGlHelperExt
      */
     public static void glVertexAttribPointerFast(int index, int size, int type, boolean normalized, int stride, long buffer_buffer_offset)
     {
-        if(glVertexAttribPointerFunctionPointer == -1)
-            GL20.glVertexAttribPointer(index, size, type, normalized, stride, buffer_buffer_offset);
-        else
-            try
-            {
-                nglVertexAttribPointerBO.invokeExact(index, size, type, normalized, stride, buffer_buffer_offset, glVertexAttribPointerFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glVertexAttribPointer"), e);
-                glVertexAttribPointerFunctionPointer = -1;
-                GL20.glVertexAttribPointer(index, size, type, normalized, stride, buffer_buffer_offset);
-            }
+        try
+        {
+            nglVertexAttribPointerBO.invokeExact(index, size, type, normalized, stride, buffer_buffer_offset, glVertexAttribPointerFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     /**
@@ -696,19 +683,14 @@ public class OpenGlHelperExt
      */
     public static void glTexCoordPointerFast(int size, int type, int stride, long buffer_buffer_offset)
     {
-        if(glTexCoordPointerFunctionPointer == -1)
-            GL11.glTexCoordPointer(size, type, stride, buffer_buffer_offset);
-        else
-            try
-            {
-                nglTexCoordPointerBO.invokeExact(size, type, stride, buffer_buffer_offset, glTexCoordPointerFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glTexCoordPointer"), e);
-                glTexCoordPointerFunctionPointer = -1;
-                GL11.glTexCoordPointer(size, type, stride, buffer_buffer_offset);
-            }
+        try
+        {
+            nglTexCoordPointerBO.invokeExact(size, type, stride, buffer_buffer_offset, glTexCoordPointerFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
 
     /**
@@ -717,171 +699,133 @@ public class OpenGlHelperExt
      */
     public static void glVertexPointerFast(int size, int type, int stride, long buffer_buffer_offset)
     {
-        if(glVertexPointerFunctionPointer == -1)
-            GL11.glVertexPointer(size, type, stride, buffer_buffer_offset);
-        else
-            try
-            {
-                nglVertexPointerBO.invokeExact(size, type, stride, buffer_buffer_offset, glVertexPointerFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glVertexPointer"), e);
-                glVertexPointerFunctionPointer = -1;
-                GL11.glVertexPointer(size, type, stride, buffer_buffer_offset);
-            }
+        try
+        {
+            nglVertexPointerBO.invokeExact(size, type, stride, buffer_buffer_offset, glVertexPointerFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     public static void glColorPointerFast(int size, int type, int stride, long pointer_buffer_offset)
     {
-        if(glColorPointerFunctionPointer == -1)
-            GL11.glColorPointer(size, type, stride, pointer_buffer_offset);
-        else
-            try
-            {
-                nglColorPointerBO.invokeExact(size, type, stride, pointer_buffer_offset, glColorPointerFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glColorPointer"), e);
-                glColorPointerFunctionPointer = -1;
-                GL11.glColorPointer(size, type, stride, pointer_buffer_offset);
-            }
+        try
+        {
+            nglColorPointerBO.invokeExact(size, type, stride, pointer_buffer_offset, glColorPointerFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
 
     public static void setClientActiveTextureFast(int textureId)
     {
-        if(glClientActiveTextureFunctionPointer == -1)
-            OpenGlHelper.setClientActiveTexture(textureId);
-        else
-            try
-            {
-                nglClientActiveTexturePointer.invokeExact(textureId, glClientActiveTextureFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glClientActiveTexture"), e);
-                glClientActiveTextureFunctionPointer = -1;
-                OpenGlHelper.setClientActiveTexture(textureId);
-            }
+        try
+        {
+            nglClientActiveTexturePointer.invokeExact(textureId, glClientActiveTextureFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     public static void glDrawArraysFast(int mode, int first, int count)
     {
-        if(glDrawArraysFunctionPointer == -1)
-            GlStateManager.glDrawArrays(mode, first, count);
-        else
-            try
-            {
-                nglDrawArrays.invokeExact(mode, first, count, glDrawArraysFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glDrawArrays"), e);
-                glDrawArraysFunctionPointer = -1;
-                GlStateManager.glDrawArrays(mode, first, count);
-            }
+        try
+        {
+            nglDrawArrays.invokeExact(mode, first, count, glDrawArraysFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     public static void glBindBufferFast(int target, int buffer)
     {
-        if(glBindBufferFunctionPointer == -1)
-            OpenGlHelper.glBindBuffer(target, buffer);
-        else
-            try
-            {
-                nglBindBuffer.invokeExact(target, buffer, glBindBufferFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glBindBuffer"), e);
-                glBindBufferFunctionPointer = -1;
-                OpenGlHelper.glBindBuffer(target, buffer);
-            }
+        try
+        {
+            nglBindBuffer.invokeExact(target, buffer, glBindBufferFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     public static void glUseProgramFast(int programId)
     {
-        if(glUseProgramFunctionPointer == -1)
-            OpenGlHelper.glUseProgram(programId);
-        else
-            try
-            {
-                nglUseProgram.invokeExact(programId, glUseProgramFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUseProgram"), e);
-                glUseProgramFunctionPointer = -1;
-                OpenGlHelper.glUseProgram(programId);
-            }
+        try
+        {
+            nglUseProgram.invokeExact(programId, glUseProgramFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     public static void pushMatrixFast()
     {
-        if(glPushMatrixFunctionPointer == -1)
-            GL11.glPushMatrix();
-        else
-            try
-            {
-                nglPushMatrix.invokeExact(glPushMatrixFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glPushMatrix"), e);
-                glPushMatrixFunctionPointer = -1;
-                GL11.glPushMatrix();
-            }
+        try
+        {
+            nglPushMatrix.invokeExact(glPushMatrixFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
 
     public static void popMatrixFast()
     {
-        if(glPopMatrixFunctionPointer == -1)
-            GL11.glPopMatrix();
-        else
-            try
-            {
-                nglPopMatrix.invokeExact(glPopMatrixFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glPopMatrix"), e);
-                glPopMatrixFunctionPointer = -1;
-                GL11.glPopMatrix();
-            }
+        try
+        {
+            nglPopMatrix.invokeExact(glPopMatrixFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     public static void translateFast(float x, float y, float z)
     {
-        if(glTranslatefFunctionPointer == -1)
-            GL11.glTranslatef(x, y, z);
-        else
-            try
-            {
-                nglTranslatef.invokeExact(x, y, z, glTranslatefFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glTranslatef"), e);
-                glTranslatefFunctionPointer = -1;
-                GL11.glTranslatef(x, y, z);
-            }
+        try
+        {
+            nglTranslatef.invokeExact(x, y, z, glTranslatefFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
+    }
+    
+    public static void translateFastDouble(double x, double y, double z)
+    {
+        try
+        {
+            nglTranslated.invokeExact(x, y, z, glTranslatedFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     public static void multMatrixFast(FloatBuffer matrix)
     {
-        if(glMultMatrixfFunctionPointer == -1)
-            GL11.glMultMatrix(matrix);
-        else
             try
             {
                 nglMultMatrixf.invokeExact(MemoryUtil.getAddress(matrix), glMultMatrixfFunctionPointer);
             }
             catch (Throwable e)
             {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glMultMatrixf"), e);
-                glMultMatrixfFunctionPointer = -1;
-                GL11.glMultMatrix(matrix);
+                Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
             }
     }
     
@@ -891,19 +835,14 @@ public class OpenGlHelperExt
      */
     public static void glUniformMatrix4Fast(int location, boolean transpose, FloatBuffer matrix, long bufferAddress)
     {
-        if(glUniformMatrix4fvFunctionPointer == -1)
-            OpenGlHelper.glUniformMatrix4(location, transpose, matrix);
-        else
-            try
-            {
-                nglUniformMatrix4fv.invokeExact(location,  1, transpose, bufferAddress, glUniformMatrix4fvFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glUniformMatrix4fv"), e);
-                glUniformMatrix4fvFunctionPointer = -1;
-                OpenGlHelper.glUniformMatrix4(location, transpose, matrix);
-            }
+        try
+        {
+            nglUniformMatrix4fv.invokeExact(location,  1, transpose, bufferAddress, glUniformMatrix4fvFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     private static final float[] LOAD_ARRAY = new float[16];
@@ -970,30 +909,13 @@ public class OpenGlHelperExt
     static private MethodHandle nglBufferData = null;
     public static void glBufferData(int target, int size, int usage)
     {
-        if(glBufferDataFunctionPointer == -1)
-            glBufferDataSlow(target, size, usage);
-        else
-            try
-            {
-                nglBufferData.invokeExact(target, (long)size, 0L, usage, glBufferDataFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "glBufferData"), e);
-                glBufferDataFunctionPointer = -1;
-                glBufferDataSlow(target, size, usage);
-            }
-    }
-
-    private static void glBufferDataSlow(int target, int size, int usage)
-    {
-        if (OpenGlHelper.arbVbo)
+        try
         {
-            ARBVertexBufferObject.glBufferDataARB(target, size, usage);
+            nglBufferData.invokeExact(target, (long)size, 0L, usage, glBufferDataFunctionPointer);
         }
-        else
+        catch (Throwable e)
         {
-            GL15.glBufferData(target, size, usage);
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
         }
     }
     
@@ -1006,57 +928,34 @@ public class OpenGlHelperExt
      */
     public static @Nullable ByteBuffer mapBufferAsynch(@Nullable ByteBuffer priorMapped, int bufferSize, boolean writeFlag)
     {
-        if(glmapBufferAsynchFunctionPointer == -1)
-            return mapBufferAsynchSlow(priorMapped, bufferSize, writeFlag);
-        else
-            try
-            {
-                ByteBuffer result;
-                
-                if(appleMapping || !writeFlag)
-                    result = (ByteBuffer) nglmapBufferAsynch.invokeExact(
-                            OpenGlHelper.GL_ARRAY_BUFFER, 
-                            writeFlag ? GL15.GL_WRITE_ONLY : GL15.GL_READ_ONLY, 
-                            (long)bufferSize, priorMapped, 
-                            glmapBufferAsynchFunctionPointer);
-                else
-                    result = (ByteBuffer) nglmapBufferAsynch.invokeExact(
-                            OpenGlHelper.GL_ARRAY_BUFFER, 
-                            0L, 
-                            (long)bufferSize, 
-                            GL30.GL_MAP_FLUSH_EXPLICIT_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_WRITE_BIT, 
-                            priorMapped, 
-                            glmapBufferAsynchFunctionPointer);
-                
-                if(result != null)
-                    result.order(ByteOrder.nativeOrder());
-                
-                return result;
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "mapBufferAsynch"), e);
-                glmapBufferAsynchFunctionPointer = -1;
-                return mapBufferAsynchSlow(priorMapped, bufferSize, writeFlag);
-            }
-        
-    }
-    
-    private static @Nullable ByteBuffer mapBufferAsynchSlow(@Nullable ByteBuffer priorMapped, int bufferSize, boolean writeFlag)
-    {
-        if(appleMapping)
+        try
         {
-            return GL15.glMapBuffer(
-                    OpenGlHelper.GL_ARRAY_BUFFER, 
-                    writeFlag ? GL15.GL_WRITE_ONLY : GL15.GL_READ_ONLY, 
-                    bufferSize, 
-                    priorMapped);
+            ByteBuffer result;
+            
+            if(appleMapping || !writeFlag)
+                result = (ByteBuffer) nglmapBufferAsynch.invokeExact(
+                        OpenGlHelper.GL_ARRAY_BUFFER, 
+                        writeFlag ? GL15.GL_WRITE_ONLY : GL15.GL_READ_ONLY, 
+                        (long)bufferSize, priorMapped, 
+                        glmapBufferAsynchFunctionPointer);
+            else
+                result = (ByteBuffer) nglmapBufferAsynch.invokeExact(
+                        OpenGlHelper.GL_ARRAY_BUFFER, 
+                        0L, 
+                        (long)bufferSize, 
+                        GL30.GL_MAP_FLUSH_EXPLICIT_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_WRITE_BIT, 
+                        priorMapped, 
+                        glmapBufferAsynchFunctionPointer);
+            
+            if(result != null)
+                result.order(ByteOrder.nativeOrder());
+            
+            return result;
         }
-        else
+        catch (Throwable e)
         {
-            return GL30.glMapBufferRange(OpenGlHelper.GL_ARRAY_BUFFER, 0, bufferSize, 
-                    GL30.GL_MAP_FLUSH_EXPLICIT_BIT | GL30.GL_MAP_UNSYNCHRONIZED_BIT | GL30.GL_MAP_WRITE_BIT,
-                    priorMapped);
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+            return null;
         }
     }
     
@@ -1071,28 +970,16 @@ public class OpenGlHelperExt
     {
         if(appleMapping)
         {
-            if(glBufferParameteriAPPLEFunctionPointer == -1)
-                handleAppleMappedBufferSlow();
-            else
-                try
-                {
-                    nglBufferParameteriAPPLE.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL11.GL_FALSE, glBufferParameteriAPPLEFunctionPointer);
-                    nglBufferParameteriAPPLE.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_FLUSHING_UNMAP_APPLE, GL11.GL_FALSE, glBufferParameteriAPPLEFunctionPointer);
-                }
-                catch (Throwable e)
-                {
-                    Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "handleAppleMappedBuffer"), e);
-                    glBufferParameteriAPPLEFunctionPointer = -1;
-                    handleAppleMappedBufferSlow();
-                }
+            try
+            {
+                nglBufferParameteriAPPLE.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL11.GL_FALSE, glBufferParameteriAPPLEFunctionPointer);
+                nglBufferParameteriAPPLE.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_FLUSHING_UNMAP_APPLE, GL11.GL_FALSE, glBufferParameteriAPPLEFunctionPointer);
+            }
+            catch (Throwable e)
+            {
+                Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+            }
         }
-    }
-
-    private static void handleAppleMappedBufferSlow()
-    {
-        APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_SERIALIZED_MODIFY_APPLE, GL11.GL_FALSE);
-        APPLEFlushBufferRange.glBufferParameteriAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, APPLEFlushBufferRange.GL_BUFFER_FLUSHING_UNMAP_APPLE, GL11.GL_FALSE);
-
     }
 
     static private long glFlushMappedBufferRangeFunctionPointer = -1;
@@ -1103,52 +990,27 @@ public class OpenGlHelperExt
     
     public static void flushBuffer(long offset, long length)
     {
-        if(glFlushMappedBufferRangeFunctionPointer == -1)
+        try
         {
-            flushBufferSlow(offset, length);
+            nglFlushMappedBufferRange.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, offset, length, glFlushMappedBufferRangeFunctionPointer);
         }
-        else 
-            try
-            {
-                nglFlushMappedBufferRange.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, offset, length, glFlushMappedBufferRangeFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "flushBuffer"), e);
-                glFlushMappedBufferRangeFunctionPointer = -1;
-                flushBufferSlow(offset, length);
-            }
-    }
-    
-    private static void flushBufferSlow(long offset, long length)
-    {
-        if(appleMapping)
-            APPLEFlushBufferRange.glFlushMappedBufferRangeAPPLE(OpenGlHelper.GL_ARRAY_BUFFER, offset, length);
-        else
-            GL30.glFlushMappedBufferRange(OpenGlHelper.GL_ARRAY_BUFFER, offset, length);
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     public static void unmapBuffer()
     {
-        if(glUnmapBufferFunctionPointer == -1)
-            unmapBufferSlow();
-        else 
-            try
-            {
-                @SuppressWarnings("unused")
-                boolean discard = (boolean) nglUnmapBuffer.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, glUnmapBufferFunctionPointer);
-            }
-            catch (Throwable e)
-            {
-                Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.warn_slow_gl_call", "unmapBuffer"), e);
-                glUnmapBufferFunctionPointer = -1;
-                unmapBufferSlow();
-            }
-    }
-    
-    private static void unmapBufferSlow()
-    {
-        GL15.glUnmapBuffer(OpenGlHelper.GL_ARRAY_BUFFER);
+        try
+        {
+            @SuppressWarnings("unused")
+            boolean discard = (boolean) nglUnmapBuffer.invokeExact(OpenGlHelper.GL_ARRAY_BUFFER, glUnmapBufferFunctionPointer);
+        }
+        catch (Throwable e)
+        {
+            Minecraft.getMinecraft().crashed(new CrashReport("Acuity Native GL Call Failure", e));
+        }
     }
     
     private static long functionPointer(String capabilityFieldName)
