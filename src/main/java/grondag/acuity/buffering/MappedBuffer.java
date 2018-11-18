@@ -123,6 +123,11 @@ public class MappedBuffer
         if(isDisposed)
             return;
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
+        
+        // don't try to remap writeable buffer as read only
+        if(!writeFlag && mapped != null)
+            mapped = null;
+        
         mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES, writeFlag);
         assert mapped != null;
         isMapped = true;
