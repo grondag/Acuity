@@ -2,7 +2,7 @@ package grondag.acuity.core;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import net.minecraft.client.renderer.GLAllocation;
 import net.minecraft.util.math.MathHelper;
@@ -15,7 +15,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
 @SideOnly(Side.CLIENT)
 public class BufferStore
 {
-    private static final ConcurrentLinkedQueue<ExpandableByteBuffer> store = new ConcurrentLinkedQueue<ExpandableByteBuffer>();
+    private static final ArrayBlockingQueue<ExpandableByteBuffer> store = new ArrayBlockingQueue<ExpandableByteBuffer>(4096);
     private static final int BUFFER_SIZE_INCREMENT = 0x200000;
     
     public static class ExpandableByteBuffer

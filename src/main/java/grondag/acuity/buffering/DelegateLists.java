@@ -1,12 +1,12 @@
 package grondag.acuity.buffering;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
 public class DelegateLists
 {
-    private static final ConcurrentLinkedQueue<ObjectArrayList<DrawableChunkDelegate>> delegateLists = new ConcurrentLinkedQueue<>();
+    private static final ArrayBlockingQueue<ObjectArrayList<DrawableChunkDelegate>> delegateLists = new ArrayBlockingQueue<>(4096);
 
     static ObjectArrayList<DrawableChunkDelegate> getReadyDelegateList()
     {

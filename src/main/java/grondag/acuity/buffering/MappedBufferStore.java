@@ -1,7 +1,6 @@
 package grondag.acuity.buffering;
 
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 
 import javax.annotation.Nullable;
@@ -22,12 +21,12 @@ public class MappedBufferStore
     private static final int TARGET_BUFFERS = 512;
     
     private static final ArrayBlockingQueue<MappedBuffer> emptyMapped = new ArrayBlockingQueue<MappedBuffer>(TARGET_BUFFERS);
-    private static final ConcurrentLinkedQueue<MappedBuffer> emptyUnmapped = new ConcurrentLinkedQueue<>();
+    private static final ArrayBlockingQueue<MappedBuffer> emptyUnmapped = new ArrayBlockingQueue<>(4096);
     
     /**
      * Buffers that may need defrag and thus need to be mapped.
      */
-    private static final ConcurrentLinkedQueue<MappedBuffer> releaseRemapQueue = new ConcurrentLinkedQueue<>();
+    private static final ArrayBlockingQueue<MappedBuffer> releaseRemapQueue = new ArrayBlockingQueue<>(4096);
     
     /**
      * Buffers that have been mapped and are awaiting defrag.
@@ -38,7 +37,7 @@ public class MappedBufferStore
      * Buffers that have been defragged and thus need to be unmapped and reset.
      * New buffers also need to be flushed and swapped for old.
      */
-    private static final ConcurrentLinkedQueue<Pair<MappedBuffer, ObjectArrayList<Pair<DrawableChunkDelegate, MappedBufferDelegate>>>> releaseResetQueue = new ConcurrentLinkedQueue<>();
+    private static final ArrayBlockingQueue<Pair<MappedBuffer, ObjectArrayList<Pair<DrawableChunkDelegate, MappedBufferDelegate>>>> releaseResetQueue = new ArrayBlockingQueue<>(4096);
     
     private static final Thread DEFRAG_THREAD;
     private static final Runnable DEFRAGGER = new Runnable()

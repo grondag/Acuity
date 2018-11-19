@@ -1,13 +1,12 @@
 package grondag.acuity.hooks;
 
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import net.minecraft.client.renderer.chunk.CompiledChunk;
 
 public class CompiledChunkStore
 {
-    private static final ConcurrentLinkedQueue<CompiledChunk> chunks = new ConcurrentLinkedQueue<>();
-    
+    private static final ArrayBlockingQueue<CompiledChunk> chunks = new ArrayBlockingQueue<>(4096);
  
     public static CompiledChunk claim()
     {

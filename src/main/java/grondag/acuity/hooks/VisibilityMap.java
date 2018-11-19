@@ -1,7 +1,7 @@
 package grondag.acuity.hooks;
 
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ArrayBlockingQueue;
 
 import it.unimi.dsi.fastutil.shorts.Short2ByteOpenHashMap;
 import net.minecraft.util.EnumFacing;
@@ -9,7 +9,7 @@ import net.minecraft.util.EnumFacing;
 @SuppressWarnings("serial")
 public class VisibilityMap extends Short2ByteOpenHashMap
 {
-    private static ConcurrentLinkedQueue<VisibilityMap> visibilityMaps = new ConcurrentLinkedQueue<>();
+    private static ArrayBlockingQueue<VisibilityMap> visibilityMaps = new ArrayBlockingQueue<>(4096);
     
     public static VisibilityMap claim()
     {
