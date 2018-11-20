@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.util.glu.GLU;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
@@ -19,6 +20,7 @@ import grondag.acuity.opengl.GLBufferStore;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 
 /**
@@ -128,8 +130,19 @@ public class MappedBuffer
         if(!writeFlag && mapped != null)
             mapped = null;
         
+        assert !isMapped;
+        
         mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES, writeFlag);
-        assert mapped != null;
+        if(mapped == null)
+        {
+            int i = GlStateManager.glGetError();
+            if (i != 0)
+            {
+                Acuity.INSTANCE.getLog().error("########## GL ERROR ON BUFFER REMAP ##########");
+                Acuity.INSTANCE.getLog().error(GLU.gluErrorString(i) + " (" + i + ")");
+            }
+            assert false;
+        }
         isMapped = true;
         isMappedReadonly = !writeFlag;
     }
