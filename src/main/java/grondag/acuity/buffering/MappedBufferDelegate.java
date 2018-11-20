@@ -59,4 +59,14 @@ public class MappedBufferDelegate
     {
         buffer.retain(drawableChunkDelegate);
     }
+    
+    public final void lockForUpload()
+    {
+//        buffer.bufferLock.lock();
+    }
+    
+    public final void unlockForUpload()
+    {
+//        buffer.bufferLock.unlock();
+    }
 }

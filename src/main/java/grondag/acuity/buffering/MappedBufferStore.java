@@ -106,7 +106,7 @@ public class MappedBufferStore
                 if(buff.retainers.isEmpty())
                 {
                     if(buff.isMapped())
-                        buff.unmap();
+                        buff.discardFlushAndUnmap();
                     releaseResetQueue.offer(Pair.of(buff, null));
                 }
                 else
@@ -167,6 +167,8 @@ public class MappedBufferStore
      */
     public static void prepareEmpties()
     {
+        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
+        
         processReleaseRemapQueue();
        
         processReleaseResetQueue();
@@ -180,8 +182,12 @@ public class MappedBufferStore
             if(empty == null)
                 empty = new MappedBuffer();
             else
-                empty.remap();
-            
+            {
+                assert !empty.isDisposed();
+                empty.bind();
+                empty.map(true);
+                empty.unbind();
+            }
             emptyMapped.offer(empty);
         }
         

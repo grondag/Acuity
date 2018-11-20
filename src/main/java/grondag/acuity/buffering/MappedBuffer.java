@@ -70,9 +70,11 @@ public class MappedBuffer
     
     /**
      * True if buffer is actually mapped. If false, and {@link #mapped} is non-null,
-     * the buffer instance is only meant for remap calls. Modified by client thread only.
+     * the buffer instance is only meant for remap calls. Modified by client thread only
+     * but may be read by buffering thread (assertions) at any time, thus marked volatile.
+     * 
      */
-    private boolean isMapped = false;
+    private volatile boolean isMapped = false;
     
     /**
      * If true, buffer is fully allocated and does not need to be re-mapped after flush.
@@ -100,6 +102,23 @@ public class MappedBuffer
      */
     final Set<DrawableChunkDelegate> retainers = Collections.newSetFromMap(new ConcurrentHashMap<DrawableChunkDelegate, Boolean>());
     
+    /**
+     * Buffering threads hold a read lock on this while they are uploading. 
+     * Client thread will block during flush/remap until it can get a write lock.
+     */
+//    private final ReadWriteLock lock = new ReentrantReadWriteLock();
+    
+    /**
+     * Buffering threads hold a read lock on this while they are uploading. 
+     * Client thread will block during flush/remap until it can get a write lock.
+     */
+//    public final Lock bufferLock = lock.readLock();
+    
+    /**
+     * Efficient access to write lock for client thread.
+     */
+//    private final Lock flushAndMapLock = lock.writeLock();
+    
 //    final ArrayList<String> traceLog = new ArrayList<>();
     
     MappedBuffer()
@@ -124,7 +143,6 @@ public class MappedBuffer
 //        traceLog.add("map(" + writeFlag + ")");
         if(isDisposed)
             return;
-        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
         
         // don't try to remap writeable buffer as read only
         if(!writeFlag && mapped != null)
@@ -147,18 +165,6 @@ public class MappedBuffer
         isMappedReadonly = !writeFlag;
     }
     
-    /** Called for buffers that are being reused.  Should already have been orphaned earlier.*/
-    public void remap()
-    {
-//        traceLog.add("reMap()");
-        if(isDisposed)
-            return;
-        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
-        bind();
-        map(true);
-        unbind();
-    }
-    
     public int unallocatedBytes()
     {
         return isFinal ? 0 : (CAPACITY_BYTES - currentMaxOffset.get());
@@ -171,7 +177,7 @@ public class MappedBuffer
     {
 //        traceLog.add(String.format("requestBytes(%d, %d)", byteCount, stride));
         assert !isDisposed;
-        assert mapped != null;
+        assert !isFinal;
         
         int oldOffset, newOffset, filled;
         while(true)
@@ -198,7 +204,7 @@ public class MappedBuffer
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
     }
     
-    private void unbind()
+    void unbind()
     {
         OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
     }
@@ -221,13 +227,18 @@ public class MappedBuffer
     /**
      * Discards any pending flush and unmaps buffer.
      */
-    public void unmap()
+    public void discardFlushAndUnmap()
     {
 //        traceLog.add("unmap()");
+        
+        assert !isDisposed;
+        
         if(isDisposed)
             return;
         
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
+        
+        assert isMapped;
         
         if(isMapped)
         {
@@ -242,7 +253,6 @@ public class MappedBuffer
     
     /**
      * Called each tick to send updates to GPU. 
-     * TODO: locking to prevent content upload during flush.
      */
     public void flush()
     {
@@ -263,17 +273,18 @@ public class MappedBuffer
 //        traceLog.add("flush()");
         
         bind();
-            
+        
+//        flushAndMapLock.lock();
+        
         OpenGlHelperExt.flushBuffer(lastFlushedOffset, bytes);
-        lastFlushedOffset = currentMax;
-        
         OpenGlHelperExt.unmapBuffer();
+        lastFlushedOffset = currentMax;
+        isMapped = false;
         
-        // need to check again because another thread could have set us final or add vertices after we started
-        if(isFinal && currentMaxOffset.get() == lastFlushedOffset)
-            isMapped = false;
-        else
-            remap();
+        if(!isFinal)
+            map(true);
+        
+//        flushAndMapLock.unlock();
         
         unbind();
     }
@@ -416,13 +427,15 @@ public class MappedBuffer
                 final int byteOffset = ref.byteOffset();
                 final int byteCount = ref.byteCount();
                 final int intLength = byteCount / 4;
-                final IntBuffer intBuffer = ref.intBuffer();
-
                 // no splitting, need 1:1
                 assert byteCount == fromByteCount;
                 
+                ref.lockForUpload();
+                final IntBuffer intBuffer = ref.intBuffer();
                 intBuffer.position(byteOffset / 4);
                 intBuffer.put(transfer, 0, intLength);
+                ref.unlockForUpload();
+                
                 ref.retain(delegate);
                 swaps.add(Pair.of(delegate, ref));
             });

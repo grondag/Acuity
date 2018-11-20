@@ -38,10 +38,13 @@ public abstract class UploadableChunk<V extends DrawableChunk>
                 final int byteOffset = ref.byteOffset();
                 final int byteCount = ref.byteCount();
                 final int intLength = byteCount / 4;
+                
+                ref.lockForUpload();
                 final IntBuffer intBuffer = ref.intBuffer();
-
                 intBuffer.position(byteOffset / 4);
                 intBuffer.put(collectorList.getIfExists(pipeline.getIndex()).rawData(), intOffset, intLength);
+                ref.unlockForUpload();
+                
                 intOffset += intLength;
                 final DrawableChunkDelegate delegate = new DrawableChunkDelegate(ref, pipeline, byteCount / stride);
                 delegates.add(delegate);
