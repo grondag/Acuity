@@ -267,6 +267,13 @@ public class MappedBuffer
         if(bytes == 0)
             return;
         
+        // TODO: remove this once fixed
+        if(!isMapped)
+        {
+            Acuity.INSTANCE.getLog().warn("Skipped buffer flush due to unmapped buffer.");
+            return;
+        }
+        
         assert isMapped;
         assert !isMappedReadonly;
 
