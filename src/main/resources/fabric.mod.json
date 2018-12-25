@@ -1,0 +1,15 @@
+{
+  "id": "acuity",
+  "name": "Acuity Rendering API",
+  "description": "API to enable advanced rendering features",
+  "version": "1.0.0",
+  "side": "client",
+  "initializer": "grondag.acuity.Acuity",
+  "requires": {
+    "fabric": "*"
+  },
+  "mixins": {
+    "render": "acuity.render.json",
+    "performance": "acuity.performance.json"
+  }
+}

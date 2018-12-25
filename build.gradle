@@ -1,210 +1,29 @@
-buildscript {
-    repositories {
-        mavenCentral()
-        jcenter()
-		
-	    maven {
-            name = "forge"
-            url = "http://files.minecraftforge.net/maven"
-        }
-        
-        maven {
-            name = "sonatype"
-            url = "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
-
-        maven {
-            name = 'SpongePowered'
-            url = 'http://repo.spongepowered.org/maven'
-        }
-    }
-
-    dependencies {
-        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
-        classpath 'org.ajoberstar:gradle-git:0.10.1'
-        classpath 'org.spongepowered:mixingradle:0.6-SNAPSHOT'
-        classpath 'com.github.jengelman.gradle.plugins:shadow:1.2.3'
-    }
+plugins {
+	id 'fabric-loom' version '0.2.0-SNAPSHOT'
 }
-
-// see https://github.com/passsy/gradle-GitVersioner
-ext.gitVersioner = [
-        defaultBranch           : "master",  // default "master"
-        stableBranches          : ["master"], // default [], the feature branch postfix (-dm4(6)) will not be appended on stable branches, all commits are included into the version number calculation
-        yearFactor              : 1200, 	  // default "1000", increasing every 8.57h
-        snapshotEnabled         : true,      // default false, the "-SNAPSHOT" postfix
-        localChangesCountEnabled: false,       // default false, the (<commitCount>) before -SNAPSHOT
-        shortName: { gitVersion ->            // optional closure to build a short name
-          // allows you to add your own short name logic
-          // All properties from gitVersion are available
-          // can be used for CI `System.getenv("BUILD_NUMBER")`
-
-          // i.e. use short sha1
-          return gitVersion.commit.subSequence(0, 7)
-        }
-]
-
-
-// import the script which runs the version generation
-apply from: 'https://raw.githubusercontent.com/passsy/gradle-GitVersioner/master/git-versioner.gradle'
-
-// variable `gitVersionName` can be used everywhere to get the revision name
-println("versionName: $gitVersionName") // output: "versionName: 1083-dm4(6)-SNAPSHOT"
-
-apply plugin: 'net.minecraftforge.gradle.forge'
-apply plugin: 'org.spongepowered.mixin'
-apply plugin: 'com.github.johnrengelman.shadow'
-apply plugin: 'java'
-apply plugin: 'maven'
-apply plugin: 'maven-publish'
-
-version = "mc${minecraft_version}-${mod_version}.${gitVersionName}-${release_type}"
-group= "grondag" // http://maven.apache.org/guides/mini/guide-naming-conventions.html
-archivesBaseName = "acuity"
 
 sourceCompatibility = 1.8
 targetCompatibility = 1.8
 
-repositories {
-    maven {
-        name = 'spongepowered-repo'
-        url = 'http://repo.spongepowered.org/maven/'
-    }
+archivesBaseName = "acuity_fabric"
+version = "1.0.0"
+
+minecraft {
 }
 
 dependencies {
-	compile("org.spongepowered:mixin:0.7.11-SNAPSHOT") {
-        exclude module: "asm-commons"
-        exclude module: "asm-tree"
-        exclude module: "guava"
-        exclude module: "log4j-core"
-        exclude module: "gson"
-        exclude module: "commons-io"
-    }
+	minecraft "com.mojang:minecraft:18w50a"
+	mappings "net.fabricmc:yarn:18w50a.71"
+	modCompile "net.fabricmc:fabric-loader:0.3.0.75"
+
+	// Fabric API. This is technically optional, but you probably want it anyway.
+	modCompile "net.fabricmc:fabric:0.1.2.64"
 }
 
-// Need this here so eclipse task generates correctly.
-compileJava {
-    sourceCompatibility = targetCompatibility = '1.8'
-}
-
-minecraft {
-    version = "${minecraft_version}-${forge_version}"
-    runDir = "run"
-    mappings = "stable_39"
-    useDepAts = false
-    makeObfSourceJar = false
-    
-    replaceIn "Reference.java"
-    replace "@VERSION@", project.version
-}
-
-sourceSets {
-	main {
-	        java {
-	            include 'grondag/**/*'
-	            exclude '*.DS_Store'
-	        }
-	        resources
-	        {
-	        	include '**/*'
-	        	exclude '*.DS_Store'
-	        }
-    }
-	api {
-		java {
-	            include 'grondag/**'
-	            exclude '*.DS_Store'
-	        }
-	}
-    test {
-        java {
-            exclude 'grondag/**'
-        }
-    }
-}
-
-mixin {
-    add sourceSets.main, "mixins.acuity.refmap.json"
-}
-
-jar {
-	classifier "thin"
-    manifest.attributes(
-            'TweakClass': 'org.spongepowered.asm.launch.MixinTweaker',
-            'TweakOrder': 0,
-            'MixinConfigs': 'mixins.acuity.json',
-            'FMLAT': 'acuity_at.cfg',
-            'ForceLoadAsMod': 'true'
-    )
-    from sourceSets.main.output
-    from sourceSets.api.output
-}
-
-shadowJar {
-    classifier ""
-    from sourceSets.main.output
-    from sourceSets.api.output
-    exclude "LICENSE.txt", "dummyThing"
-}
-
-reobf {
-    shadowJar {
-        mappingType = "SEARGE"
-    }
-}
-    
-task deobfJar(type: Jar) {
+// Loom will automatically attach sourcesJar to a RemapSourcesJar task and to the "build" task
+// if it is present.
+// If you remove this task, sources will not be generated.
+task sourcesJar(type: Jar, dependsOn: classes) {
+	classifier = 'sources'
 	from sourceSets.main.allSource
-    from sourceSets.main.output
-    from sourceSets.api.allSource
-    from sourceSets.api.output
-    classifier 'dev'
-}
-
-task apiJar(type: Jar, dependsOn: 'sourceApiJava') {
-    from sourceSets.api.allSource
-    from sourceSets.api.output
-    //include 'grondag/acuity/api/**/*'
-    classifier 'api'
-}
-
-artifacts {
-    archives sourceJar
-    archives deobfJar
-    archives apiJar
-    archives jar
-}
-
-processResources
-{
-    // this will ensure that this task is redone when the versions change.
-    inputs.property "version", project.version
-    inputs.property "mcversion", project.minecraft.version
-
-    // replace stuff in mcmod.info, nothing else
-    from(sourceSets.main.resources.srcDirs) {
-        include 'mcmod.info'
-                
-        // replace version and mcversion
-        expand 'version':project.version, 'mcversion':project.minecraft.version
-    }
-        
-    // copy everything else, thats not the mcmod.info
-    from(sourceSets.main.resources.srcDirs) {
-        exclude 'mcmod.info'
-    }
-}
-
-uploadArchives {
-    repositories {
-        mavenDeployer {
-            repository(url: "https://grondag-repo.appspot.com") {
-                authentication(userName: "admin", password: "${maven_password}")
-            }
-            pom.version = project.version
-            pom.artifactId = project.archivesBaseName
-            pom.groupId = project.group
-        }
-    }
 }
