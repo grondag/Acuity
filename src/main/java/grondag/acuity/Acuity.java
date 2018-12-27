@@ -1,94 +1,40 @@
 package grondag.acuity;
 
-import java.util.Optional;
-import java.util.function.Function;
-
-import javax.annotation.Nullable;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import com.mojang.blaze3d.platform.GLX;
+
 import grondag.acuity.api.AcuityRuntime;
-import grondag.acuity.api.IAcuityRuntime;
+import grondag.acuity.api.PipelineManager;
+import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.opengl.OpenGlHelperExt;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.resources.IReloadableResourceManager;
-import net.minecraft.client.resources.IResourceManager;
-import net.minecraft.client.resources.IResourceManagerReloadListener;
-import net.minecraft.util.text.translation.I18n;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.Mod.Instance;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLInterModComms;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.events.client.ClientTickEvent;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.resource.ReloadableResourceManager;
+import net.minecraft.resource.ResourceManager;
+import net.minecraft.resource.ResourceReloadListener;
 
-@Mod(   modid = Acuity.MODID, 
-        name = Acuity.MODNAME,
-        version = Acuity.VERSION,
-        acceptedMinecraftVersions = "[1.12]", 
-        clientSideOnly = true)
-
-public class Acuity
+public class Acuity implements ModInitializer
 {
-	public static final String MODID = "acuity";
-	public static final String MODNAME = "Acuity Rendering API";
-	public static final String VERSION = "%VERSION%";
 	
-	@Instance
 	public static Acuity INSTANCE = new Acuity();
 	
 	private static boolean glCapabilitiesMet = false;
 	private static boolean isEnabled = false;
 	
-	@SideOnly(Side.CLIENT)
-    public static final boolean isModEnabled()
+	@Override
+    public void onInitialize()
     {
-        return isEnabled;
-    }
-	
-	@SideOnly(Side.CLIENT)
-	public static final void recomputeEnabledStatus()
-	{
-	    isEnabled = glCapabilitiesMet && Configurator.enabled && OpenGlHelperExt.isFastNioCopyEnabled();
-	}
-	
-    @Nullable
-    private static Logger log;
-    
-    public Logger getLog()
-    {
-        Logger result = log;
-        if(result == null)
+        if(!GLX.usePostProcess)
         {
-            result = LogManager.getLogger(MODNAME);
-            log = result;
-        }
-        return result;
-    }
-
-    @SideOnly(Side.CLIENT)
-    @EventHandler
-	public void preInit(FMLPreInitializationEvent event)
-	{
-        // check for needed opengl capabilities
-        if(!OpenGlHelper.vboSupported)
-        {
-            getLog().warn(I18n.translateToLocal("misc.fail_no_vbo"));
+            getLog().warn(Localization.translate("misc.fail_no_shaders"));
             return;
         }
-        if(!OpenGlHelper.areShadersSupported() )
+        if(!GLX.isOpenGl21)
         {
-            getLog().warn(I18n.translateToLocal("misc.fail_no_shaders"));
-            return;
-        }
-        if(!OpenGlHelper.openGL21)
-        {
-            getLog().warn(I18n.translateToLocal("misc.fail_opengl_version"));
+            getLog().warn(Localization.translate("misc.fail_opengl_version"));
             return;
         }
         
@@ -96,61 +42,59 @@ public class Acuity
         
         if(!OpenGlHelperExt.areAsynchMappedBuffersSupported())
         {
-            getLog().warn(I18n.translateToLocal("misc.fail_no_asynch_mapped"));
+            getLog().warn(Localization.translate("misc.fail_no_asynch_mapped"));
             return;
         }
         
-        getLog().info(I18n.translateToLocal("misc.hardware_ok"));
-        getLog().info(I18n.translateToLocal(OpenGlHelperExt.isVaoEnabled() ? "misc.vao_on" : "misc.vao_off"));
+        getLog().info(Localization.translate("misc.hardware_ok"));
+        getLog().info(Localization.translate(OpenGlHelperExt.isVaoEnabled() ? "misc.vao_on" : "misc.vao_off"));
         
         if(!OpenGlHelperExt.isFastNioCopyEnabled())
         {
-            getLog().error(I18n.translateToLocal("misc.error_no_fast_nio_copy"));
+            getLog().error(Localization.translate("misc.error_no_fast_nio_copy"));
         }
         
         glCapabilitiesMet = true;
         recomputeEnabledStatus();
-	}
-
-    @SideOnly(Side.CLIENT)
-	@EventHandler
-	public void init(FMLInitializationEvent event)
-	{
-
-	}
-
-    @SideOnly(Side.CLIENT)
-	@EventHandler
-	public void postInit(FMLPostInitializationEvent event)
-	{
-        IResourceManager rm = Minecraft.getMinecraft().getResourceManager();
-        if(rm instanceof IReloadableResourceManager)
+        
+        ResourceManager rm = MinecraftClient.getInstance().getResourceManager();
+        if(rm instanceof ReloadableResourceManager)
         {
-            ((IReloadableResourceManager)rm).registerReloadListener(new IResourceManagerReloadListener() {
+            ((ReloadableResourceManager)rm).addListener(new ResourceReloadListener() {
 
                 @Override
-                public void onResourceManagerReload(IResourceManager resourceManager)
+                public void onResourceReload(ResourceManager resourceManager)
                 {
                     AcuityRuntime.INSTANCE.forceReload();
                 }});
         }
         
+        ClientTickEvent.CLIENT.register(mc -> 
+        {
+            PipelineManager.INSTANCE.onGameTick(mc);
+        });
+    }
+	
+    public static final boolean isModEnabled()
+    {
+        return isEnabled;
+    }
+	
+	public static final void recomputeEnabledStatus()
+	{
+	    isEnabled = glCapabilitiesMet && Configurator.enabled && OpenGlHelperExt.isFastNioCopyEnabled();
 	}
 	
-    @SideOnly(Side.CLIENT)
-	@Mod.EventHandler
-    public void imcCallback(FMLInterModComms.IMCEvent event)
-	{
-        for (FMLInterModComms.IMCMessage message : event.getMessages())
+    private static Logger log;
+    
+    public Logger getLog()
+    {
+        Logger result = log;
+        if(result == null)
         {
-            if (message.key.equalsIgnoreCase("getAcuityRuntime"))
-            {
-                Optional<Function<IAcuityRuntime, Void>> value = message.getFunctionValue(IAcuityRuntime.class, Void.class);
-                if (value.isPresent()) 
-                    value.get().apply(AcuityRuntime.INSTANCE);
-                else 
-                    getLog().warn(I18n.translateToLocal("misc.fail_imc"));
-            }
+            result = LogManager.getLogger("Acuity");
+            log = result;
         }
+        return result;
     }
 }

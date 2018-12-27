@@ -13,7 +13,8 @@ minecraft {
 
 dependencies {
 	minecraft "com.mojang:minecraft:18w50a"
-	mappings "net.fabricmc:yarn:18w50a.71"
+	//mappings "net.fabricmc:yarn:18w50a.71"
+	mappings "net.fabricmc:yarn:18w50a.local"
 	modCompile "net.fabricmc:fabric-loader:0.3.0.75"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.

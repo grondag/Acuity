@@ -2,8 +2,6 @@ package grondag.acuity.buffering;
 
 import java.nio.IntBuffer;
 
-import javax.annotation.Nullable;
-
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.VertexCollectorList;
 import grondag.acuity.core.VertexPackingList;

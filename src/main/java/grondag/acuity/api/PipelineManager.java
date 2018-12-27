@@ -2,31 +2,19 @@ package grondag.acuity.api;
 
 import java.nio.FloatBuffer;
 
-import javax.annotation.Nullable;
 
 import org.lwjgl.BufferUtils;
-import org.lwjgl.MemoryUtil;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
-import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Configurator;
 import grondag.acuity.buffering.MappedBufferStore;
 import grondag.acuity.core.PipelineShaderManager;
 import grondag.acuity.opengl.OpenGlHelperExt;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.EntityRenderer;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
-import net.minecraftforge.client.model.animation.Animation;
-import net.minecraftforge.fml.common.gameevent.TickEvent.ClientTickEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.RenderTickEvent;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
 public final class PipelineManager implements IPipelineManager
 {
     /**
@@ -85,16 +73,25 @@ public final class PipelineManager implements IPipelineManager
     private final RenderPipeline lavaPipeline;
     public final RenderPipeline defaultSinglePipeline;
     
-    private float worldTime;
-    private float partialTicks;
-    
+    /**
+     * The number of seconds this world has been rendering since the last render reload,
+     * including fractional seconds. <p>
+     * 
+     * Based on total world time, but shifted to originate from start of this game session.
+     */
+    private float renderSeconds;
     
     /**
-     * See {@link #onRenderTick(RenderTickEvent)}
+     * World time ticks at last render reload..
      */
-    private boolean didUpdatePipelinesThisFrame = false;
+    private long baseWorldTime;
     
-    @SuppressWarnings("null")
+    /**
+     * Frames are (hopefully) shorter than a client tick.  This is the fraction of a tick that
+     * has elapsed since the last complete client tick.
+     */
+    private float fractionalFrameTicks;
+    
     private PipelineManager()
     {
         super();
@@ -118,10 +115,19 @@ public final class PipelineManager implements IPipelineManager
         {
             this.pipelines[i].forceReload();
         }
+        
+        Entity cameraEntity = MinecraftClient.getInstance().getCameraEntity();
+        
+        assert cameraEntity != null;
+        assert cameraEntity.getEntityWorld() != null;
+        
+        if(cameraEntity != null && cameraEntity.getEntityWorld() != null)
+        {
+            this.baseWorldTime = cameraEntity.getEntityWorld().getTime();
+            computeRenderSeconds(cameraEntity);
+        }
     }
     
-    
-    @Nullable
     @Override
     public final synchronized RenderPipeline createPipeline(
             TextureFormat textureFormat, 
@@ -189,7 +195,7 @@ public final class PipelineManager implements IPipelineManager
         
         pipeline.uniform3f("u_eye_position", UniformUpdateFrequency.PER_FRAME, u -> 
         {
-            Vec3d eyePos = Minecraft.getMinecraft().player.getPositionEyes(partialTicks);
+            Vec3d eyePos = Minecraft.getMinecraft().player.getPositionEyes(fractionalFrameTicks);
             u.set((float)eyePos.x, (float)eyePos.y, (float)eyePos.z);
         });
         
@@ -211,25 +217,25 @@ public final class PipelineManager implements IPipelineManager
     }
             
     /**
-     * Called at start of each frame but does not update pipelines immediately
-     * because camera has not yet been set up and we need the projection matrix.
-     * So, captures state it can and sets a flag that will used to update
-     * pipelines before any chunks are rendered.   Our render list will call
-     * us right before it render chunks.
+     * Called just before terrain setup each frame after camera, fog and projection matrix are set up,
      */
-    public void onRenderTick(RenderTickEvent event)
+    public void prepareForFrame(Entity cameraEntity, float fractionalTicks)
     {
-        MappedBufferStore.prepareEmpties();
+        this.fractionalFrameTicks = fractionalTicks;
         
-        didUpdatePipelinesThisFrame = false;
+        assert cameraEntity != null;
+        assert cameraEntity.getEntityWorld() != null;
+        
+        if(cameraEntity == null || cameraEntity.getEntityWorld() == null)
+            return;
 
-        Entity entity = Minecraft.getMinecraft().getRenderViewEntity();
-        if(entity == null) return;
-
-        final float partialTicks = event.renderTickTime;
-        this.partialTicks = partialTicks;
-        if(entity.world != null)
-            worldTime = Animation.getWorldTime(entity.world, partialTicks);
+        computeRenderSeconds(cameraEntity);
+    }
+    
+    private void computeRenderSeconds(Entity cameraEntity)
+    {
+        renderSeconds = (float) ((cameraEntity.getEntityWorld().getTime() 
+                - baseWorldTime + fractionalFrameTicks) / 20);
     }
     
     /**
@@ -242,24 +248,13 @@ public final class PipelineManager implements IPipelineManager
      */
     public boolean beforeRenderChunks()
     {
-        if(didUpdatePipelinesThisFrame)
-            return false;
         
-        didUpdatePipelinesThisFrame = true;
-        
-        projectionMatrixBuffer.position(0);
-        GlStateManager.getFloat(GL11.GL_PROJECTION_MATRIX, projectionMatrixBuffer);
-        OpenGlHelperExt.loadTransposeQuickly(projectionMatrixBuffer, projMatrix);
-        
-        for(int i = 0; i < this.pipelineCount; i++)
-        {
-            this.pipelines[i].onRenderTick();
-        }
+        // TODO: Moved these to onRenderTick, still need a way to handle 1X detection
         
         return true;
     }
 
-    public void onGameTick(ClientTickEvent event)
+    public void onGameTick(MinecraftClient mc)
     {
         for(int i = 0; i < this.pipelineCount; i++)
         {
@@ -268,9 +263,9 @@ public final class PipelineManager implements IPipelineManager
     }
     
     @Override
-    public float worldTime()
+    public float renderSeconds()
     {
-        return this.worldTime;
+        return this.renderSeconds;
     }
 
     private static final float[] transferArray = new float[16];
