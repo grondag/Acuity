@@ -6,18 +6,15 @@ import grondag.acuity.api.IPipelinedVertexConsumer;
 import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
-import net.minecraft.client.Minecraft;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.text.translation.I18n;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * A heavily-modified version of Forge vertex lighter that supports multiple render paths in same quad stream.
  */
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 {
     protected final RenderPipeline pipeline;

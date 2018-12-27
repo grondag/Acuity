@@ -3,7 +3,10 @@ package grondag.acuity.buffering;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
+@Environment(EnvType.CLIENT)
 public class DelegateLists
 {
     private static final ArrayBlockingQueue<ObjectArrayList<DrawableChunkDelegate>> delegateLists = new ArrayBlockingQueue<>(4096);

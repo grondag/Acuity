@@ -1,8 +1,9 @@
 package grondag.acuity.api;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
+@Environment(EnvType.CLIENT)
 public interface IPipelinedVertexConsumer
 {
     /**
@@ -12,7 +13,6 @@ public interface IPipelinedVertexConsumer
      * is definitely in a hot loop) and 2) allow flexibility in vertex/quad implementation. This means you don't
      * have to map your internal vertex format (if you even have one) to some arbitrary interface.<p>
      */
-    @SideOnly(Side.CLIENT)
     public void acceptVertex(
             float posX,
             float posY,
@@ -28,7 +28,6 @@ public interface IPipelinedVertexConsumer
     /**
      * Adds a second color and uv coordinate.<br>
      */
-    @SideOnly(Side.CLIENT)
     public void acceptVertex(
             float posX,
             float posY,
@@ -47,7 +46,6 @@ public interface IPipelinedVertexConsumer
     /**
     * For triple-layer renders.<br>
     */
-    @SideOnly(Side.CLIENT)
     public void acceptVertex(
             float posX,
             float posY,
@@ -66,7 +64,6 @@ public interface IPipelinedVertexConsumer
             float v2
             );
     
-    @SideOnly(Side.CLIENT)
     public IBlockInfo getBlockInfo();
     
     /**
@@ -80,7 +77,6 @@ public interface IPipelinedVertexConsumer
      * This will allow for unambiguous rendering of your quad in future 
      * lighting models that may not rely on lightmaps. <p>
      */
-    @SideOnly(Side.CLIENT)
     public void setEmissive(int layerIndex, boolean isEmissive);
     
     /**
@@ -115,13 +111,11 @@ public interface IPipelinedVertexConsumer
      * both diffuse and AO disabled and this setting will be ignored.
      */
     @Deprecated
-    @SideOnly(Side.CLIENT)
     public void setShading(boolean enableDiffuse);
     
     /**
      * Primarily intended for vanilla model support.  Will be true by default at start of each quad.
      */
-    @SideOnly(Side.CLIENT)
     public void setAmbientOcclusion(boolean enableAmbientOcclusion);
     
     /**
@@ -149,13 +143,10 @@ public interface IPipelinedVertexConsumer
      * lightmaps entirely. For emissive rendering, use quad-level glow.<p>
      * 
      */
-    @SideOnly(Side.CLIENT)
     public void setBlockLightMap(int blockLightRBGF);
     
-    @SideOnly(Side.CLIENT)
     public void setBlockLightMap(int red, int green, int blue, int flicker);
     
-    @SideOnly(Side.CLIENT)
     public void setBlockLightMap(float red, float green, float blue, float flicker);
     
     /**
@@ -163,6 +154,5 @@ public interface IPipelinedVertexConsumer
      * 
      * Expected values are 0-255, not 0-15.
      */
-    @SideOnly(Side.CLIENT)
     public void setSkyLightMap(int skyLightMap);
 }

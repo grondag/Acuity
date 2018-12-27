@@ -1,17 +1,16 @@
 package grondag.acuity.core;
 
-import javax.annotation.Nullable;
 
 import com.google.common.primitives.Doubles;
 
 import grondag.acuity.api.RenderPipeline;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class VertexCollector
 {
     private int[] data;

@@ -17,12 +17,10 @@ import grondag.acuity.core.PipelineShaderManager;
 import grondag.acuity.core.PipelineVertexFormat;
 import grondag.acuity.core.PipelineVertexShader;
 import grondag.acuity.core.Program;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.text.translation.I18n;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public final class RenderPipeline implements IRenderPipeline
 {
     private final int index;

@@ -4,12 +4,12 @@ import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.RenderPipeline;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.client.model.pipeline.LightUtil;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class VanillaVertexLighter extends CompoundVertexLighter
 {
     private class ChildLighter extends PipelinedVertexLighter

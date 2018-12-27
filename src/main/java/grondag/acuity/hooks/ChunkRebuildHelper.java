@@ -5,13 +5,15 @@ import java.util.Set;
 
 import com.google.common.collect.Sets;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
+@Environment(EnvType.CLIENT)
 public class ChunkRebuildHelper
 {
     public static final int BLOCK_RENDER_LAYER_COUNT = BlockRenderLayer.values().length;

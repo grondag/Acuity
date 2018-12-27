@@ -18,7 +18,6 @@ import net.minecraft.resource.ResourceReloadListener;
 
 public class Acuity implements ModInitializer
 {
-	
 	public static Acuity INSTANCE = new Acuity();
 	
 	private static boolean glCapabilitiesMet = false;

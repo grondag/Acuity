@@ -3,13 +3,13 @@ package grondag.acuity.core;
 import java.util.function.Consumer;
 
 import grondag.acuity.api.RenderPipeline;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 /**
  * Tracks number of vertices, pipeline and sequence thereof within a buffer.
  */
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class VertexPackingList
 {
     private int[] counts = new int[16];

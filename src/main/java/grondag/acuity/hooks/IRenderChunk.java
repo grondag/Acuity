@@ -1,7 +1,5 @@
 package grondag.acuity.hooks;
 
-import javax.annotation.Nullable;
-
 import grondag.acuity.buffering.DrawableChunk;
 
 public interface IRenderChunk

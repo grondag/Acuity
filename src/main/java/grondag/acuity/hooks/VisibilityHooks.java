@@ -8,18 +8,24 @@ import org.apache.commons.lang3.tuple.Pair;
 
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.chunk.SetVisibility;
 import net.minecraft.client.renderer.chunk.VisGraph;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 
+@Environment(EnvType.CLIENT)
 public class VisibilityHooks
 {
+    private static final Direction[] ALL_DIRECTIONS = Direction.values();
+    
     @SuppressWarnings("unchecked")
-    public static Set<EnumFacing> getVisibleFacingsExt(Object visData, BlockPos eyePos)
+    public static Set<Direction> getVisibleFacingsExt(Object visData, BlockPos eyePos)
     {
         if(visData instanceof Set)
-            return (Set<EnumFacing>)visData;
+            return (Set<Direction>)visData;
         else
         {
             return ((VisibilityMap)visData).getFaceSet(VisGraph.getIndex(eyePos));
@@ -33,12 +39,12 @@ public class VisibilityHooks
         if (4096 - visgraph.empty < 256)
         {
             setvisibility.setAllVisible(true);
-            ((ISetVisibility)setvisibility).setVisibilityData(EnumFacingSet.ALL);
+            ((ISetVisibility)setvisibility).setVisibilityData(DirectionSet.ALL);
         }
         else if (visgraph.empty == 0)
         {
             setvisibility.setAllVisible(false);
-            ((ISetVisibility)setvisibility).setVisibilityData(EnumFacingSet.NONE);
+            ((ISetVisibility)setvisibility).setVisibilityData(DirectionSet.NONE);
         }
         else
         {
@@ -49,10 +55,10 @@ public class VisibilityHooks
             {
                 if (!bitSet.get(i))
                 {
-                    final Pair<Set<EnumFacing>, IntArrayList> floodResult = floodFill(visgraph, i);
-                    final Set<EnumFacing> fillSet = floodResult.getLeft();
+                    final Pair<Set<Direction>, IntArrayList> floodResult = floodFill(visgraph, i);
+                    final Set<Direction> fillSet = floodResult.getLeft();
                     setvisibility.setManyVisible(fillSet);
-                    byte setIndex = (byte) EnumFacingSet.sharedIndex(fillSet);
+                    byte setIndex = (byte) DirectionSet.sharedIndex(fillSet);
                     final IntArrayList list = floodResult.getRight();
                     final int limit = list.size();
                     for(int j = 0; j < limit; j++)
@@ -67,7 +73,7 @@ public class VisibilityHooks
 
     private static class Helpers
     {
-        final EnumSet<EnumFacing> faces = EnumSet.noneOf(EnumFacing.class);
+        final EnumSet<Direction> faces = EnumSet.noneOf(Direction.class);
         final IntArrayList list = new IntArrayList();
         final IntArrayFIFOQueue queue = new IntArrayFIFOQueue();
     }
@@ -81,10 +87,10 @@ public class VisibilityHooks
         }
     };
     
-    private static Pair<Set<EnumFacing>, IntArrayList> floodFill(VisGraph visgraph, int pos)
+    private static Pair<Set<Direction>, IntArrayList> floodFill(VisGraph visgraph, int pos)
     {
         final Helpers help = helpers.get();
-        Set<EnumFacing> set = help.faces;
+        Set<Direction> set = help.faces;
         set.clear();
         
         final IntArrayList list = help.list;
@@ -105,7 +111,7 @@ public class VisibilityHooks
 
             for(int f = 0; f < 6; f++)
             {
-                final EnumFacing enumfacing = EnumFacing.VALUES[f];
+                final Direction enumfacing = ALL_DIRECTIONS[f];
                 
                 int j = visgraph.getNeighborIndexAtFace(i, enumfacing);
 
@@ -118,6 +124,6 @@ public class VisibilityHooks
             }
         }
 
-        return Pair.of(EnumFacingSet.sharedInstance(set), list);
+        return Pair.of(DirectionSet.sharedInstance(set), list);
     }
 }

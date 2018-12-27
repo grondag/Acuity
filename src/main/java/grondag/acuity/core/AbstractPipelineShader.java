@@ -15,12 +15,10 @@ import grondag.acuity.Acuity;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.opengl.OpenGlHelperExt;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.util.text.translation.I18n;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 abstract class AbstractPipelineShader
 {
     public final String fileName;

@@ -2,7 +2,6 @@ package grondag.acuity.core;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.tuple.Pair;
 
@@ -10,14 +9,13 @@ import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.buffering.UploadableChunk;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.RegionRenderCacheBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class CompoundBufferBuilder extends BufferBuilder
 {
     

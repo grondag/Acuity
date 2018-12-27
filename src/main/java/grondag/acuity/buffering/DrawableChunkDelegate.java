@@ -6,9 +6,12 @@ import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.PipelineVertexFormat;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import grondag.acuity.opengl.VaoStore;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
+@Environment(EnvType.CLIENT)
 public class DrawableChunkDelegate
 {
     private MappedBufferDelegate bufferDelegate;

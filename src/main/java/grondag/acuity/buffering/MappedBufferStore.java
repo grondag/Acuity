@@ -10,6 +10,8 @@ import org.apache.commons.lang3.tuple.Pair;
 import grondag.acuity.Acuity;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.crash.CrashReport;
@@ -165,6 +167,7 @@ public class MappedBufferStore
      * Called at start of each render tick from client thread to  
      * maintain a pool of mapped buffers ready for off-thread loading.
      */
+    @Environment(EnvType.CLIENT)
     public static void prepareEmpties()
     {
         assert Minecraft.getMinecraft().isCallingFromMinecraftThread();

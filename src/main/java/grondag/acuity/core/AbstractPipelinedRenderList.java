@@ -5,7 +5,6 @@ import java.util.ArrayDeque;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.AcuityRuntime;
@@ -22,15 +21,11 @@ import it.unimi.dsi.fastutil.longs.Long2ObjectMap.Entry;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.util.BlockRenderLayer;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class AbstractPipelinedRenderList implements IAcuityListener
 {
     public boolean isAcuityEnabled = Acuity.isModEnabled();

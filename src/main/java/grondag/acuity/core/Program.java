@@ -5,12 +5,10 @@ import java.nio.IntBuffer;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-import javax.annotation.Nullable;
 
 import org.lwjgl.BufferUtils;
 import org.lwjgl.MemoryUtil;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
@@ -29,12 +27,11 @@ import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.api.UniformUpdateFrequency;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.util.text.translation.I18n;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class Program
 {
     private static @Nullable Program activeProgram;

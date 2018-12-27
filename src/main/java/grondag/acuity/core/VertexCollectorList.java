@@ -4,13 +4,14 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.function.Consumer;
 
-import javax.annotation.Nullable;
-
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.buffering.UploadableChunk;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.util.math.MathHelper;
 
+@Environment(EnvType.CLIENT)
 public class VertexCollectorList
 {
     private static final Comparator<VertexCollector> vertexCollectionComparator = new Comparator<VertexCollector>() 

@@ -2,10 +2,10 @@ package grondag.acuity.core;
 
 import grondag.acuity.api.TextureFormat;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public final class PipelineShaderManager
 {
     public final static PipelineShaderManager INSTANCE = new PipelineShaderManager();

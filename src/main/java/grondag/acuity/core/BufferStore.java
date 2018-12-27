@@ -4,15 +4,14 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
 
-import net.minecraft.client.renderer.GLAllocation;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * Holds a thread-safe cache of buffer builders to be used for VBO uploads
  */
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class BufferStore
 {
     private static final ArrayBlockingQueue<ExpandableByteBuffer> store = new ArrayBlockingQueue<ExpandableByteBuffer>(4096);

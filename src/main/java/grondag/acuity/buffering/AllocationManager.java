@@ -4,9 +4,12 @@ import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 
 import grondag.acuity.api.RenderPipeline;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 
 //PERF: provide diff buffers by vertex format and handle VAO binding 1X per buffer bind in buffers
+@Environment(EnvType.CLIENT)
 public class AllocationManager
 {
     private static final ConcurrentSkipListMap<Long, MappedBuffer> BUFFERS = new ConcurrentSkipListMap<>();

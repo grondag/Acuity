@@ -11,53 +11,42 @@ import grondag.acuity.api.IUniform.IUniform3i;
 import grondag.acuity.api.IUniform.IUniform4f;
 import grondag.acuity.api.IUniform.IUniform4i;
 import grondag.acuity.api.IUniform.IUniformMatrix4f;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 /**
  * Type-safe reference to a rendering pipeline.
  */
+@Environment(EnvType.CLIENT)
 public interface IRenderPipeline
 {
-    @SideOnly(Side.CLIENT)
     int getIndex();
     
-    @SideOnly(Side.CLIENT)
     TextureFormat textureFormat();
     
-    @SideOnly(Side.CLIENT)
     void uniform1f(String name, UniformUpdateFrequency frequency, Consumer<IUniform1f> initializer);
 
-    @SideOnly(Side.CLIENT)
     void uniform2f(String name, UniformUpdateFrequency frequency, Consumer<IUniform2f> initializer);
 
-    @SideOnly(Side.CLIENT)
     void uniform3f(String name, UniformUpdateFrequency frequency, Consumer<IUniform3f> initializer);
 
-    @SideOnly(Side.CLIENT)
     void uniform4f(String name, UniformUpdateFrequency frequency, Consumer<IUniform4f> initializer);
 
-    @SideOnly(Side.CLIENT)
     void uniform1i(String name, UniformUpdateFrequency frequency, Consumer<IUniform1i> initializer);
 
-    @SideOnly(Side.CLIENT)
     void uniform2i(String name, UniformUpdateFrequency frequency, Consumer<IUniform2i> initializer);
 
-    @SideOnly(Side.CLIENT)
     void uniform3i(String name, UniformUpdateFrequency frequency, Consumer<IUniform3i> initializer);
 
-    @SideOnly(Side.CLIENT)
     void uniform4i(String name, UniformUpdateFrequency frequency, Consumer<IUniform4i> initializer);
 
     /**
      * Call after all uniforms are added to make this program immutable.  Any attempt to add uniforms after calling
-     * {@link #finish()} will throw and exception.  Not strictly necessary, but good practice.<p>
+     * {@link #finish()} will throw an exception.  Not strictly necessary, but good practice.<p>
      * 
      * Note that all built-in pipelines are finished - you cannot add uniforms to them.
      */
-    @SideOnly(Side.CLIENT)
     IRenderPipeline finish();
 
-    @SideOnly(Side.CLIENT)
     void uniformMatrix4f(String name, UniformUpdateFrequency frequency, Consumer<IUniformMatrix4f> initializer);
 }

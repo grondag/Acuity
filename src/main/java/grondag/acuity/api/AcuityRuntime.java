@@ -9,11 +9,10 @@ import grondag.acuity.Acuity;
 import grondag.acuity.buffering.MappedBufferStore;
 import grondag.acuity.core.PipelineShaderManager;
 import grondag.acuity.hooks.PipelineHooks;
-import net.minecraft.util.text.translation.I18n;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public final class AcuityRuntime implements IAcuityRuntime
 {
     public static final AcuityRuntime INSTANCE = new AcuityRuntime();

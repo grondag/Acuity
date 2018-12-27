@@ -1,17 +1,13 @@
 package grondag.acuity.api;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.render.block.BlockRenderLayer;
 
-import javax.annotation.Nullable;
-
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraftforge.client.model.pipeline.BlockInfo;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
+@Environment(EnvType.CLIENT)
 public interface IPipelinedQuad
 {
-    @SideOnly(Side.CLIENT)
-    public @Nullable IRenderPipeline getPipeline();
+    public IRenderPipeline getPipeline();
 
     /**
      * Quad must call {@link IPipelinedVertexConsumer#acceptVertex(IPipelinedVertex)} with
@@ -24,9 +20,7 @@ public interface IPipelinedQuad
      * You can retrieve the block color from tint with {@link IPipelinedVertexConsumer#getBlockInfo()} 
      * and then {@link BlockInfo#getColorMultiplier(int tint)};
      */
-    @SideOnly(Side.CLIENT)
     public void produceVertices(IPipelinedVertexConsumer vertexLighter);
 
-    @SideOnly(Side.CLIENT)
     public BlockRenderLayer getRenderLayer();
 }

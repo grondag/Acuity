@@ -1,11 +1,10 @@
 package grondag.acuity.api;
 
-import org.lwjgl.util.vector.Matrix4f;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.client.util.math.Matrix4f;
 
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
-
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public interface IUniform
 {
     public interface IUniform1f extends IUniform

@@ -2,21 +2,18 @@ package grondag.acuity.core;
 
 import java.nio.ByteBuffer;
 
-import javax.annotation.Nullable;
 import javax.vecmath.Vector3f;
 
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedVertexConsumer;
 import grondag.acuity.api.IRenderPipeline;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.BufferBuilder;
 import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.util.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.translation.I18n;
 import net.minecraftforge.client.MinecraftForgeClient;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
 /**
  * Similar in form and function to Forge's quad gathering transformer and child classes
@@ -26,7 +23,7 @@ import net.minecraftforge.fml.relauncher.SideOnly;
  * Could get fancier, but expect fluid rendering to change drastically in 1.13.
  * 
  */
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
 {
     private static final int SKY = 0;

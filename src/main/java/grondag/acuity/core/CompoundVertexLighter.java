@@ -1,24 +1,18 @@
 package grondag.acuity.core;
 
-import javax.annotation.Nullable;
 
 import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedQuadConsumer;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
-import net.minecraft.world.IBlockAccess;
 import net.minecraftforge.client.model.pipeline.BlockInfo;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
 {
     protected final IBlockInfo blockInfo;

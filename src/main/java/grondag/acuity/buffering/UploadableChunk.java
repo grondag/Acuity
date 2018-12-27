@@ -7,7 +7,10 @@ import grondag.acuity.core.VertexCollectorList;
 import grondag.acuity.core.VertexPackingList;
 import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
+@Environment(EnvType.CLIENT)
 public abstract class UploadableChunk<V extends DrawableChunk>
 {
     protected final VertexPackingList packingList;

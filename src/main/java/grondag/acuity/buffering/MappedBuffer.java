@@ -19,6 +19,8 @@ import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.opengl.GLBufferStore;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
@@ -36,6 +38,7 @@ import net.minecraft.client.renderer.OpenGlHelper;
  * For these, Atomic variable are preferred over synchronization.
  *
  */
+@Environment(EnvType.CLIENT)
 public class MappedBuffer
 {
     private static int nextID = 0;

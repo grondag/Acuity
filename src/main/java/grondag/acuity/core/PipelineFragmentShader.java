@@ -1,11 +1,11 @@
 package grondag.acuity.core;
 
 import grondag.acuity.api.TextureFormat;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public final class PipelineFragmentShader extends AbstractPipelineShader
 {
     PipelineFragmentShader(String fileName, TextureFormat textureFormat, boolean isSolidLayer)

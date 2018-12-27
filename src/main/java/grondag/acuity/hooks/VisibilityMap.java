@@ -4,9 +4,12 @@ import java.util.Set;
 import java.util.concurrent.ArrayBlockingQueue;
 
 import it.unimi.dsi.fastutil.shorts.Short2ByteOpenHashMap;
-import net.minecraft.util.EnumFacing;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+import net.minecraft.util.math.Direction;
 
 @SuppressWarnings("serial")
+@Environment(EnvType.CLIENT)
 public class VisibilityMap extends Short2ByteOpenHashMap
 {
     private static ArrayBlockingQueue<VisibilityMap> visibilityMaps = new ArrayBlockingQueue<>(4096);
@@ -26,9 +29,9 @@ public class VisibilityMap extends Short2ByteOpenHashMap
         visibilityMaps.offer(map);
     }
 
-    public Set<EnumFacing> getFaceSet(int index)
+    public Set<Direction> getFaceSet(int index)
     {
-        return EnumFacingSet.sharedInstance(this.get((short)index));
+        return DirectionSet.sharedInstance(this.get((short)index));
     }
     
     public void setIndex(int positionIndex, int setIndex)

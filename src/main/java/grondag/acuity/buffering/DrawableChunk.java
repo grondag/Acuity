@@ -3,6 +3,8 @@ package grondag.acuity.buffering;
 import java.util.function.Consumer;
 
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
 /**
  * Plays same role as VertexBuffer in RenderChunk but implementation
@@ -25,6 +27,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
  *
  *
  */
+@Environment(EnvType.CLIENT)
 public abstract class DrawableChunk
 {
     protected boolean isCleared = false;

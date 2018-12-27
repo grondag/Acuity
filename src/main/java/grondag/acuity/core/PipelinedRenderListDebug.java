@@ -3,12 +3,11 @@ package grondag.acuity.core;
 import grondag.acuity.Acuity;
 import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.hooks.IRenderChunk;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class PipelinedRenderListDebug extends AbstractPipelinedRenderList
 {
     public PipelinedRenderListDebug()

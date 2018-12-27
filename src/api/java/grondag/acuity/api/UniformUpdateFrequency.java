@@ -1,11 +1,15 @@
 package grondag.acuity.api;
 
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+
 /**
  * Governs how often shader uniform initializers are called.<p>
  * 
  * In all cases, this will only be called if the shader is activated
  * and the values are only uploaded if the value has changed.
  */
+@Environment(EnvType.CLIENT)
 public enum UniformUpdateFrequency
 {
     /**

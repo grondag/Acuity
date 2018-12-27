@@ -1,12 +1,10 @@
 package grondag.acuity.core;
 
-import javax.annotation.Nullable;
-
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
 
-@SideOnly(Side.CLIENT)
+@Environment(EnvType.CLIENT)
 public class PipelineVertextFormatElement extends VertexFormatElement
 {
     // openGL implementation on my dev laptop *really* wants to get vertex positions via standard (GL 2.1) binding
