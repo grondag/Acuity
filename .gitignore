@@ -22,6 +22,12 @@ build
 run
 gradle.properties
 
+
+##idea
+*.iml
+*.ipr
+*.iws
+
 ## Jars
 *.jar
 
@@ -40,3 +46,4 @@ logs
 discarded textures
 *.nps
 /.apt_generated/
+notes.txt
