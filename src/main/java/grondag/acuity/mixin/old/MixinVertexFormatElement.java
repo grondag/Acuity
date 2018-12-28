@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import grondag.acuity.hooks.PipelineHooks;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
 
 @Mixin(VertexFormatElement.class)
 public abstract class MixinVertexFormatElement

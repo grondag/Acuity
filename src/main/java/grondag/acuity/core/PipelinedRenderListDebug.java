@@ -5,7 +5,7 @@ import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.hooks.IRenderChunk;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.chunk.RenderChunk;
+import net.minecraft.client.render.block.BlockRenderLayer;
 
 @Environment(EnvType.CLIENT)
 public class PipelinedRenderListDebug extends AbstractPipelinedRenderList

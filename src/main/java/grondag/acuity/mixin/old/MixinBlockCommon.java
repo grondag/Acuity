@@ -2,25 +2,23 @@ package grondag.acuity.mixin.old;
 
 import java.util.List;
 
-import javax.annotation.Nullable;
-
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
-import grondag.acuity.hooks.IMutableAxisAlignedBB;
+import grondag.acuity.hooks.MutableBoundingBox;
 import net.minecraft.block.Block;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.math.BoundingBox;
 import net.minecraft.util.math.BlockPos;
 
 @Mixin(Block.class)
 public abstract class MixinBlockCommon
 {
-    private static ThreadLocal<IMutableAxisAlignedBB> mutableAABB = new ThreadLocal<IMutableAxisAlignedBB>()
+    private static ThreadLocal<MutableBoundingBox> mutableAABB = new ThreadLocal<MutableBoundingBox>()
     {
         @Override
-        protected IMutableAxisAlignedBB initialValue()
+        protected MutableBoundingBox initialValue()
         {
-            return (IMutableAxisAlignedBB)new AxisAlignedBB(0, 0, 0, 0, 0, 0);
+            return (MutableBoundingBox)new BoundingBox(0, 0, 0, 0, 0, 0);
         }
     };
     
@@ -29,16 +27,15 @@ public abstract class MixinBlockCommon
      * @author grondag
      */
     @Overwrite
-    protected static void addCollisionBoxToList(BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, @Nullable AxisAlignedBB blockBox)
+    protected static void addCollisionBoxToList(BlockPos pos, AxisAlignedBB entityBox, List<AxisAlignedBB> collidingBoxes, AxisAlignedBB blockBox)
     {
         if (blockBox != Block.NULL_AABB)
         {
-            @SuppressWarnings("null")
             AxisAlignedBB axisalignedbb = mutableAABB.get().set(blockBox).offsetMutable(pos).cast();
 
             if (entityBox.intersects(axisalignedbb))
             {
-                collidingBoxes.add(((IMutableAxisAlignedBB)axisalignedbb).toImmutable());
+                collidingBoxes.add(((MutableBoundingBox)axisalignedbb).toImmutable());
             }
         }
     }

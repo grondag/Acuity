@@ -6,11 +6,14 @@ import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedQuadConsumer;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.fermion.varia.DirectionHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
-import net.minecraftforge.client.model.pipeline.BlockInfo;
 
 @Environment(EnvType.CLIENT)
 public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
@@ -19,12 +22,12 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     
     private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[PipelineManager.MAX_PIPELINES];
 
-    protected @Nullable BlockRenderLayer renderLayer;
+    protected BlockRenderLayer renderLayer;
     protected CompoundBufferBuilder target;
     protected boolean didOutput;
 
     
-    protected @Nullable IBlockState blockState;
+    protected BlockState blockState;
     
     protected long positionRandom = Long.MIN_VALUE;
     protected int sideFlags;
@@ -46,7 +49,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
         int result = 0;
         for(int f = 0; f < 6; f++)
         {
-            final EnumFacing face = EnumFacing.VALUES[f];
+            final Direction face = DirectionHelper.fromOrdinal(f);
             if(this.blockState.shouldSideBeRendered(this.world(), this.pos(), face))
                 result |= (1 << face.ordinal());
         }
@@ -54,7 +57,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     }
     
     @Override
-    public void accept(@Nullable IPipelinedQuad quad)
+    public void accept(IPipelinedQuad quad)
     {
         if(quad != null && quad.getRenderLayer() == this.renderLayer)
             getPipelineLighter((RenderPipeline)quad.getPipeline()).acceptQuad(quad);
@@ -67,7 +70,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     
     protected abstract PipelinedVertexLighter createChildLighter(RenderPipeline pipeline);
 
-    private PipelinedVertexLighter getPipelineLighter(@Nullable RenderPipeline pipeline)
+    private PipelinedVertexLighter getPipelineLighter(RenderPipeline pipeline)
     {
         if(pipeline == null)
             pipeline = PipelineManager.INSTANCE.defaultSinglePipeline;
@@ -88,13 +91,12 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     }
 
     @Override
-    public boolean shouldOutputSide(EnumFacing side)
+    public boolean shouldOutputSide(Direction side)
     {
         return (this.sideFlags & (1 << side.ordinal())) != 0;
     }
 
     @Override
-    @Nullable
     public BlockRenderLayer targetLayer()
     {
         return this.renderLayer;
@@ -113,7 +115,6 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     }
 
     @Override
-    @Nullable
     public IBlockState blockState()
     {
         return this.blockState;

@@ -8,10 +8,10 @@ import org.spongepowered.asm.mixin.Overwrite;
 import com.google.common.collect.Iterators;
 
 import grondag.acuity.hooks.PipelineHooks;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.EnumFacing.Plane;
+import net.minecraft.util.math.Direction;
+import net.minecraft.util.math.Direction.class_2353;
 
-@Mixin(Plane.class)
+@Mixin(class_2353.class)
 public abstract class MixinPlane
 {
     /**
@@ -19,15 +19,15 @@ public abstract class MixinPlane
      * @author grondag
      */
     @Overwrite
-    public Iterator<EnumFacing> iterator()
+    public Iterator<Direction> iterator()
     {
-        switch ((Plane)(Object)this)
+        switch ((class_2353)(Object)this)
         {
             case HORIZONTAL:
-                return Iterators.<EnumFacing>forArray(PipelineHooks.HORIZONTAL_FACES);
+                return Iterators.<Direction>forArray(PipelineHooks.HORIZONTAL_FACES);
                 
             case VERTICAL:
-                return Iterators.<EnumFacing>forArray(PipelineHooks.VERTICAL_FACES);
+                return Iterators.<Direction>forArray(PipelineHooks.VERTICAL_FACES);
                 
             default:
                 throw new Error("Someone's been tampering with the universe!");

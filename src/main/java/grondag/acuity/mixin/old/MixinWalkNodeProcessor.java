@@ -4,19 +4,17 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import net.minecraft.pathfinding.WalkNodeProcessor;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 @Mixin(WalkNodeProcessor.class)
 public abstract class MixinWalkNodeProcessor
 {
-    private static ThreadLocal<MutableBlockPos> pathNodePos = new ThreadLocal<MutableBlockPos>()
+    private static ThreadLocal<BlockPos.Mutable> pathNodePos = new ThreadLocal<BlockPos.Mutable>()
     {
         @Override
-        protected MutableBlockPos initialValue()
+        protected BlockPos.Mutable initialValue()
         {
-            return new MutableBlockPos();
+            return new BlockPos.Mutable();
         }
     };
     
@@ -25,7 +23,7 @@ public abstract class MixinWalkNodeProcessor
             at = @At(value = "NEW", args = "class=net/minecraft/util/math/BlockPos") )
     private BlockPos onGetPathNodeTypePos(int x, int y, int z) 
     {
-        return pathNodePos.get().setPos(x, y, z);
+        return pathNodePos.get().set(x, y, z);
     }
     
     // prevents significant garbage build up during chunk load
@@ -33,6 +31,6 @@ public abstract class MixinWalkNodeProcessor
             at = @At(value = "NEW", args = "class=net/minecraft/util/math/BlockPos") )
     private BlockPos onGetPathNodeTypeRawPos(int x, int y, int z)
     {
-        return pathNodePos.get().setPos(x, y, z);
+        return pathNodePos.get().set(x, y, z);
     }
 }

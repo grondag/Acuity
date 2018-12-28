@@ -5,9 +5,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraft.world.biome.BiomeColorHelper;
 
 @Mixin(BiomeColorHelper.class)
 public abstract class MixinBiomeColorHelper
@@ -35,12 +32,12 @@ public abstract class MixinBiomeColorHelper
         return getColorAtPosFast(blockAccess, pos, colorResolver);
     }
     
-    private static final ThreadLocal<MutableBlockPos> searchPos = new ThreadLocal<MutableBlockPos>()
+    private static final ThreadLocal<BlockPos.Mutable> searchPos = new ThreadLocal<BlockPos.Mutable>()
     {
         @Override
-        protected MutableBlockPos initialValue()
+        protected BlockPos.Mutable initialValue()
         {
-            return new MutableBlockPos();
+            return new BlockPos.Mutable();
         }
     };
 
@@ -49,13 +46,13 @@ public abstract class MixinBiomeColorHelper
         int i = 0;
         int j = 0;
         int k = 0;
-        MutableBlockPos mPos = searchPos.get();
+        BlockPos.Mutable mPos = searchPos.get();
         
         for(int x = -1; x <= 1; x++)
         {
             for(int z = -1; z <= 1; z++)
             {
-                mPos.setPos(pos.getX() + x, pos.getY(), pos.getZ() + z);
+                mPos.set(pos.getX() + x, pos.getY(), pos.getZ() + z);
                 int l = colorResolver.getColorAtPos(blockAccess.getBiome(mPos), mPos);
                 i += (l & 16711680) >> 16;
                 j += (l & 65280) >> 8;

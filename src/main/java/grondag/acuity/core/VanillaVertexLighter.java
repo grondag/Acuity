@@ -7,7 +7,6 @@ import grondag.acuity.api.RenderPipeline;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.client.model.pipeline.LightUtil;
 
 @Environment(EnvType.CLIENT)
 public class VanillaVertexLighter extends CompoundVertexLighter

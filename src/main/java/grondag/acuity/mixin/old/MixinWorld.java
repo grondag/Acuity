@@ -4,31 +4,29 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import grondag.acuity.hooks.IMutableAxisAlignedBB;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.AxisAlignedBB;
+import grondag.acuity.hooks.MutableBoundingBox;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 
 @Mixin(World.class)
 public abstract class MixinWorld
 {
-    private static ThreadLocal<IMutableAxisAlignedBB> mutableAABB = new ThreadLocal<IMutableAxisAlignedBB>()
+    private static ThreadLocal<MutableBoundingBox> mutableAABB = new ThreadLocal<MutableBoundingBox>()
     {
         @Override
-        protected IMutableAxisAlignedBB initialValue()
+        protected MutableBoundingBox initialValue()
         {
-            return (IMutableAxisAlignedBB)new AxisAlignedBB(0, 0, 0, 0, 0, 0);
+            return (MutableBoundingBox)new AxisAlignedBB(0, 0, 0, 0, 0, 0);
         }
     };
     
-    private static ThreadLocal<MutableBlockPos> mutablePos = new ThreadLocal<MutableBlockPos>()
+    private static ThreadLocal<BlockPos.Mutable> mutablePos = new ThreadLocal<BlockPos.Mutable>()
     {
         @Override
-        protected MutableBlockPos initialValue()
+        protected BlockPos.Mutable initialValue()
         {
-            return new MutableBlockPos();
+            return new BlockPos.Mutable();
         }
     };
     
@@ -46,15 +44,17 @@ public abstract class MixinWorld
                       at = @At(value = "NEW", args = "class=net/minecraft/util/math/BlockPos") )
     private BlockPos onIsFlammableWithin(int x, int y, int z) 
     {
-        return mutablePos.get().setPos(x, y, z);
+        return mutablePos.get().set(x, y, z);
     }
+    
+    private static final Direction[] RAW_LIGHT_DIRECTION = Direction.values();
     
     // prevents significant garbage build up
     @Redirect(method = "getRawLight",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/util/EnumFacing;values()[Lnet/minecraft/util/EnumFacing;"))
-    private EnumFacing[] onGetRawLightFaces() 
+    private Direction[] onGetRawLightFaces() 
     {
-        return EnumFacing.VALUES;
+        return RAW_LIGHT_DIRECTION;
     }
     
     // prevents significant garbage build up
@@ -66,12 +66,12 @@ public abstract class MixinWorld
     }
     
     
-    private static ThreadLocal<MutableBlockPos> checkLightPos = new ThreadLocal<MutableBlockPos>()
+    private static ThreadLocal<BlockPos.Mutable> checkLightPos = new ThreadLocal<BlockPos.Mutable>()
     {
         @Override
-        protected MutableBlockPos initialValue()
+        protected BlockPos.Mutable initialValue()
         {
-            return new MutableBlockPos();
+            return new BlockPos.Mutable();
         }
     };
     
@@ -80,6 +80,6 @@ public abstract class MixinWorld
             at = @At(value = "NEW", args = "class=net/minecraft/util/math/BlockPos") )
     private BlockPos onCheckLightForPos(int x, int y, int z) 
     {
-        return checkLightPos.get().setPos(x, y, z);
+        return checkLightPos.get().set(x, y, z);
     }
 }

@@ -5,13 +5,8 @@ import java.lang.invoke.MethodHandles;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
-import org.lwjgl.BufferChecks;
-import org.lwjgl.opengl.APPLEFence;
-import org.lwjgl.opengl.ContextCapabilities;
-import org.lwjgl.opengl.GLContext;
 
 import grondag.acuity.Acuity;
-import net.minecraft.util.text.translation.I18n;
 
 class AppleFence extends Fence
 {

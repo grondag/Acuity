@@ -4,19 +4,17 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import net.minecraft.block.BlockGrass;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
 
 @Mixin(BlockGrass.class)
 public abstract class MixinBlockGrass
 {
-    private static ThreadLocal<MutableBlockPos> getUpPos = new ThreadLocal<MutableBlockPos>()
+    private static ThreadLocal<BlockPos.Mutable> getUpPos = new ThreadLocal<BlockPos.Mutable>()
     {
         @Override
-        protected MutableBlockPos initialValue()
+        protected BlockPos.Mutable initialValue()
         {
-            return new MutableBlockPos();
+            return new BlockPos.Mutable();
         }
     };
     
@@ -25,7 +23,7 @@ public abstract class MixinBlockGrass
             target = "Lnet/minecraft/util/math/BlockPos;up()Lnet/minecraft/util/math/BlockPos;"))
     private BlockPos onGetActualStateUp(BlockPos pos)
     {
-        return getUpPos.get().setPos(pos.getX(), pos.getY() + 1, pos.getZ());
+        return getUpPos.get().set(pos.getX(), pos.getY() + 1, pos.getZ());
     }
     
 }

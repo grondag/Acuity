@@ -9,6 +9,8 @@ import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.system.MemoryUtil;
 
+import com.mojang.blaze3d.platform.GLX;
+
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
 import grondag.acuity.api.IUniform;
@@ -25,12 +27,11 @@ import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.api.UniformUpdateFrequency;
 import grondag.acuity.extension.AcuityMatrix4f;
+import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.client.util.math.Matrix4f;
 
 @Environment(EnvType.CLIENT)
@@ -103,10 +104,10 @@ public class Program
         
         private final void load(int programID)
         {
-            this.unifID = OpenGlHelper.glGetUniformLocation(programID, name);
+            this.unifID = GLX.glGetUniformLocation(programID, name);
             if(this.unifID == -1)
             {
-                Acuity.INSTANCE.getLog().debug(I18n.translateToLocalFormatted("misc.debug_missing_uniform", name, Program.this.vertexShader.fileName, Program.this.fragmentShader.fileName));
+                Acuity.INSTANCE.getLog().debug(Localization.translate("misc.debug_missing_uniform", name, Program.this.vertexShader.fileName, Program.this.fragmentShader.fileName));
                 this.flags = 0;
             }
             else
@@ -173,7 +174,7 @@ public class Program
         @Override
         protected void uploadInner()
         {
-            OpenGlHelper.glUniform1(this.unifID, this.uniformFloatBuffer);
+            GLX.glUniform1(this.unifID, this.uniformFloatBuffer);
         }
     }
     
@@ -203,7 +204,7 @@ public class Program
         @Override
         protected void uploadInner()
         {
-            OpenGlHelper.glUniform2(this.unifID, this.uniformFloatBuffer);
+            GLX.glUniform2(this.unifID, this.uniformFloatBuffer);
         }
     }
     
@@ -701,15 +702,10 @@ public class Program
         }
     }
     
-    @Nullable
     public UniformMatrix4f modelViewUniform;
-    @Nullable
     public UniformMatrix4f modelViewProjectionUniform;
-    @Nullable
     public UniformMatrix4f projectionMatrixUniform;
     
-    
-    @SuppressWarnings("null")
     public final void setupModelViewUniforms()
     {
         if(containsUniformSpec("mat4", "u_modelView"))

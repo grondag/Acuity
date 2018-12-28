@@ -5,7 +5,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import grondag.acuity.LoadingConfig;
-import net.minecraft.client.Minecraft;
 
 @Mixin(Minecraft.class)
 public abstract class MixinMinecraft

@@ -9,11 +9,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.hooks.PipelineHooks;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.client.render.block.BlockRenderLayer;
 
 @Mixin(ChunkRenderDispatcher.class)
 public abstract class MixinChunkRenderDispatcher

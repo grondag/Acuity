@@ -2,14 +2,12 @@ package grondag.acuity.mixin.old;
 
 import java.nio.FloatBuffer;
 
-import org.lwjgl.MemoryUtil;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Overwrite;
 
 import grondag.acuity.hooks.PipelineHooks;
 import grondag.acuity.opengl.GLBufferStore;
 import grondag.acuity.opengl.OpenGlHelperExt;
-import net.minecraft.client.renderer.OpenGlHelper;
 
 @Mixin(OpenGlHelper.class)
 public abstract class MixinOpenGlHelper

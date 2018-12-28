@@ -1,7 +1,5 @@
 package grondag.acuity.core;
 
-import javax.vecmath.Vector3f;
-
 import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedQuadConsumer;
@@ -11,17 +9,16 @@ import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.vertex.VertexFormat;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraftforge.client.model.pipeline.LightUtil;
+import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.client.render.model.BakedQuad;
+import net.minecraft.client.util.math.Vector3f;
 
 @Environment(EnvType.CLIENT)
 public class VanillaQuadWrapper implements IPipelinedQuad
 {
     private final IRenderPipeline SIMPLE = PipelineManager.INSTANCE.getDefaultPipeline(TextureFormat.SINGLE);
-    private @Nullable BakedQuad wrapped;
-    private @Nullable BlockRenderLayer layer;
+    private BakedQuad wrapped;
+    private BlockRenderLayer layer;
     private final float[][] positions = new float[4][3];
     private final float[] unpack = new float[3];
     private final Vector3f v0 = new Vector3f();
@@ -37,7 +34,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     }
     
     @Override
-    public @Nullable IRenderPipeline getPipeline()
+    public IRenderPipeline getPipeline()
     {
         return SIMPLE;
     }

@@ -165,7 +165,7 @@ public class VertexCollectorList
         }
     }
 
-    public final @Nullable UploadableChunk.Solid packUploadSolid()
+    public final UploadableChunk.Solid packUploadSolid()
     {
         VertexPackingList packing = new VertexPackingList();
 
@@ -184,7 +184,7 @@ public class VertexCollectorList
         return new UploadableChunk.Solid(packing, this);
     }
 
-    public final @Nullable UploadableChunk.Translucent packUploadTranslucent()
+    public final UploadableChunk.Translucent packUploadTranslucent()
     {
         final VertexPackingList packing = new VertexPackingList();
 
@@ -233,7 +233,7 @@ public class VertexCollectorList
         return packing.size() == 0 ? null : new UploadableChunk.Translucent(packing, this);
     }
 
-    public int[][] getCollectorState(@Nullable int[][] priorState)
+    public int[][] getCollectorState(int[][] priorState)
     {
         int[][] result = priorState;
         

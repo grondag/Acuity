@@ -7,9 +7,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.hooks.VisibilityHooks;
-import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.chunk.SetVisibility;
-import net.minecraft.client.renderer.chunk.VisGraph;
 
 @Mixin(VisGraph.class)
 public abstract class MixinVisGraph

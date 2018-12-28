@@ -8,7 +8,7 @@ import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 
 /**
@@ -103,7 +103,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             isCurrentQuadMipped = false;
             break;
             
-        case CUTOUT_MIPPED:
+        case MIPPED_CUTOUT:
             isCurrentQuadCutout = true;
             isCurrentQuadMipped = true;
             break;
@@ -254,14 +254,14 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         final float e2 = 0.95f;
 
         boolean full = blockInfo.isFullCube();
-        EnumFacing side = null;
+        Direction side = null;
 
-             if((full || y < -e1) && normY < -e2) side = EnumFacing.DOWN;
-        else if((full || y >  e1) && normY >  e2) side = EnumFacing.UP;
-        else if((full || z < -e1) && normZ < -e2) side = EnumFacing.NORTH;
-        else if((full || z >  e1) && normZ >  e2) side = EnumFacing.SOUTH;
-        else if((full || x < -e1) && normX < -e2) side = EnumFacing.WEST;
-        else if((full || x >  e1) && normX >  e2) side = EnumFacing.EAST;
+             if((full || y < -e1) && normY < -e2) side = Direction.DOWN;
+        else if((full || y >  e1) && normY >  e2) side = Direction.UP;
+        else if((full || z < -e1) && normZ < -e2) side = Direction.NORTH;
+        else if((full || z >  e1) && normZ >  e2) side = Direction.SOUTH;
+        else if((full || x < -e1) && normX < -e2) side = Direction.WEST;
+        else if((full || x >  e1) && normX >  e2) side = Direction.EAST;
 
         int i = side == null ? 0 : side.ordinal() + 1;
         

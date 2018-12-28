@@ -5,26 +5,25 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import net.minecraft.block.Block;
-import net.minecraft.util.EnumFacing;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.Direction;
 
 @Mixin(Block.class)
 public abstract class MixinBlockClient
 {
-    private static ThreadLocal<MutableBlockPos> offsetPos = new ThreadLocal<MutableBlockPos>()
+    private static ThreadLocal<BlockPos.Mutable> offsetPos = new ThreadLocal<BlockPos.Mutable>()
     {
         @Override
-        protected MutableBlockPos initialValue()
+        protected BlockPos.Mutable initialValue()
         {
-            return new MutableBlockPos();
+            return new BlockPos.Mutable();
         }
     };
     
     // prevents significant garbage build up during chunk rebuild
     @Redirect(method = "shouldSideBeRendered", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/BlockPos;offset(Lnet/minecraft/util/EnumFacing;)Lnet/minecraft/util/math/BlockPos;"))
-    private BlockPos onOffset(BlockPos pos, EnumFacing facing)
+    private BlockPos onOffset(BlockPos pos, Direction facing)
     {
-        return offsetPos.get().setPos(pos).move(facing);
+        return offsetPos.get().set(pos).move(facing);
     }
 }

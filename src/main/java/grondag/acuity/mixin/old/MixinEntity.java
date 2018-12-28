@@ -5,19 +5,18 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import grondag.acuity.hooks.IMutableAxisAlignedBB;
+import grondag.acuity.hooks.MutableBoundingBox;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.math.AxisAlignedBB;
 
 @Mixin(Entity.class)
 public abstract class MixinEntity
 {
-    private static ThreadLocal<IMutableAxisAlignedBB> mutableAABB = new ThreadLocal<IMutableAxisAlignedBB>()
+    private static ThreadLocal<MutableBoundingBox> mutableAABB = new ThreadLocal<MutableBoundingBox>()
     {
         @Override
-        protected IMutableAxisAlignedBB initialValue()
+        protected MutableBoundingBox initialValue()
         {
-            return (IMutableAxisAlignedBB)new AxisAlignedBB(0, 0, 0, 0, 0, 0);
+            return (MutableBoundingBox)new AxisAlignedBB(0, 0, 0, 0, 0, 0);
         }
     };
     

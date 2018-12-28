@@ -6,8 +6,6 @@ import org.lwjgl.opengl.ARBVertexBufferObject;
 import org.lwjgl.opengl.GL15;
 
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
-import net.minecraft.client.renderer.GLAllocation;
-import net.minecraft.client.renderer.OpenGlHelper;
 
 /**
  * Buffer gen is incredibly slow on some Windows/NVidia systems and default MC behavior

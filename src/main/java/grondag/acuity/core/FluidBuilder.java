@@ -2,18 +2,19 @@ package grondag.acuity.core;
 
 import java.nio.ByteBuffer;
 
-import javax.vecmath.Vector3f;
 
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedVertexConsumer;
 import grondag.acuity.api.IRenderPipeline;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.client.MinecraftForgeClient;
 
 /**
  * Similar in form and function to Forge's quad gathering transformer and child classes
@@ -58,31 +59,31 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
     @Override
     public void sortVertexData(float p_181674_1_, float p_181674_2_, float p_181674_3_)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public State getVertexState()
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void setVertexState(State state)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void reset()
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void begin(int glMode, VertexFormat format)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
@@ -107,43 +108,43 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
     @Override
     public void putBrightness4(int p_178962_1_, int p_178962_2_, int p_178962_3_, int p_178962_4_)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void putPosition(double x, double y, double z)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public int getColorIndex(int vertexIndex)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void putColorMultiplier(float red, float green, float blue, int vertexIndex)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void putColorRGB_F(float red, float green, float blue, int vertexIndex)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void putColorRGBA(int index, int red, int green, int blue)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void noColor()
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
@@ -156,13 +157,13 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
     @Override
     public BufferBuilder color(int red, int green, int blue, int alpha)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void addVertexData(int[] vertexData)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
@@ -193,83 +194,83 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
     @Override
     public void putNormal(float x, float y, float z)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public BufferBuilder normal(float x, float y, float z)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void setTranslation(double x, double y, double z)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void finishDrawing()
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public ByteBuffer getByteBuffer()
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public VertexFormat getVertexFormat()
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public int getVertexCount()
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public int getDrawMode()
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void putColor4(int argb)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void putColorRGB_F4(float red, float green, float blue)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void putColorRGBA(int index, int red, int green, int blue, int alpha)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public boolean isColorDisabled()
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
     public void putBulkData(ByteBuffer buffer)
     {
-        throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_wrapped_buffer_unsupported"));
+        throw new UnsupportedOperationException(Localization.translate("misc.error_wrapped_buffer_unsupported"));
     }
 
     @Override
-    public @Nullable IRenderPipeline getPipeline()
+    public IRenderPipeline getPipeline()
     {
         return this.pipeline;
     }
@@ -281,24 +282,25 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
         vertexLighter.setShading(false);
         float normX, normY, normZ;
         
+        // PERF: garbage factory
         Vector3f v1 = new Vector3f(pos[3]);
         Vector3f t = new Vector3f(pos[1]);  
         Vector3f v2 = new Vector3f(pos[2]);  
-        v1.sub(t);
-        t.set(pos[0]);
-        v2.sub(t);
-        v1.cross(v2, v1);
+        v1.subtract(t);
+        t.set(pos[0].x(), pos[0].y(), pos[0].z());
+        v2.subtract(t);
+        v1.cross(v2);
         v1.normalize();
-        normX = v1.x;
-        normY = v1.y;
-        normZ = v1.z;
+        normX = v1.x();
+        normY = v1.y();
+        normZ = v1.z();
         
         for(int i = 0; i < 4; i++)
         {
             vertexLighter.setSkyLightMap(this.lightmap[i][SKY]);
             int blockLight = this.lightmap[i][BLOCK];
             vertexLighter.setBlockLightMap(blockLight, blockLight, blockLight, 0xFF);
-            vertexLighter.acceptVertex(pos[i].x, pos[i].y, pos[i].z, normX, normY, normZ, color[i], tex[i][0], tex[i][1]);
+            vertexLighter.acceptVertex(pos[i].x(), pos[i].y(), pos[i].z(), normX, normY, normZ, color[i], tex[i][0], tex[i][1]);
         }
     }
 

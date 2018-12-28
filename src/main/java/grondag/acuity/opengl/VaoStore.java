@@ -3,7 +3,6 @@ package grondag.acuity.opengl;
 import java.nio.IntBuffer;
 
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
-import net.minecraft.client.renderer.GLAllocation;
 
 public class VaoStore
 {

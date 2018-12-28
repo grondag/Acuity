@@ -21,34 +21,17 @@ import grondag.acuity.core.FluidBuilder;
 import grondag.acuity.core.VanillaQuadWrapper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.block.material.Material;
-import net.minecraft.client.renderer.BlockFluidRenderer;
-import net.minecraft.client.renderer.BlockModelRenderer;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.client.renderer.RegionRenderCacheBuilder;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.block.model.IBakedModel;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.crash.CrashReportCategory;
+import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.ReportedException;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.translation.I18n;
-import net.minecraftforge.client.MinecraftForgeClient;
-import net.minecraftforge.common.property.IExtendedBlockState;
+import net.minecraft.util.math.Direction;
 
 @Environment(EnvType.CLIENT)
 public class PipelineHooks
 {
     // these have to be somewhere other than the static initialize for EnumFacing/mixins thereof
-    public static final EnumFacing[] HORIZONTAL_FACES = {EnumFacing.NORTH, EnumFacing.EAST, EnumFacing.SOUTH, EnumFacing.WEST};
-    public static final EnumFacing[] VERTICAL_FACES = {EnumFacing.UP, EnumFacing.DOWN};
+    public static final Direction[] HORIZONTAL_FACES = {Direction.NORTH, Direction.EAST, Direction.SOUTH, Direction.WEST};
+    public static final Direction[] VERTICAL_FACES = {Direction.UP, Direction.DOWN};
     
     private static ThreadLocal<CompoundVertexLighter> lighters;
     private static ThreadLocal<FluidBuilder> fluidBuilders;
@@ -99,7 +82,7 @@ public class PipelineHooks
     {
         linkBuildersInner(cache, BlockRenderLayer.SOLID);
         linkBuildersInner(cache, BlockRenderLayer.CUTOUT);
-        linkBuildersInner(cache, BlockRenderLayer.CUTOUT_MIPPED);
+        linkBuildersInner(cache, BlockRenderLayer.MIPPED_CUTOUT);
         linkBuildersInner(cache, BlockRenderLayer.TRANSLUCENT);
     }
     
@@ -266,27 +249,27 @@ public class PipelineHooks
             
             if(checkSides)
             {
-                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.DOWN))
-                        renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.DOWN);
-                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.UP))
-                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.UP);
-                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.EAST))
-                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.EAST);
-                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.WEST))
-                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.WEST);
-                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.NORTH))
-                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.NORTH);
-                if(stateIn.shouldSideBeRendered(worldIn, posIn, EnumFacing.SOUTH))
-                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.SOUTH);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, Direction.DOWN))
+                        renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.DOWN);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, Direction.UP))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.UP);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, Direction.EAST))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.EAST);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, Direction.WEST))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.WEST);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, Direction.NORTH))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.NORTH);
+                if(stateIn.shouldSideBeRendered(worldIn, posIn, Direction.SOUTH))
+                    renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.SOUTH);
             }
             else
             {
-                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.DOWN);
-                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.UP);
-                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.EAST);
-                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.WEST);
-                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.NORTH);
-                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, EnumFacing.SOUTH);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.DOWN);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.UP);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.EAST);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.WEST);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.NORTH);
+                renderVanillaModelInner(modelIn, stateIn, lighter, wrapper, Direction.SOUTH);
             }
             
             return lighter.didOutput();
@@ -300,7 +283,7 @@ public class PipelineHooks
         }
     }
     
-    private static void renderVanillaModelInner(IBakedModel modelIn, IBlockState stateIn, CompoundVertexLighter lighter, VanillaQuadWrapper wrapper, @Nullable EnumFacing face)
+    private static void renderVanillaModelInner(IBakedModel modelIn, IBlockState stateIn, CompoundVertexLighter lighter, VanillaQuadWrapper wrapper, Direction face)
     {
         List<BakedQuad> quads = modelIn.getQuads(stateIn, face, lighter.positionRandom());
         final int limit = quads.size();
@@ -357,7 +340,7 @@ public class PipelineHooks
                     return renderGlobal.renderBlockLayer(blockLayerIn, partialTicks, pass, entityIn);
                     
                 case CUTOUT:
-                case CUTOUT_MIPPED:
+                case MIPPED_CUTOUT:
                 default: 
                     return 0;
             }

@@ -9,10 +9,7 @@ import grondag.acuity.LoadingConfig;
 import grondag.acuity.core.AbstractPipelinedRenderList;
 import grondag.acuity.core.PipelinedRenderList;
 import grondag.acuity.core.PipelinedRenderListDebug;
-import net.minecraft.client.renderer.ChunkRenderContainer;
-import net.minecraft.client.renderer.VboRenderList;
-import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.client.render.block.BlockRenderLayer;
 
 @Mixin(VboRenderList.class)
 public abstract class MixinVboRenderList extends ChunkRenderContainer

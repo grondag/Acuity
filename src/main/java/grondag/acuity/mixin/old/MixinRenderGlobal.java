@@ -4,9 +4,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 
-import javax.annotation.Nullable;
 
-import org.lwjgl.util.vector.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -17,29 +15,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.google.common.collect.Queues;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.hooks.IMutableAxisAlignedBB;
+import grondag.acuity.hooks.MutableBoundingBox;
 import grondag.acuity.hooks.IRenderGlobal;
 import grondag.acuity.hooks.ISetVisibility;
 import grondag.acuity.hooks.PipelineHooks;
 import grondag.acuity.hooks.VisibilityHooks;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.client.renderer.ChunkRenderContainer;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.Vector3d;
-import net.minecraft.client.renderer.ViewFrustum;
-import net.minecraft.client.renderer.chunk.ChunkRenderDispatcher;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.culling.ClippingHelper;
-import net.minecraft.client.renderer.culling.Frustum;
-import net.minecraft.client.renderer.culling.ICamera;
+import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 
 @Mixin(RenderGlobal.class)
@@ -72,7 +56,7 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
     @Shadow public abstract Set<EnumFacing> getVisibleFacings(BlockPos pos);
     @Shadow protected abstract Vector3f getViewVector(Entity entityIn, double partialTicks);
     @Shadow public abstract void loadRenderers();
-    @Shadow @Nullable protected abstract RenderChunk getRenderChunkOffset(BlockPos playerPos, RenderChunk renderChunkBase, EnumFacing facing);
+    @Shadow protected abstract RenderChunk getRenderChunkOffset(BlockPos playerPos, RenderChunk renderChunkBase, EnumFacing facing);
     @Shadow protected abstract void fixTerrainFrustum(double x, double y, double z);
     
     /**
@@ -104,10 +88,10 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
         return PipelineHooks.shouldUploadLayer(compiledChunk, layer);
     }
     
-    private final MutableBlockPos eyePos = new MutableBlockPos();
-    private final MutableBlockPos viewChunkOrigin = new MutableBlockPos();
+    private final BlockPos.Mutable eyePos = new BlockPos.Mutable();
+    private final BlockPos.Mutable viewChunkOrigin = new BlockPos.Mutable();
     private final Queue<RenderGlobal.ContainerLocalRenderInformation> renderQueue = Queues.<RenderGlobal.ContainerLocalRenderInformation>newArrayDeque();
-    private final IMutableAxisAlignedBB box = (IMutableAxisAlignedBB) new AxisAlignedBB(0, 0, 0, 0, 0, 0);
+    private final MutableBoundingBox box = (MutableBoundingBox) new AxisAlignedBB(0, 0, 0, 0, 0, 0);
     
     @SuppressWarnings("null")
     @Override
@@ -149,8 +133,8 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
         }
 
         this.mc.profiler.endStartSection("culling");
-        final BlockPos eyePos = this.eyePos.setPos(viewX, viewY + (double)viewEntity.getEyeHeight(), viewZ);
-        final BlockPos viewChunkOrigin = this.viewChunkOrigin.setPos(MathHelper.floor(viewX / 16.0D) * 16, MathHelper.floor(viewY / 16.0D) * 16, MathHelper.floor(viewZ / 16.0D) * 16);
+        final BlockPos eyePos = this.eyePos.set(viewX, viewY + (double)viewEntity.getEyeHeight(), viewZ);
+        final BlockPos viewChunkOrigin = this.viewChunkOrigin.set(MathHelper.floor(viewX / 16.0D) * 16, MathHelper.floor(viewY / 16.0D) * 16, MathHelper.floor(viewZ / 16.0D) * 16);
         RenderChunk eyeRenderChunk = this.viewFrustum.getRenderChunk(eyePos);
         
         this.displayListEntitiesDirty = this.displayListEntitiesDirty || !this.chunksToUpdate.isEmpty() || viewEntity.posX != this.lastViewEntityX || viewEntity.posY != this.lastViewEntityY || viewEntity.posZ != this.lastViewEntityZ || (double)viewEntity.rotationPitch != this.lastViewEntityPitch || (double)viewEntity.rotationYaw != this.lastViewEntityYaw;
@@ -182,7 +166,7 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
                 if (eyeFacings.size() == 1)
                 {
                     Vector3f vector3f = this.getViewVector(viewEntity, partialTicks);
-                    EnumFacing enumfacing = EnumFacing.getFacingFromVector(vector3f.x, vector3f.y, vector3f.z).getOpposite();
+                    Direction enumfacing = Direction.getFacingFromVector(vector3f.x, vector3f.y, vector3f.z).getOpposite();
                     eyeFacings.remove(enumfacing);
                 }
 

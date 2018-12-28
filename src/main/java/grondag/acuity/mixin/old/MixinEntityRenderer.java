@@ -7,12 +7,8 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import grondag.acuity.Acuity;
 import grondag.acuity.hooks.IRenderGlobal;
 import grondag.acuity.hooks.PipelineHooks;
-import net.minecraft.client.renderer.EntityRenderer;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.culling.ICamera;
-import net.minecraft.client.renderer.texture.ITextureObject;
+import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.entity.Entity;
-import net.minecraft.util.BlockRenderLayer;
 
 @Mixin(EntityRenderer.class)
 public abstract class MixinEntityRenderer

@@ -16,12 +16,12 @@ public class VertexCollector
     private int[] data;
     private int integerSize = 0;
     private final RenderPipeline pipeline;
-    private final @Nullable VertexCollectorList parent; 
+    private final VertexCollectorList parent; 
     
     /**
      * Holds per-quad distance after {@link #sortQuads(double, double, double)} is called
      */
-    @Nullable private double[] perQuadDistance;
+    private double[] perQuadDistance;
     
     /**
      * Pointer to next sorted quad in sort iteration methods.<br>
@@ -254,7 +254,7 @@ public class VertexCollector
         return result;
     }
 
-    public int[] saveState(@Nullable int[] priorState)
+    public int[] saveState(int[] priorState)
     {
         int[] result = priorState;
         if(result == null || result.length != integerSize)

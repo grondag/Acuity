@@ -1,6 +1,5 @@
 package grondag.acuity.hooks;
 
-import net.minecraft.client.renderer.culling.ICamera;
 import net.minecraft.entity.Entity;
 
 public interface IRenderGlobal

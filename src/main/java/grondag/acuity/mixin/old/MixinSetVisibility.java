@@ -1,12 +1,9 @@
 package grondag.acuity.mixin.old;
 
-import javax.annotation.Nullable;
-
 import org.spongepowered.asm.mixin.Mixin;
 
 import grondag.acuity.hooks.ISetVisibility;
 import grondag.acuity.hooks.VisibilityMap;
-import net.minecraft.client.renderer.chunk.SetVisibility;
 
 @Mixin(SetVisibility.class)
 public abstract class MixinSetVisibility implements ISetVisibility
@@ -14,7 +11,7 @@ public abstract class MixinSetVisibility implements ISetVisibility
     private Object visibilityData = null;
     
     @Override
-    public @Nullable Object getVisibilityData()
+    public Object getVisibilityData()
     {
         return visibilityData;
     }

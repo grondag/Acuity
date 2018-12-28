@@ -11,9 +11,7 @@ import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.buffering.UploadableChunk;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RegionRenderCacheBuilder;
-import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.client.render.block.BlockRenderLayer;
 
 @Environment(EnvType.CLIENT)
 public class CompoundBufferBuilder extends BufferBuilder
@@ -43,9 +41,9 @@ public class CompoundBufferBuilder extends BufferBuilder
      * Can be used with {@link #owner} to find peer buffers for other layers.
      * Could also be handy for other purposes.
      */
-    private @Nullable BlockRenderLayer layer;
+    private BlockRenderLayer layer;
 
-    private @Nullable CompoundBufferBuilder proxy;
+    private CompoundBufferBuilder proxy;
     
     private class CompoundState extends State
     {
@@ -70,7 +68,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     {
         this.layer = layer;
         
-        if(this.layer == BlockRenderLayer.CUTOUT || this.layer == BlockRenderLayer.CUTOUT_MIPPED)
+        if(this.layer == BlockRenderLayer.CUTOUT || this.layer == BlockRenderLayer.MIPPED_CUTOUT)
         {
             this.proxy = (CompoundBufferBuilder) owner.getWorldRendererByLayer(BlockRenderLayer.SOLID);
         }
@@ -93,7 +91,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         return bufferSizeIn;
     }
     
-    private @Nullable CompoundState loadedState;
+    private CompoundState loadedState;
     
     /**
      * Used to retrieve and save collector state for later resorting of translucency.<p>
@@ -215,7 +213,7 @@ public class CompoundBufferBuilder extends BufferBuilder
                     }
                     
                     case CUTOUT:
-                    case CUTOUT_MIPPED:
+                    case MIPPED_CUTOUT:
                     default:
                         assert false : "Bad render layer in compound buffer builder finish";
                         break;
@@ -241,7 +239,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     /**
      * Must be called on thread - handles any portion of GL buffering that must be done in context.
      */
-    public @Nullable DrawableChunk produceDrawable()
+    public DrawableChunk produceDrawable()
     {   
         assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
         

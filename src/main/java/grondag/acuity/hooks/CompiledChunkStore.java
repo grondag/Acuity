@@ -4,7 +4,6 @@ import java.util.concurrent.ArrayBlockingQueue;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
 
 @Environment(EnvType.CLIENT)
 public class CompiledChunkStore

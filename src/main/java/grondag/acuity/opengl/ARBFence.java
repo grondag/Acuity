@@ -6,14 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.nio.IntBuffer;
 
-import org.lwjgl.BufferChecks;
-import org.lwjgl.MemoryUtil;
-import org.lwjgl.opengl.ContextCapabilities;
-import org.lwjgl.opengl.GL32;
-import org.lwjgl.opengl.GLContext;
-
 import grondag.acuity.Acuity;
-import net.minecraft.client.renderer.GLAllocation;
 
 class ARBFence extends Fence
 {

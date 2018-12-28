@@ -26,6 +26,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.util.math.Matrix4f;
 import net.minecraft.util.math.BlockPos;
 

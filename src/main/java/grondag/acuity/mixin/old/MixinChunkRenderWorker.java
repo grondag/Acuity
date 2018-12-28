@@ -5,9 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import grondag.acuity.hooks.PipelineHooks;
-import net.minecraft.client.renderer.chunk.ChunkRenderWorker;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.util.BlockRenderLayer;
+import net.minecraft.client.render.block.BlockRenderLayer;
 
 @Mixin(ChunkRenderWorker.class)
 public abstract class MixinChunkRenderWorker

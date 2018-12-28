@@ -5,18 +5,17 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
 import net.minecraft.world.chunk.Chunk;
 
 @Mixin(Chunk.class)
 public abstract class MixinChunk
 {
-    private static ThreadLocal<MutableBlockPos> getLightOpacityPos = new ThreadLocal<MutableBlockPos>()
+    private static ThreadLocal<BlockPos.Mutable> getLightOpacityPos = new ThreadLocal<BlockPos.Mutable>()
     {
         @Override
-        protected MutableBlockPos initialValue()
+        protected BlockPos.Mutable initialValue()
         {
-            return new MutableBlockPos();
+            return new BlockPos.Mutable();
         }
     };
     
@@ -25,6 +24,6 @@ public abstract class MixinChunk
             at = @At(value = "NEW", args = "class=net/minecraft/util/math/BlockPos") )
     private BlockPos onBlockLightOpacityNewPos(int x, int y, int z)
     {
-        return getLightOpacityPos.get().setPos(x, y, z);
+        return getLightOpacityPos.get().set(x, y, z);
     }
 }

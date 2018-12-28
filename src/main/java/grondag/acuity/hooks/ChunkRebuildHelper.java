@@ -7,11 +7,8 @@ import com.google.common.collect.Sets;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RegionRenderCacheBuilder;
-import net.minecraft.client.renderer.chunk.VisGraph;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
+import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.util.math.BlockPos;
 
 @Environment(EnvType.CLIENT)
 public class ChunkRebuildHelper
@@ -35,7 +32,7 @@ public class ChunkRebuildHelper
     
     public final BlockRenderLayer[] layers = BlockRenderLayer.values().clone();
     public final boolean[] layerFlags = new boolean[BLOCK_RENDER_LAYER_COUNT];
-    public final MutableBlockPos searchPos = new MutableBlockPos();
+    public final BlockPos.Mutable searchPos = new BlockPos.Mutable();
     public final HashSet<TileEntity> tileEntities = Sets.newHashSet();
     public final Set<TileEntity> tileEntitiesToAdd = Sets.newHashSet();
     public final Set<TileEntity> tileEntitiesToRemove = Sets.newHashSet();
@@ -46,7 +43,7 @@ public class ChunkRebuildHelper
     {
         builders[BlockRenderLayer.SOLID.ordinal()] = regionCache.getWorldRendererByLayer(BlockRenderLayer.SOLID);
         builders[BlockRenderLayer.CUTOUT.ordinal()] = regionCache.getWorldRendererByLayer(BlockRenderLayer.CUTOUT);
-        builders[BlockRenderLayer.CUTOUT_MIPPED.ordinal()] = regionCache.getWorldRendererByLayer(BlockRenderLayer.CUTOUT_MIPPED);
+        builders[BlockRenderLayer.MIPPED_CUTOUT.ordinal()] = regionCache.getWorldRendererByLayer(BlockRenderLayer.MIPPED_CUTOUT);
         builders[BlockRenderLayer.TRANSLUCENT.ordinal()] = regionCache.getWorldRendererByLayer(BlockRenderLayer.TRANSLUCENT);
         return builders;
     }

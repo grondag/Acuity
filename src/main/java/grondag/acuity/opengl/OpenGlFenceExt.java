@@ -2,9 +2,6 @@ package grondag.acuity.opengl;
 
 import java.util.function.Supplier;
 
-import org.lwjgl.opengl.ContextCapabilities;
-import org.lwjgl.opengl.GLContext;
-
 public class OpenGlFenceExt
 {
     private static boolean isFenceEnabled = true;

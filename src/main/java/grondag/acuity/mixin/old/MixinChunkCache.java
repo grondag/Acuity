@@ -5,12 +5,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.EnumFacing;
+import grondag.acuity.fermion.varia.DirectionHelper;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.world.ChunkCache;
-import net.minecraft.world.EnumSkyBlock;
+import net.minecraft.util.math.Direction;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 
@@ -25,12 +22,12 @@ public abstract class MixinChunkCache
     @Shadow public abstract int getLightFor(EnumSkyBlock type, BlockPos pos);
     @Shadow(remap=false) protected abstract boolean withinBounds(int x, int z);
     
-    private static final ThreadLocal<MutableBlockPos> fastPos = new ThreadLocal<MutableBlockPos>()
+    private static final ThreadLocal<BlockPos.Mutable> fastPos = new ThreadLocal<BlockPos.Mutable>()
     {
         @Override
-        protected MutableBlockPos initialValue()
+        protected BlockPos.Mutable initialValue()
         {
-            return new MutableBlockPos();
+            return new BlockPos.Mutable();
         }
     };
     
@@ -51,12 +48,12 @@ public abstract class MixinChunkCache
             {
                 int l = 0;
 
-                final MutableBlockPos searchPos = fastPos.get();
+                final BlockPos.Mutable searchPos = fastPos.get();
                 
                 for(int i = 0; i < 6; i++)
                 {
-                    EnumFacing face = EnumFacing.VALUES[i];
-                    searchPos.setPos(pos.getX() + face.getXOffset(), pos.getY() + face.getYOffset(), pos.getZ() + face.getZOffset());
+                    Direction face = DirectionHelper.fromOrdinal(i);
+                    searchPos.set(pos.getX() + face.getOffsetX(), pos.getY() + face.getOffsetY(), pos.getZ() + face.getOffsetZ());
                     
                     int k = this.getLightFor(type, searchPos);
 

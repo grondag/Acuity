@@ -4,14 +4,20 @@ import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
 import java.util.concurrent.ArrayBlockingQueue;
 
+import com.mojang.blaze3d.platform.GLX;
+
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.util.math.MathHelper;
 
 /**
- * Holds a thread-safe cache of buffer builders to be used for VBO uploads
+ * Holds a thread-safe cache of byte buffers to be used for VBO uploads.<br>
+ * Currently not used.
+ * 
+ * TODO: remove if sticking with mem-mapped buffers
  */
 @Environment(EnvType.CLIENT)
+@Deprecated
 public class BufferStore
 {
     private static final ArrayBlockingQueue<ExpandableByteBuffer> store = new ArrayBlockingQueue<ExpandableByteBuffer>(4096);
@@ -24,7 +30,7 @@ public class BufferStore
         
         private ExpandableByteBuffer()
         {
-            byteBuffer = GLAllocation.createDirectByteBuffer(BUFFER_SIZE_INCREMENT);
+            byteBuffer = GLX.allocateMemory(BUFFER_SIZE_INCREMENT);
             intBuffer = byteBuffer.asIntBuffer();
         }
         
@@ -42,7 +48,8 @@ public class BufferStore
         {
             if (minByteSize > this.byteBuffer.capacity())
             {
-                ByteBuffer newBuffer = GLAllocation.createDirectByteBuffer(MathHelper.roundUp(minByteSize, BUFFER_SIZE_INCREMENT));
+                ByteBuffer oldBuffer = this.byteBuffer;
+                ByteBuffer newBuffer = GLX.allocateMemory(MathHelper.roundUp(minByteSize, BUFFER_SIZE_INCREMENT));
                 int oldIntPos = this.intBuffer.position();
                 int oldBytePos = this.byteBuffer.position();
                 this.byteBuffer.position(0);
@@ -52,6 +59,8 @@ public class BufferStore
                 this.intBuffer = newBuffer.asIntBuffer();
                 newBuffer.position(oldBytePos);
                 this.intBuffer.position(oldIntPos);
+                
+                GLX.freeMemory(oldBuffer);
             }
         }
        

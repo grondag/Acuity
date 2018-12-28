@@ -4,8 +4,6 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
-import javax.annotation.Nullable;
-
 import org.spongepowered.asm.lib.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -23,24 +21,10 @@ import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.hooks.ISetVisibility;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.BlockRendererDispatcher;
-import net.minecraft.client.renderer.BufferBuilder;
-import net.minecraft.client.renderer.RenderGlobal;
-import net.minecraft.client.renderer.chunk.ChunkCompileTaskGenerator;
-import net.minecraft.client.renderer.chunk.CompiledChunk;
-import net.minecraft.client.renderer.chunk.RenderChunk;
-import net.minecraft.client.renderer.chunk.SetVisibility;
-import net.minecraft.client.renderer.chunk.VisGraph;
-import net.minecraft.client.renderer.tileentity.TileEntityRendererDispatcher;
-import net.minecraft.client.renderer.tileentity.TileEntitySpecialRenderer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.BlockRenderLayer;
-import net.minecraft.util.EnumBlockRenderType;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.world.ChunkCache;
 import net.minecraft.world.chunk.Chunk;
 
 @Mixin(RenderChunk.class)
@@ -49,7 +33,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
     @Shadow public static int renderChunksUpdated;
 
     @Shadow public CompiledChunk compiledChunk;
-    @Shadow private BlockPos.MutableBlockPos position;
+    @Shadow private BlockPos.Mutable position;
     @Shadow private ChunkCache worldView;
     @Shadow abstract void preRenderBlocks(BufferBuilder bufferBuilderIn, BlockPos pos);
     @Shadow abstract void postRenderBlocks(BlockRenderLayer layer, float x, float y, float z, BufferBuilder bufferBuilderIn, CompiledChunk compiledChunkIn);
@@ -57,17 +41,17 @@ public abstract class MixinRenderChunk implements IRenderChunk
     @Shadow private Set<TileEntity> setTileEntities;
     @Shadow private RenderGlobal renderGlobal;
 
-    @Nullable Solid solidDrawable;
-    @Nullable Translucent translucentDrawable;
+    Solid solidDrawable;
+    Translucent translucentDrawable;
 
     @Override
-    public @Nullable Solid getSolidDrawable()
+    public Solid getSolidDrawable()
     {
         return solidDrawable;
     }
 
     @Override
-    public @Nullable Translucent getTranslucentDrawable()
+    public Translucent getTranslucentDrawable()
     {
         return translucentDrawable;
     }
@@ -157,7 +141,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
         help.clear();
 
         final CompiledChunk compiledChunk = CompiledChunkStore.claim();
-        final MutableBlockPos minPos = this.position;
+        final BlockPos.Mutable minPos = this.position;
 
         generator.getLock().lock();
 
@@ -181,7 +165,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
             ++renderChunksUpdated;
             final boolean[] layerFlags = help.layerFlags;
             final BlockRendererDispatcher blockrendererdispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
-            final MutableBlockPos searchPos = help.searchPos;
+            final BlockPos.Mutable searchPos = help.searchPos;
             final int xMin = minPos.getX();
             final int yMin = minPos.getY();
             final int zMin = minPos.getZ();
@@ -193,8 +177,8 @@ public abstract class MixinRenderChunk implements IRenderChunk
                 {
                     for(int zPos = 0; zPos < 16; zPos++)
                     {
-                        searchPos.setPos(xMin + xPos, yMin + yPos, zMin + zPos);
-                        final IBlockState iblockstate = this.worldView.getBlockState(searchPos);
+                        searchPos.set(xMin + xPos, yMin + yPos, zMin + zPos);
+                        final BlockState iblockstate = this.worldView.getBlockState(searchPos);
                         final Block block = iblockstate.getBlock();
 
                         if (iblockstate.isOpaqueCube())

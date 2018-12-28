@@ -5,18 +5,17 @@ import org.spongepowered.asm.mixin.Shadow;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.IBlockInfo;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.block.BlockState;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockPos.MutableBlockPos;
-import net.minecraft.world.IBlockAccess;
-import net.minecraftforge.client.model.pipeline.BlockInfo;
+import net.minecraft.util.math.BlockPos.Mutable;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.ExtendedBlockView;
 
 @Mixin(BlockInfo.class)
 public abstract class MixinBlockInfo implements IBlockInfo
 {
-    @Shadow(remap=false) private IBlockAccess world;
-    @Shadow(remap=false)  private IBlockState state;
+    @Shadow(remap=false) private ExtendedBlockView world;
+    @Shadow(remap=false)  private BlockState state;
     @Shadow(remap=false)  private BlockPos blockPos;
     
     @Shadow(remap=false)  private boolean[][][] t;
@@ -36,14 +35,14 @@ public abstract class MixinBlockInfo implements IBlockInfo
     private boolean needsFlatLightUpdate = true;
     private boolean needsAoLightUpdate = true;
     
-    private final MutableBlockPos searchPos = new MutableBlockPos();
+    private final BlockPos.Mutable searchPos = new BlockPos.Mutable();
     
     /**
      * Consolidate multiple calls to {@link #reset()}, {@link #setBlockPos(net.minecraft.util.math.BlockPos)},
      * {@link #setState(net.minecraft.block.state.IBlockState)} and {@link #setWorld(net.minecraft.world.IBlockAccess)}
      */
     @Override
-    public void prepare(IBlockAccess world, IBlockState state, BlockPos pos)
+    public void prepare(ExtendedBlockView world, BlockState state, BlockPos pos)
     {
         ((BlockInfo)(Object)this).reset();
         this.needsAoLightUpdate = true;
@@ -83,12 +82,12 @@ public abstract class MixinBlockInfo implements IBlockInfo
             {
                 for(int z = 0; z <= 2; z++)
                 {
-                    searchPos.setPos(
+                    searchPos.set(
                             blockPos.getX() + x - 1, 
                             blockPos.getY() + y - 1, 
                             blockPos.getZ() + z - 1);
 
-                    IBlockState state = world.getBlockState(searchPos);
+                    BlockState state = world.getBlockState(searchPos);
                     t[x][y][z] = state.getLightOpacity(world, searchPos) < 15;
                     int brightness = state.getPackedLightmapCoords(world, searchPos);
                     s[x][y][z] = (brightness >> 0x14) & 0xF;
@@ -97,12 +96,12 @@ public abstract class MixinBlockInfo implements IBlockInfo
                 }
             }
         }
-        updateLightMatrixFastInner(EnumFacing.DOWN);
-        updateLightMatrixFastInner(EnumFacing.UP);
-        updateLightMatrixFastInner(EnumFacing.EAST);
-        updateLightMatrixFastInner(EnumFacing.WEST);
-        updateLightMatrixFastInner(EnumFacing.NORTH);
-        updateLightMatrixFastInner(EnumFacing.SOUTH);
+        updateLightMatrixFastInner(Direction.DOWN);
+        updateLightMatrixFastInner(Direction.UP);
+        updateLightMatrixFastInner(Direction.EAST);
+        updateLightMatrixFastInner(Direction.WEST);
+        updateLightMatrixFastInner(Direction.NORTH);
+        updateLightMatrixFastInner(Direction.SOUTH);
 
         for(int x = 0; x < 2; x++)
         {
@@ -145,13 +144,13 @@ public abstract class MixinBlockInfo implements IBlockInfo
         }
     }
     
-    private void updateLightMatrixFastInner(EnumFacing side)
+    private void updateLightMatrixFastInner(Direction side)
     {
         if(!state.doesSideBlockRendering(world, blockPos, side))
         {
-            int x = side.getXOffset() + 1;
-            int y = side.getYOffset() + 1;
-            int z = side.getZOffset() + 1;
+            int x = side.getOffsetX() + 1;
+            int y = side.getOffsetY() + 1;
+            int z = side.getOffsetZ() + 1;
             s[x][y][z] = Math.max(s[1][1][1] - 1, s[x][y][z]);
             b[x][y][z] = Math.max(b[1][1][1] - 1, b[x][y][z]);
         }
@@ -161,17 +160,17 @@ public abstract class MixinBlockInfo implements IBlockInfo
     {
         full = state.isFullCube();
         packed[0] = state.getPackedLightmapCoords(world, blockPos);
-        updateFlatLightingFastInner(EnumFacing.DOWN);
-        updateFlatLightingFastInner(EnumFacing.UP);
-        updateFlatLightingFastInner(EnumFacing.EAST);
-        updateFlatLightingFastInner(EnumFacing.WEST);
-        updateFlatLightingFastInner(EnumFacing.NORTH);
-        updateFlatLightingFastInner(EnumFacing.SOUTH);
+        updateFlatLightingFastInner(Direction.DOWN);
+        updateFlatLightingFastInner(Direction.UP);
+        updateFlatLightingFastInner(Direction.EAST);
+        updateFlatLightingFastInner(Direction.WEST);
+        updateFlatLightingFastInner(Direction.NORTH);
+        updateFlatLightingFastInner(Direction.SOUTH);
     }
     
-    private void updateFlatLightingFastInner(EnumFacing side)
+    private void updateFlatLightingFastInner(Direction side)
     {
-        searchPos.setPos(blockPos.getX() + side.getXOffset(), blockPos.getY() + side.getYOffset(), blockPos.getZ() + side.getZOffset());
+        searchPos.set(blockPos.getX() + side.getOffsetX(), blockPos.getY() + side.getOffsetY(), blockPos.getZ() + side.getOffsetZ());
         packed[side.ordinal() + 1] = state.getPackedLightmapCoords(world, searchPos);
     }
 
@@ -182,7 +181,7 @@ public abstract class MixinBlockInfo implements IBlockInfo
     }
 
     @Override
-    public IBlockAccess world()
+    public ExtendedBlockView world()
     {
         return world;
     }
