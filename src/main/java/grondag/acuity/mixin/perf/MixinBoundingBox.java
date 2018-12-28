@@ -1,4 +1,4 @@
-package grondag.acuity.mixin.old;
+package grondag.acuity.mixin.perf;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;

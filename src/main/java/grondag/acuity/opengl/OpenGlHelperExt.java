@@ -46,7 +46,7 @@ public class OpenGlHelperExt
     
     static private final MethodHandles.Lookup lookup = MethodHandles.lookup();
     
-    static private boolean useVboArb;
+    static boolean useVboArb;
     static private boolean asynchBufferMapEnabled;
     
     /**

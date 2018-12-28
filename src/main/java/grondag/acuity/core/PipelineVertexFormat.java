@@ -12,8 +12,6 @@ import static grondag.acuity.core.PipelineVertextFormatElement.TERTIARY_TEX_2F;
 
 import org.lwjgl.opengl.GL20;
 
-import com.mojang.blaze3d.platform.GLX;
-
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

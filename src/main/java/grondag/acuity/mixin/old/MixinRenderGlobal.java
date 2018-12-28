@@ -23,6 +23,7 @@ import grondag.acuity.hooks.VisibilityHooks;
 import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BoundingBox;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 
@@ -91,7 +92,7 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
     private final BlockPos.Mutable eyePos = new BlockPos.Mutable();
     private final BlockPos.Mutable viewChunkOrigin = new BlockPos.Mutable();
     private final Queue<RenderGlobal.ContainerLocalRenderInformation> renderQueue = Queues.<RenderGlobal.ContainerLocalRenderInformation>newArrayDeque();
-    private final MutableBoundingBox box = (MutableBoundingBox) new AxisAlignedBB(0, 0, 0, 0, 0, 0);
+    private final MutableBoundingBox box = (MutableBoundingBox) new BoundingBox(0, 0, 0, 0, 0, 0);
     
     @SuppressWarnings("null")
     @Override

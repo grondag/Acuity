@@ -2,7 +2,6 @@ package grondag.acuity.buffering;
 
 import org.lwjgl.opengl.GL11;
 
-import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.api.RenderPipeline;

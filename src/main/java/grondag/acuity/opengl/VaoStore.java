@@ -2,12 +2,14 @@ package grondag.acuity.opengl;
 
 import java.nio.IntBuffer;
 
+import org.lwjgl.system.MemoryUtil;
+
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 
 public class VaoStore
 {
     private static final IntArrayFIFOQueue queue = new IntArrayFIFOQueue();
-    private static final IntBuffer buff = GLAllocation.createDirectIntBuffer(128);
+    private static final IntBuffer buff = MemoryUtil.memAllocInt(128);
     
     public static int[] claimVertexArrays(int howMany)
     {

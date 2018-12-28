@@ -1,12 +1,13 @@
-package grondag.acuity.mixin.old;
+package grondag.acuity.mixin.perf;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import grondag.acuity.LoadingConfig;
+import net.minecraft.client.MinecraftClient;
 
-@Mixin(Minecraft.class)
+@Mixin(MinecraftClient.class)
 public abstract class MixinMinecraft
 {
     @Redirect(method = "runGameLoop", expect = 1,

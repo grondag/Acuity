@@ -26,7 +26,9 @@ import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.VertexFormatElement;
 import net.minecraft.client.render.block.BlockModelRenderer;
 import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.client.render.block.FluidRenderer;
 import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -130,7 +132,7 @@ public class PipelineHooks
     /**
      * Performance counting version of {@link #renderFluid(BlockFluidRenderer, IBlockAccess, IBlockState, BlockPos, BufferBuilder)}
      */
-    public static boolean renderFluidDebug(BlockFluidRenderer fluidRenderer, ExtendedBlockView blockAccess, BlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
+    public static boolean renderFluidDebug(FluidRenderer fluidRenderer, ExtendedBlockView blockAccess, BlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
     {
         final long start = System.nanoTime();
         final boolean result = renderFluid(fluidRenderer, blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
@@ -152,7 +154,7 @@ public class PipelineHooks
      * Handles vanilla special-case rendering for lava and water.
      * Forge fluids should come as block models instead.
      */
-    public static boolean renderFluid(BlockFluidRenderer fluidRenderer, ExtendedBlockView blockAccess, BlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
+    public static boolean renderFluid(FluidRenderer fluidRenderer, ExtendedBlockView blockAccess, BlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
     {
         if(Acuity.isModEnabled())
         {

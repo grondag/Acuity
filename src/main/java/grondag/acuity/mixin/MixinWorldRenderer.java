@@ -1,18 +1,11 @@
 package grondag.acuity.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-
-import com.google.common.util.concurrent.ListenableFuture;
-
-import grondag.acuity.Acuity;
 import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.PipelineManager;
-import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.class_856;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.entity.Entity;

@@ -21,11 +21,19 @@ import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.hooks.ISetVisibility;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.client.render.block.BlockRenderManager;
+import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
+import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.chunk.ChunkCache;
+import net.minecraft.world.chunk.WorldChunk;
 
 @Mixin(RenderChunk.class)
 public abstract class MixinRenderChunk implements IRenderChunk
@@ -38,7 +46,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
     @Shadow abstract void preRenderBlocks(BufferBuilder bufferBuilderIn, BlockPos pos);
     @Shadow abstract void postRenderBlocks(BlockRenderLayer layer, float x, float y, float z, BufferBuilder bufferBuilderIn, CompiledChunk compiledChunkIn);
     @Shadow private ReentrantLock lockCompileTask;
-    @Shadow private Set<TileEntity> setTileEntities;
+    @Shadow private Set<BlockEntity> setTileEntities;
     @Shadow private RenderGlobal renderGlobal;
 
     Solid solidDrawable;
@@ -158,13 +166,13 @@ public abstract class MixinRenderChunk implements IRenderChunk
         }
 
         final VisGraph visGraph = help.visGraph;
-        final HashSet<TileEntity> tileEntities = help.tileEntities;
+        final HashSet<BlockEntity> tileEntities = help.tileEntities;
 
         if (!this.worldView.isEmpty())
         {
             ++renderChunksUpdated;
             final boolean[] layerFlags = help.layerFlags;
-            final BlockRendererDispatcher blockrendererdispatcher = Minecraft.getMinecraft().getBlockRendererDispatcher();
+            final BlockRenderManager blockrendererdispatcher = MinecraftClient.getInstance().getBlockRenderManager();
             final BlockPos.Mutable searchPos = help.searchPos;
             final int xMin = minPos.getX();
             final int yMin = minPos.getY();
@@ -184,20 +192,21 @@ public abstract class MixinRenderChunk implements IRenderChunk
                         if (iblockstate.isOpaqueCube())
                             visGraph.setOpaqueCube(searchPos);
 
-                        if (block.hasTileEntity(iblockstate))
+                        if (block.hasBlockEntity())
                         {
-                            final TileEntity tileentity = this.worldView.getTileEntity(searchPos, Chunk.EnumCreateEntityType.CHECK);
+                            final BlockEntity blockEntity = this.worldView.getBlockEntity(searchPos, WorldChunk.AccessType.GET);
 
-                            if (tileentity != null)
+                            if (blockEntity != null)
                             {
-                                TileEntitySpecialRenderer<TileEntity> tileentityspecialrenderer = TileEntityRendererDispatcher.instance.<TileEntity>getRenderer(tileentity);
+                                BlockEntityRenderer<BlockEntity> tileentityspecialrenderer = BlockEntityRenderDispatcher.INSTANCE.<BlockEntity>get(blockEntity);
 
                                 if (tileentityspecialrenderer != null)
                                 {
-                                    if (tileentityspecialrenderer.isGlobalRenderer(tileentity))
-                                        tileEntities.add(tileentity);
+                                    // method_3563 indicates visible everywhere
+                                    if (tileentityspecialrenderer.method_3563(blockEntity))
+                                        tileEntities.add(blockEntity);
                                     else 
-                                        compiledChunk.addTileEntity(tileentity); // FORGE: Fix MC-112730
+                                        compiledChunk.addTileEntity(blockEntity);
                                 }
                             }
                         }
@@ -208,9 +217,10 @@ public abstract class MixinRenderChunk implements IRenderChunk
                             if(!block.canRenderInLayer(iblockstate, layer)) 
                                 continue;
 
-                            net.minecraftforge.client.ForgeHooksClient.setRenderLayer(layer);
+                            //FIXME: support fabric hook when available
+                            //net.minecraftforge.client.ForgeHooksClient.setRenderLayer(layer);
 
-                            if (block.getDefaultState().getRenderType() != EnumBlockRenderType.INVISIBLE)
+                            if (block.getDefaultState().getRenderType() != BlockRenderType.INVISIBLE)
                             {
                                 if (!compiledChunk.isLayerStarted(layer))
                                 {
@@ -221,7 +231,8 @@ public abstract class MixinRenderChunk implements IRenderChunk
                                 layerFlags[i] |= blockrendererdispatcher.renderBlock(iblockstate, searchPos, this.worldView, builders[i]);
                             }
                         }
-                        net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
+                      //FIXME: support fabric hook when available
+                      //net.minecraftforge.client.ForgeHooksClient.setRenderLayer(null);
                     }
                 }
             }

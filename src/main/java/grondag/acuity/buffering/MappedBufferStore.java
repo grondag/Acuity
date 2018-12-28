@@ -9,7 +9,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

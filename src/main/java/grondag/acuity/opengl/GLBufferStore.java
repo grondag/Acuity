@@ -4,6 +4,7 @@ import java.nio.IntBuffer;
 
 import org.lwjgl.opengl.ARBVertexBufferObject;
 import org.lwjgl.opengl.GL15;
+import org.lwjgl.system.MemoryUtil;
 
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 
@@ -13,13 +14,13 @@ import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 public class GLBufferStore
 {
     private static final IntArrayFIFOQueue queue = new IntArrayFIFOQueue();
-    private static final IntBuffer buff = GLAllocation.createDirectIntBuffer(128);
+    private static final IntBuffer buff = MemoryUtil.memAllocInt(128);
     
     public static int claimBuffer()
     {
         if(queue.isEmpty())
         {
-            if(OpenGlHelper.arbVbo)
+            if(OpenGlHelperExt.useVboArb)
                 ARBVertexBufferObject.glGenBuffersARB(buff);
             else
                 GL15.glGenBuffers(buff);

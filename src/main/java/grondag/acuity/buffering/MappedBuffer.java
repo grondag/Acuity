@@ -217,7 +217,6 @@ public class MappedBuffer
         assert MinecraftClient.getInstance().isMainThread();
         mapped = null;
         OpenGlHelperExt.glBufferData(GLX.GL_ARRAY_BUFFER, CAPACITY_BYTES, GL15.GL_STATIC_DRAW);
-        OpenGlHelperExt.handleAppleMappedBuffer();
     }
     
     public boolean isFlushPending()

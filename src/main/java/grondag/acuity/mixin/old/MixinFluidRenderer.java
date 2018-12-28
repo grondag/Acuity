@@ -4,10 +4,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+import net.minecraft.client.render.block.FluidRenderer;
 import net.minecraft.util.math.BlockPos;
 
-@Mixin(BlockFluidRenderer.class)
-public abstract class MixinBlockFluidRenderer
+@Mixin(FluidRenderer.class)
+public abstract class MixinFluidRenderer
 {
     private static ThreadLocal<BlockPos.Mutable> getFluidHeightAddPos = new ThreadLocal<BlockPos.Mutable>()
     {
