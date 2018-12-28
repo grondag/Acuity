@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import grondag.acuity.core.CompoundBufferBuilder;
 import grondag.acuity.hooks.PipelineHooks;
+import net.minecraft.client.render.BufferBuilder;
 
 @Mixin(RegionRenderCacheBuilder.class)
 public abstract class MixinRegionRenderCacheBuilder

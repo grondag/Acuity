@@ -202,12 +202,12 @@ public class MappedBuffer
 
     void bind()
     {
-        OpenGlHelperExt.glBindBufferFast(GLX.GL_ARRAY_BUFFER, this.glBufferId);
+        GLX.glBindBuffer(GLX.GL_ARRAY_BUFFER, this.glBufferId);
     }
     
     void unbind()
     {
-        OpenGlHelperExt.glBindBufferFast(GLX.GL_ARRAY_BUFFER, 0);
+        GLX.glBindBuffer(GLX.GL_ARRAY_BUFFER, 0);
     }
 
     /** assumes buffer is bound */

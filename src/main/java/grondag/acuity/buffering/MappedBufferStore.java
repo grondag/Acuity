@@ -121,7 +121,7 @@ public class MappedBufferStore
                     releaseRebufferQueue.offer(buff);
                 }
             }
-            OpenGlHelperExt.glBindBufferFast(GLX.GL_ARRAY_BUFFER, 0);
+            GLX.glBindBuffer(GLX.GL_ARRAY_BUFFER, 0);
         }
     }
     
@@ -159,7 +159,7 @@ public class MappedBufferStore
                 
                 pair = releaseResetQueue.poll();
             }
-            OpenGlHelperExt.glBindBufferFast(GLX.GL_ARRAY_BUFFER, 0);
+            GLX.glBindBuffer(GLX.GL_ARRAY_BUFFER, 0);
         }
     }
     

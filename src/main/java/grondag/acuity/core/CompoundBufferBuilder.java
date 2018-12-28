@@ -11,6 +11,7 @@ import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.buffering.UploadableChunk;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.block.BlockRenderLayer;
 
 @Environment(EnvType.CLIENT)

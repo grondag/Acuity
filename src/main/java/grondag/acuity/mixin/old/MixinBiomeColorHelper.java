@@ -5,6 +5,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.ExtendedBlockView;
 
 @Mixin(BiomeColorHelper.class)
 public abstract class MixinBiomeColorHelper
@@ -13,21 +14,21 @@ public abstract class MixinBiomeColorHelper
     
     @Redirect(method = "getGrassColorAtPos", expect = 1,       
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/biome/BiomeColorHelper;getColorAtPos(Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/biome/BiomeColorHelper$ColorResolver;)I"))       
-    private static int onGetGrassColorAtPos(IBlockAccess blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
+    private static int onGetGrassColorAtPos(ExtendedBlockView blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
     {
         return getColorAtPosFast(blockAccess, pos, colorResolver);
     }
 
     @Redirect(method = "getFoliageColorAtPos", expect = 1,       
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/biome/BiomeColorHelper;getColorAtPos(Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/biome/BiomeColorHelper$ColorResolver;)I"))       
-    private static int onGetFoliageColorAtPos(IBlockAccess blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
+    private static int onGetFoliageColorAtPos(ExtendedBlockView blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
     {
         return getColorAtPosFast(blockAccess, pos, colorResolver);
     }
 
     @Redirect(method = "getWaterColorAtPos", expect = 1,       
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/biome/BiomeColorHelper;getColorAtPos(Lnet/minecraft/world/IBlockAccess;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/biome/BiomeColorHelper$ColorResolver;)I"))       
-    private static int onGetWaterColorAtPos(IBlockAccess blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
+    private static int onGetWaterColorAtPos(ExtendedBlockView blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
     {
         return getColorAtPosFast(blockAccess, pos, colorResolver);
     }
@@ -41,7 +42,7 @@ public abstract class MixinBiomeColorHelper
         }
     };
 
-    private static int getColorAtPosFast(IBlockAccess blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
+    private static int getColorAtPosFast(ExtendedBlockView blockAccess, BlockPos pos, BiomeColorHelper.ColorResolver colorResolver)
     {
         int i = 0;
         int j = 0;

@@ -14,6 +14,7 @@ import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
+import net.minecraft.world.ExtendedBlockView;
 
 @Environment(EnvType.CLIENT)
 public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
@@ -32,7 +33,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     protected long positionRandom = Long.MIN_VALUE;
     protected int sideFlags;
     
-    public void prepare(CompoundBufferBuilder target, BlockRenderLayer layer, IBlockAccess world, IBlockState blockState, BlockPos pos, boolean checkSides)
+    public void prepare(CompoundBufferBuilder target, BlockRenderLayer layer, ExtendedBlockView world, BlockState blockState, BlockPos pos, boolean checkSides)
     {
         this.renderLayer = layer;
         this.target = target;
@@ -109,13 +110,13 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     }
 
     @Override
-    public final IBlockAccess world()
+    public final ExtendedBlockView world()
     {
         return this.blockInfo.world();
     }
 
     @Override
-    public IBlockState blockState()
+    public BlockState blockState()
     {
         return this.blockState;
     }

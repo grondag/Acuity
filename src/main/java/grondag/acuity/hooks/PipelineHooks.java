@@ -21,10 +21,16 @@ import grondag.acuity.core.FluidBuilder;
 import grondag.acuity.core.VanillaQuadWrapper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.block.BlockState;
+import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.VertexFormatElement;
+import net.minecraft.client.render.block.BlockModelRenderer;
 import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
+import net.minecraft.world.ExtendedBlockView;
 
 @Environment(EnvType.CLIENT)
 public class PipelineHooks
@@ -124,7 +130,7 @@ public class PipelineHooks
     /**
      * Performance counting version of {@link #renderFluid(BlockFluidRenderer, IBlockAccess, IBlockState, BlockPos, BufferBuilder)}
      */
-    public static boolean renderFluidDebug(BlockFluidRenderer fluidRenderer, IBlockAccess blockAccess, IBlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
+    public static boolean renderFluidDebug(BlockFluidRenderer fluidRenderer, ExtendedBlockView blockAccess, BlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
     {
         final long start = System.nanoTime();
         final boolean result = renderFluid(fluidRenderer, blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
@@ -146,7 +152,7 @@ public class PipelineHooks
      * Handles vanilla special-case rendering for lava and water.
      * Forge fluids should come as block models instead.
      */
-    public static boolean renderFluid(BlockFluidRenderer fluidRenderer, IBlockAccess blockAccess, IBlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
+    public static boolean renderFluid(BlockFluidRenderer fluidRenderer, ExtendedBlockView blockAccess, BlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
     {
         if(Acuity.isModEnabled())
         {
@@ -178,8 +184,8 @@ public class PipelineHooks
     /**
      * Performance counting version of #
      */
-    public static boolean renderModelDebug(BlockModelRenderer blockModelRenderer, IBlockAccess blockAccess, IBakedModel model, 
-            IBlockState state, BlockPos pos, BufferBuilder bufferBuilderIn, boolean checkSides)
+    public static boolean renderModelDebug(BlockModelRenderer blockModelRenderer, ExtendedBlockView blockAccess, BakedModel model, 
+            BlockState state, BlockPos pos, BufferBuilder bufferBuilderIn, boolean checkSides)
     {
         final long start = System.nanoTime();
         final boolean result = renderModel(blockModelRenderer, blockAccess, model, state, pos, bufferBuilderIn, checkSides);
@@ -197,7 +203,7 @@ public class PipelineHooks
         return result;
     }
     
-    public static boolean renderModel(BlockModelRenderer blockModelRenderer, IBlockAccess blockAccess, IBakedModel model, IBlockState state, BlockPos pos,
+    public static boolean renderModel(BlockModelRenderer blockModelRenderer, ExtendedBlockView blockAccess, BakedModel model, BlockState state, BlockPos pos,
             BufferBuilder bufferBuilderIn, boolean checkSides)
     {
         if(Acuity.isModEnabled())
@@ -211,7 +217,7 @@ public class PipelineHooks
             return blockModelRenderer.renderModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
     }
     
-    private static boolean renderModel(IBlockAccess worldIn, IBakedModel modelIn, IBlockState stateIn, BlockPos posIn, BufferBuilder bufferIn, boolean checkSides)
+    private static boolean renderModel(ExtendedBlockView worldIn, BakedModel modelIn, BlockState stateIn, BlockPos posIn, BufferBuilder bufferIn, boolean checkSides)
     {
         try
         {
@@ -234,7 +240,7 @@ public class PipelineHooks
         }
     }
 
-    private static boolean renderVanillaModel(IBlockAccess worldIn, IBakedModel modelIn, IBlockState stateIn, BlockPos posIn, BufferBuilder bufferIn, boolean checkSides)
+    private static boolean renderVanillaModel(ExtendedBlockView worldIn, BakedModel modelIn, BlockState stateIn, BlockPos posIn, BufferBuilder bufferIn, boolean checkSides)
     {
         try
         {
@@ -283,7 +289,7 @@ public class PipelineHooks
         }
     }
     
-    private static void renderVanillaModelInner(IBakedModel modelIn, IBlockState stateIn, CompoundVertexLighter lighter, VanillaQuadWrapper wrapper, Direction face)
+    private static void renderVanillaModelInner(BakedModel modelIn, BlockState stateIn, CompoundVertexLighter lighter, VanillaQuadWrapper wrapper, Direction face)
     {
         List<BakedQuad> quads = modelIn.getQuads(stateIn, face, lighter.positionRandom());
         final int limit = quads.size();
@@ -295,10 +301,10 @@ public class PipelineHooks
             wrapper.wrapAndLight(lighter, quads.get(i));
     }
     
-    public static boolean isFirstOrUV(int index, VertexFormatElement.EnumUsage usage)
+    public static boolean isFirstOrUV(int index, VertexFormatElement.Type usage)
     {
         // has to apply even when mod is disabled so that our formats can be instantiated
-        return index == 0 || usage == VertexFormatElement.EnumUsage.UV || usage == VertexFormatElement.EnumUsage.GENERIC;
+        return index == 0 || usage == VertexFormatElement.Type.UV || usage == VertexFormatElement.Type.GENERIC;
     }
 
     public static boolean useVbo()

@@ -42,7 +42,7 @@ public class Program
     public static void deactivate()
     {
         activeProgram = null;
-        OpenGlHelperExt.glUseProgramFast(0);
+        GLX.glUseProgram(0);
     }
     
     private int progID = -1;
@@ -520,7 +520,7 @@ public class Program
         if(activeProgram != this)
         {
             activeProgram = this;
-            OpenGlHelperExt.glUseProgramFast(this.progID);
+            GLX.glUseProgram(this.progID);
     
             final int count = this.dirtyCount;
             if(count != 0)
@@ -604,7 +604,7 @@ public class Program
         @Override
         protected void uploadInner()
         {
-            OpenGlHelperExt.glUniformMatrix4Fast(this.unifID, true, this.uniformFloatBuffer, this.bufferAddress);
+            GLX.glUniformMatrix4(this.unifID, true, this.uniformFloatBuffer);
         }
     }
     

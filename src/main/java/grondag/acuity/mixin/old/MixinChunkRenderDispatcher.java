@@ -9,6 +9,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.hooks.PipelineHooks;
+import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.block.BlockRenderLayer;
 
 @Mixin(ChunkRenderDispatcher.class)

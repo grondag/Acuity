@@ -6,6 +6,7 @@ import java.util.ArrayDeque;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
+import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.Acuity;
@@ -186,12 +187,12 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     
     private final void disableUnusedAttributes()
     {
-        GlStateManager.glDisableClientState(GL11.GL_COLOR_ARRAY);
-        OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
-        GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-        OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.lightmapTexUnit);
-        GlStateManager.glDisableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
-        OpenGlHelperExt.setClientActiveTextureFast(OpenGlHelper.defaultTexUnit);
+        GlStateManager.disableClientState(GL11.GL_COLOR_ARRAY);
+        GlStateManager.activeTexture(GLX.GL_TEXTURE0);
+        GlStateManager.disableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+        GlStateManager.activeTexture(GLX.GL_TEXTURE1);
+        GlStateManager.disableClientState(GL11.GL_TEXTURE_COORD_ARRAY);
+        GlStateManager.activeTexture(GLX.GL_TEXTURE0);
     }
 
     private final void downloadModelViewMatrix()
@@ -321,7 +322,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
             OpenGlHelperExt.glBindVertexArray(0);
         
         OpenGlHelperExt.resetAttributes();
-        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
+        GLX.glBindBuffer(GLX.GL_ARRAY_BUFFER, 0);
         Program.deactivate();
         GlStateManager.resetColor();
     }

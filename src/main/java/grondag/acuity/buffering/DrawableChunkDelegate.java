@@ -2,6 +2,7 @@ package grondag.acuity.buffering;
 
 import org.lwjgl.opengl.GL11;
 
+import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.api.RenderPipeline;
@@ -111,7 +112,7 @@ public class DrawableChunkDelegate
     
     private void bindVertexAttributes(PipelineVertexFormat format)
     {
-        OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.Format.FLOAT.getGlId(), format.stride, bufferDelegate.byteOffset());
+        GlStateManager.vertexPointer(3, VertexFormatElement.Format.FLOAT.getGlId(), format.stride, bufferDelegate.byteOffset());
         format.bindAttributeLocations(bufferDelegate.byteOffset());
     }
     
@@ -124,7 +125,7 @@ public class DrawableChunkDelegate
         
         if(this.bufferDelegate.isDisposed())
             return;
-        OpenGlHelperExt.glDrawArraysFast(GL11.GL_QUADS, 0, vertexCount);
+        GlStateManager.drawArrays(GL11.GL_QUADS, 0, vertexCount);
     }
     
     public void release()

@@ -7,6 +7,7 @@ import com.google.common.collect.Sets;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 
