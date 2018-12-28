@@ -5,10 +5,9 @@ import java.nio.IntBuffer;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
 
-
 import org.lwjgl.BufferUtils;
-import org.lwjgl.MemoryUtil;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryUtil;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
@@ -22,19 +21,22 @@ import grondag.acuity.api.IUniform.IUniform3i;
 import grondag.acuity.api.IUniform.IUniform4f;
 import grondag.acuity.api.IUniform.IUniform4i;
 import grondag.acuity.api.IUniform.IUniformMatrix4f;
-import grondag.acuity.opengl.OpenGlHelperExt;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.api.UniformUpdateFrequency;
+import grondag.acuity.extension.AcuityMatrix4f;
+import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.client.util.math.Matrix4f;
 
 @Environment(EnvType.CLIENT)
 public class Program
 {
-    private static @Nullable Program activeProgram;
+    private static Program activeProgram;
     
     public static void deactivate()
     {
@@ -552,13 +554,13 @@ public class Program
         {
             super(name, initializer, frequency);
             this.uniformFloatBuffer = uniformFloatBuffer;
-            this.bufferAddress = MemoryUtil.getAddress(this.uniformFloatBuffer);
+            this.bufferAddress = MemoryUtil.memAddress(this.uniformFloatBuffer);
         }
         
         @Override
         public final void set(Matrix4f matrix)
         {
-            this.set(matrix.m00, matrix.m01, matrix.m02, matrix.m03, matrix.m10, matrix.m11, matrix.m12, matrix.m13, matrix.m20, matrix.m21, matrix.m22, matrix.m23, matrix.m30, matrix.m31, matrix.m32, matrix.m33);
+            this.set(((AcuityMatrix4f)(Object)matrix).getComponents());
         }
         
         @Override

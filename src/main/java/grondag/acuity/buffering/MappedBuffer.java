@@ -8,11 +8,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import javax.annotation.Nullable;
-
 import org.apache.commons.lang3.tuple.Pair;
 import org.lwjgl.opengl.GL15;
-import org.lwjgl.util.glu.GLU;
+
+import com.mojang.blaze3d.platform.GLX;
+import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
@@ -21,9 +21,7 @@ import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
+import net.minecraft.client.MinecraftClient;
 
 /**
  * Concurrency Notes<br>
@@ -69,7 +67,7 @@ public class MappedBuffer
      * 
      * MAY BE NON-NULL IF NOT MAPPED.  Reuse of buffer instance is an optimization feature of GL.
      */
-    private @Nullable ByteBuffer mapped = null;
+    private ByteBuffer mapped = null;
     
     /**
      * True if buffer is actually mapped. If false, and {@link #mapped} is non-null,
@@ -126,8 +124,8 @@ public class MappedBuffer
     
     MappedBuffer()
     {
-        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
-        this.glBufferId = OpenGlHelper.glGenBuffers();
+        assert MinecraftClient.getInstance().isMainThread();
+        this.glBufferId = GLX.glGenBuffers();
         bind();
         orphan();
         map(true);
@@ -156,11 +154,11 @@ public class MappedBuffer
         mapped = OpenGlHelperExt.mapBufferAsynch(mapped, CAPACITY_BYTES, writeFlag);
         if(mapped == null)
         {
-            int i = GlStateManager.glGetError();
+            int i = GlStateManager.getError();
             if (i != 0)
             {
                 Acuity.INSTANCE.getLog().error("########## GL ERROR ON BUFFER REMAP ##########");
-                Acuity.INSTANCE.getLog().error(GLU.gluErrorString(i) + " (" + i + ")");
+                Acuity.INSTANCE.getLog().error(GLX.getErrorString(i) + " (" + i + ")");
             }
             assert false;
         }
@@ -176,7 +174,7 @@ public class MappedBuffer
     /**
      * Won't break stride.
      */
-    public @Nullable MappedBufferDelegate requestBytes(int byteCount, int stride)
+    public MappedBufferDelegate requestBytes(int byteCount, int stride)
     {
 //        traceLog.add(String.format("requestBytes(%d, %d)", byteCount, stride));
         assert !isDisposed;
@@ -204,21 +202,21 @@ public class MappedBuffer
 
     void bind()
     {
-        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, this.glBufferId);
+        OpenGlHelperExt.glBindBufferFast(GLX.GL_ARRAY_BUFFER, this.glBufferId);
     }
     
     void unbind()
     {
-        OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
+        OpenGlHelperExt.glBindBufferFast(GLX.GL_ARRAY_BUFFER, 0);
     }
 
     /** assumes buffer is bound */
     private void orphan()
     {
 //        traceLog.add("orphan()");
-        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
+        assert MinecraftClient.getInstance().isMainThread();
         mapped = null;
-        OpenGlHelperExt.glBufferData(OpenGlHelper.GL_ARRAY_BUFFER, CAPACITY_BYTES, GL15.GL_STATIC_DRAW);
+        OpenGlHelperExt.glBufferData(GLX.GL_ARRAY_BUFFER, CAPACITY_BYTES, GL15.GL_STATIC_DRAW);
         OpenGlHelperExt.handleAppleMappedBuffer();
     }
     
@@ -239,7 +237,7 @@ public class MappedBuffer
         if(isDisposed)
             return;
         
-        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
+        assert MinecraftClient.getInstance().isMainThread();
         
         assert isMapped;
         
@@ -262,7 +260,7 @@ public class MappedBuffer
         if(isDisposed)
             return;
         
-        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
+        assert MinecraftClient.getInstance().isMainThread();
         
         final int currentMax = currentMaxOffset.get();
         final int bytes = currentMax - lastFlushedOffset;

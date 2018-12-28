@@ -8,6 +8,7 @@ import java.util.function.Consumer;
 import grondag.acuity.Acuity;
 import grondag.acuity.buffering.MappedBufferStore;
 import grondag.acuity.core.PipelineShaderManager;
+import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.hooks.PipelineHooks;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -36,7 +37,7 @@ public final class AcuityRuntime implements IAcuityRuntime
     
     public void forceReload()
     {
-        Acuity.INSTANCE.getLog().info(I18n.translateToLocal("misc.info_reloading"));
+        Acuity.INSTANCE.getLog().info(Localization.translate("misc.info_reloading"));
         Acuity.recomputeEnabledStatus();
         PipelineShaderManager.INSTANCE.forceReload();
         PipelineManager.INSTANCE.forceReload();

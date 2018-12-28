@@ -15,69 +15,69 @@ import org.lwjgl.opengl.GL20;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.vertex.VertexFormat;
+import net.minecraft.client.render.VertexFormat;
 
 @Environment(EnvType.CLIENT)
 public enum PipelineVertexFormat
 {
     VANILLA_SINGLE(0, new VertexFormat()
-            .addElement(POSITION_3F)
-            .addElement(BASE_RGBA_4UB)
-            .addElement(BASE_TEX_2F)
-            .addElement(LIGHTMAPS_4UB)),
+            .add(POSITION_3F)
+            .add(BASE_RGBA_4UB)
+            .add(BASE_TEX_2F)
+            .add(LIGHTMAPS_4UB)),
     
     /**
      * Adds one extra color and texture coordinate.
      * Use for two-layered textures.
      */
     VANILLA_DOUBLE(1, new VertexFormat()
-            .addElement(POSITION_3F)
-            .addElement(BASE_RGBA_4UB)
-            .addElement(BASE_TEX_2F)
-            .addElement(LIGHTMAPS_4UB)
-            .addElement(SECONDARY_RGBA_4UB)
-            .addElement(SECONDARY_TEX_2F)),
+            .add(POSITION_3F)
+            .add(BASE_RGBA_4UB)
+            .add(BASE_TEX_2F)
+            .add(LIGHTMAPS_4UB)
+            .add(SECONDARY_RGBA_4UB)
+            .add(SECONDARY_TEX_2F)),
     
     /**
      * Adds two extra colors and texture coordinates.
      * Use for three-layered materials.
      */
     VANILLA_TRIPLE(2, new VertexFormat()
-            .addElement(POSITION_3F)
-            .addElement(BASE_RGBA_4UB)
-            .addElement(BASE_TEX_2F)
-            .addElement(LIGHTMAPS_4UB)
-            .addElement(SECONDARY_RGBA_4UB)
-            .addElement(SECONDARY_TEX_2F)
-            .addElement(TERTIARY_RGBA_4UB)
-            .addElement(TERTIARY_TEX_2F)),
+            .add(POSITION_3F)
+            .add(BASE_RGBA_4UB)
+            .add(BASE_TEX_2F)
+            .add(LIGHTMAPS_4UB)
+            .add(SECONDARY_RGBA_4UB)
+            .add(SECONDARY_TEX_2F)
+            .add(TERTIARY_RGBA_4UB)
+            .add(TERTIARY_TEX_2F)),
     
     ENHANCED_SINGLE(0, new VertexFormat()
-            .addElement(POSITION_3F)
-            .addElement(BASE_RGBA_4UB)
-            .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_AO_4UB)
-            .addElement(LIGHTMAPS_4UB)),
+            .add(POSITION_3F)
+            .add(BASE_RGBA_4UB)
+            .add(BASE_TEX_2F)
+            .add(NORMAL_AO_4UB)
+            .add(LIGHTMAPS_4UB)),
     
     ENHANCED_DOUBLE(1, new VertexFormat()
-            .addElement(POSITION_3F)
-            .addElement(BASE_RGBA_4UB)
-            .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_AO_4UB)
-            .addElement(LIGHTMAPS_4UB)
-            .addElement(SECONDARY_RGBA_4UB)
-            .addElement(SECONDARY_TEX_2F)),
+            .add(POSITION_3F)
+            .add(BASE_RGBA_4UB)
+            .add(BASE_TEX_2F)
+            .add(NORMAL_AO_4UB)
+            .add(LIGHTMAPS_4UB)
+            .add(SECONDARY_RGBA_4UB)
+            .add(SECONDARY_TEX_2F)),
     
     ENHANCED_TRIPLE(2, new VertexFormat()
-            .addElement(POSITION_3F)
-            .addElement(BASE_RGBA_4UB)
-            .addElement(BASE_TEX_2F)
-            .addElement(NORMAL_AO_4UB)
-            .addElement(LIGHTMAPS_4UB)
-            .addElement(SECONDARY_RGBA_4UB)
-            .addElement(SECONDARY_TEX_2F)
-            .addElement(TERTIARY_RGBA_4UB)
-            .addElement(TERTIARY_TEX_2F));
+            .add(POSITION_3F)
+            .add(BASE_RGBA_4UB)
+            .add(BASE_TEX_2F)
+            .add(NORMAL_AO_4UB)
+            .add(LIGHTMAPS_4UB)
+            .add(SECONDARY_RGBA_4UB)
+            .add(SECONDARY_TEX_2F)
+            .add(TERTIARY_RGBA_4UB)
+            .add(TERTIARY_TEX_2F));
     
     public final VertexFormat vertexFormat;
     
@@ -95,7 +95,7 @@ public enum PipelineVertexFormat
     {
         this.layerIndex = layerIndex;
         this.vertexFormat = vertexFormat;
-        this.stride = vertexFormat.getSize();
+        this.stride = vertexFormat.getVertexSize();
         this.elements = vertexFormat.getElements().toArray(new PipelineVertextFormatElement[vertexFormat.getElementCount()]);
         int count = 0;
         for(PipelineVertextFormatElement e : elements)

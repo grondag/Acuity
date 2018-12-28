@@ -17,8 +17,10 @@ import grondag.acuity.core.PipelineShaderManager;
 import grondag.acuity.core.PipelineVertexFormat;
 import grondag.acuity.core.PipelineVertexShader;
 import grondag.acuity.core.Program;
+import grondag.acuity.fermion.config.Localization;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.render.VertexFormat;
 
 @Environment(EnvType.CLIENT)
 public final class RenderPipeline implements IRenderPipeline
@@ -30,7 +32,6 @@ public final class RenderPipeline implements IRenderPipeline
     private boolean isFinal = false;
     private PipelineVertexFormat pipelineVertexFormat;
     private VertexFormat vertexFormat;
-    
     
     RenderPipeline(int index, String vertexShader, String fragmentShader, TextureFormat textureFormat)
     {
@@ -104,7 +105,7 @@ public final class RenderPipeline implements IRenderPipeline
     private void checkFinal()
     {
         if(this.isFinal)
-            throw new UnsupportedOperationException(I18n.translateToLocal("misc.warn_uniform_program_immutable_exception"));    
+            throw new UnsupportedOperationException(Localization.translate("misc.warn_uniform_program_immutable_exception"));    
     }
     
     public void uniformSampler2d(String name, UniformUpdateFrequency frequency, Consumer<IUniform1i> initializer)

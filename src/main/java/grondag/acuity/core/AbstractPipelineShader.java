@@ -4,16 +4,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
-import java.nio.ByteBuffer;
 
-import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
 import com.google.common.io.CharStreams;
+import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
+import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -63,14 +63,9 @@ abstract class AbstractPipelineShader
         {
             String source = this.getSource();
             
-            byte[] abyte = source.getBytes();
-            ByteBuffer bytebuffer = BufferUtils.createByteBuffer(abyte.length);
-            bytebuffer.put(abyte);
-            bytebuffer.position(0);
-            
             if(this.glId <= 0)
             {
-                this.glId = OpenGlHelper.glCreateShader(shaderType);
+                this.glId = GLX.glCreateShader(shaderType);
                 if(this.glId == 0) 
                 {
                     this.glId = -1;
@@ -79,10 +74,10 @@ abstract class AbstractPipelineShader
                 }
             }
             
-            OpenGlHelper.glShaderSource(this.glId, bytebuffer);
-            OpenGlHelper.glCompileShader(this.glId);
+            GLX.glShaderSource(this.glId, source);
+            GLX.glCompileShader(this.glId);
     
-            if (OpenGlHelper.glGetShaderi(this.glId, OpenGlHelper.GL_COMPILE_STATUS) == GL11.GL_FALSE)
+            if (GLX.glGetShaderi(this.glId, GLX.GL_COMPILE_STATUS) == GL11.GL_FALSE)
                 throw new RuntimeException(OpenGlHelperExt.getShaderInfoLog(this.glId));
     
         }
@@ -91,10 +86,10 @@ abstract class AbstractPipelineShader
             this.isErrored = true;
             if(this.glId > 0)
             {
-                OpenGlHelper.glDeleteShader(glId);
+                GLX.glDeleteShader(glId);
                 this.glId = -1;
             }
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocalFormatted("misc.fail_create_shader", this.fileName, this.textureFormat.toString(), e.getMessage()));
+            Acuity.INSTANCE.getLog().error(Localization.translate("misc.fail_create_shader", this.fileName, this.textureFormat.toString(), e.getMessage()));
         }
     }
     

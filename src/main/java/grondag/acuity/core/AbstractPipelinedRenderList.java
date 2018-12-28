@@ -6,12 +6,15 @@ import java.util.ArrayDeque;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+
 import grondag.acuity.Acuity;
 import grondag.acuity.api.AcuityRuntime;
 import grondag.acuity.api.IAcuityListener;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.buffering.DrawableChunkDelegate;
+import grondag.acuity.extension.AcuityMatrix4f;
 import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.Arrays;
@@ -23,6 +26,7 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.util.math.Matrix4f;
 import net.minecraft.util.math.BlockPos;
 
 @Environment(EnvType.CLIENT)
@@ -51,7 +55,6 @@ public class AbstractPipelinedRenderList implements IAcuityListener
      */
     protected final Matrix4f mvMatrix = new Matrix4f();
     protected final Matrix4f mvPos = new Matrix4f();
-    protected final Matrix4f xlatMatrix = new Matrix4f();
     
     protected final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
     
@@ -65,7 +68,6 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     
     public AbstractPipelinedRenderList()
     {
-        xlatMatrix.setIdentity();
         AcuityRuntime.INSTANCE.registerListener(this);
     }
 
@@ -151,12 +153,14 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     {
         final Matrix4f mvPos = this.mvPos;
         
-        // note row-major order in the matrix library we are using
-        xlatMatrix.m03 = (float)(ox - viewEntityX);
-        xlatMatrix.m13 = (float)(oy - viewEntityY);
-        xlatMatrix.m23 = (float)(oz - viewEntityZ);
-
-        Matrix4f.mul(xlatMatrix, mvMatrix, mvPos);
+        //FIX: changed from LWJGL matrix to Mojang here, so may need to flip order of matrix, 
+        // and/or order of operations in multiply
+        // LWJGL was row-major order
+        mvPos.setIdentity();
+        mvPos.set(0, 3, (float)(ox - viewEntityX));
+        mvPos.set(1, 3, (float)(oy - viewEntityY));
+        mvPos.set(2, 3, (float)(oz - viewEntityZ));
+        mvPos.multiply(mvMatrix);
         
         // vanilla applies a per-chunk scaling matrix, but does not seem to be essential - probably a hack to prevent seams/holes due to FP error
         // If really is necessary, would want to handle some other way.  Per-chunk matrix not initialized when Acuity enabled.
@@ -193,8 +197,8 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     {
         final FloatBuffer modelViewMatrixBuffer = this.modelViewMatrixBuffer;
         modelViewMatrixBuffer.position(0);
-        GlStateManager.getFloat(GL11.GL_MODELVIEW_MATRIX, modelViewMatrixBuffer);
-        OpenGlHelperExt.loadTransposeQuickly(modelViewMatrixBuffer, mvMatrix);
+        GlStateManager.getMatrix(GL11.GL_MODELVIEW_MATRIX, modelViewMatrixBuffer);
+        mvMatrix.setFromBuffer(modelViewMatrixBuffer);
     }
     
     protected final void renderChunkLayerSolid()

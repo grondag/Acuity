@@ -2,16 +2,22 @@ package grondag.acuity.api;
 
 import java.nio.FloatBuffer;
 
-
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
+import com.mojang.blaze3d.platform.GLX;
+import com.mojang.blaze3d.platform.GlStateManager;
+
 import grondag.acuity.Configurator;
-import grondag.acuity.buffering.MappedBufferStore;
 import grondag.acuity.core.PipelineShaderManager;
-import grondag.acuity.opengl.OpenGlHelperExt;
+import grondag.acuity.extension.AcuityFogHelper;
+import grondag.acuity.extension.AcuityGameRenderer;
+import grondag.acuity.extension.AcuityMatrix4f;
+import grondag.acuity.mixin.MixinFogState;
+import grondag.acuity.mixin.MixinGlStateManager;
 import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.util.math.Matrix4f;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
 
@@ -48,14 +54,16 @@ public final class PipelineManager implements IPipelineManager
      */
     public static final FloatBuffer modelViewMatrixBuffer = BufferUtils.createFloatBuffer(16);
     
-    private static final long modelViewMatrixBufferAddress = MemoryUtil.getAddress(modelViewMatrixBuffer);
+    //TODO: remove if not needed
+//    private static final long modelViewMatrixBufferAddress = MemoryUtil.memAddress(modelViewMatrixBuffer);
     
     /**
      * Current mvp matrix - set at program activation
      */
     public static final FloatBuffer modelViewProjectionMatrixBuffer = BufferUtils.createFloatBuffer(16);
     
-    private static final long modelViewProjectionMatrixBufferAddress = MemoryUtil.getAddress(modelViewProjectionMatrixBuffer);
+    //TODO: remove if not needed
+//    private static final long modelViewProjectionMatrixBufferAddress = MemoryUtil.memAddress(modelViewProjectionMatrixBuffer);
     
     public static final PipelineManager INSTANCE = new PipelineManager();
     
@@ -187,30 +195,30 @@ public final class PipelineManager implements IPipelineManager
     
     private void addStandardUniforms(RenderPipeline pipeline)
     {
-        pipeline.uniform1f("u_time", UniformUpdateFrequency.PER_FRAME, u -> u.set(this.worldTime));
+        pipeline.uniform1f("u_time", UniformUpdateFrequency.PER_FRAME, u -> u.set(this.renderSeconds));
         
-        pipeline.uniformSampler2d("u_textures", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.defaultTexUnit - GL13.GL_TEXTURE0));
+        pipeline.uniformSampler2d("u_textures", UniformUpdateFrequency.ON_LOAD, u -> u.set(GLX.GL_TEXTURE0 - GL13.GL_TEXTURE0));
         
-        pipeline.uniformSampler2d("u_lightmap", UniformUpdateFrequency.ON_LOAD, u -> u.set(OpenGlHelper.lightmapTexUnit - GL13.GL_TEXTURE0));
+        pipeline.uniformSampler2d("u_lightmap", UniformUpdateFrequency.ON_LOAD, u -> u.set(GLX.GL_TEXTURE1 - GL13.GL_TEXTURE0));
         
         pipeline.uniform3f("u_eye_position", UniformUpdateFrequency.PER_FRAME, u -> 
         {
-            Vec3d eyePos = Minecraft.getMinecraft().player.getPositionEyes(fractionalFrameTicks);
+            Vec3d eyePos = MinecraftClient.getInstance().player.getCameraPosVec(fractionalFrameTicks);
             u.set((float)eyePos.x, (float)eyePos.y, (float)eyePos.z);
         });
         
         pipeline.uniform3f("u_fogAttributes", UniformUpdateFrequency.PER_TICK, u -> 
         {
-            GlStateManager.FogState fogState = GlStateManager.fogState;
-            u.set(fogState.end, fogState.end - fogState.start, 
+            MixinFogState fogState = MixinGlStateManager.FOG;
+            u.set(fogState.getEnd(), fogState.getEnd() - fogState.getStart(), 
                     // zero signals shader to use linear fog
-                    fogState.mode == GlStateManager.FogMode.LINEAR.capabilityId ? 0f : fogState.density);
+                    fogState.getMode() == GlStateManager.FogMode.LINEAR.glValue ? 0f : fogState.getDensity());
         });
         
         pipeline.uniform3f("u_fogColor", UniformUpdateFrequency.PER_TICK, u -> 
         {
-            EntityRenderer er = Minecraft.getMinecraft().entityRenderer;
-            u.set(er.fogColorRed, er.fogColorGreen, er.fogColorBlue);
+            AcuityFogHelper fh = (AcuityFogHelper)((AcuityGameRenderer)MinecraftClient.getInstance().worldRenderer).fogHelper();
+            u.set(fh.fogColorRed(), fh.fogColorGreen(), fh.fogColorBlue());
         });
         
         pipeline.setupModelViewUniforms();
@@ -222,6 +230,11 @@ public final class PipelineManager implements IPipelineManager
     public void prepareForFrame(Entity cameraEntity, float fractionalTicks)
     {
         this.fractionalFrameTicks = fractionalTicks;
+        
+        //FIXME: probably borked in some way
+        projectionMatrixBuffer.position(0);
+        GlStateManager.getMatrix(GL11.GL_PROJECTION_MATRIX, projectionMatrixBuffer);
+        projMatrix.setFromBuffer(projectionMatrixBuffer, true); // assuming true = transpose
         
         assert cameraEntity != null;
         assert cameraEntity.getEntityWorld() != null;
@@ -268,54 +281,9 @@ public final class PipelineManager implements IPipelineManager
         return this.renderSeconds;
     }
 
-    private static final float[] transferArray = new float[16];
+    private static final Matrix4f transferMatrixBase = new Matrix4f();
+    private static final AcuityMatrix4f transferMatrix = (AcuityMatrix4f)(Object)transferMatrixBase;
     
-    private static void loadTransferArray(Matrix4f m)
-    {
-        final float[] transferArray = PipelineManager.transferArray;
-        
-        transferArray[0] = m.m00;
-        transferArray[1] = m.m01;
-        transferArray[2] = m.m02;
-        transferArray[3] = m.m03;
-        transferArray[4] = m.m10;
-        transferArray[5] = m.m11;
-        transferArray[6] = m.m12;
-        transferArray[7] = m.m13;
-        transferArray[8] = m.m20;
-        transferArray[9] = m.m21;
-        transferArray[10] = m.m22;
-        transferArray[11] = m.m23;
-        transferArray[12] = m.m30;
-        transferArray[13] = m.m31;
-        transferArray[14] = m.m32;
-        transferArray[15] = m.m33;
-    }
-    
-    private static final void loadMVPMatrix(final Matrix4f mvMatrix)
-    {
-        final Matrix4f p = PipelineManager.projMatrix;
-        
-        transferArray[0] = mvMatrix.m00 * p.m00 + mvMatrix.m10 * p.m01 + mvMatrix.m20 * p.m02 + mvMatrix.m30 * p.m03;
-        transferArray[1] = mvMatrix.m01 * p.m00 + mvMatrix.m11 * p.m01 + mvMatrix.m21 * p.m02 + mvMatrix.m31 * p.m03;
-        transferArray[2] = mvMatrix.m02 * p.m00 + mvMatrix.m12 * p.m01 + mvMatrix.m22 * p.m02 + mvMatrix.m32 * p.m03;
-        transferArray[3] = mvMatrix.m03 * p.m00 + mvMatrix.m13 * p.m01 + mvMatrix.m23 * p.m02 + mvMatrix.m33 * p.m03;
-        
-        transferArray[4] = mvMatrix.m00 * p.m10 + mvMatrix.m10 * p.m11 + mvMatrix.m20 * p.m12 + mvMatrix.m30 * p.m13;
-        transferArray[5] = mvMatrix.m01 * p.m10 + mvMatrix.m11 * p.m11 + mvMatrix.m21 * p.m12 + mvMatrix.m31 * p.m13;
-        transferArray[6] = mvMatrix.m02 * p.m10 + mvMatrix.m12 * p.m11 + mvMatrix.m22 * p.m12 + mvMatrix.m32 * p.m13;
-        transferArray[7] = mvMatrix.m03 * p.m10 + mvMatrix.m13 * p.m11 + mvMatrix.m23 * p.m12 + mvMatrix.m33 * p.m13;
-        
-        transferArray[8] = mvMatrix.m00 * p.m20 + mvMatrix.m10 * p.m21 + mvMatrix.m20 * p.m22 + mvMatrix.m30 * p.m23;
-        transferArray[9] = mvMatrix.m01 * p.m20 + mvMatrix.m11 * p.m21 + mvMatrix.m21 * p.m22 + mvMatrix.m31 * p.m23;
-        transferArray[10] = mvMatrix.m02 * p.m20 + mvMatrix.m12 * p.m21 + mvMatrix.m22 * p.m22 + mvMatrix.m32 * p.m23;
-        transferArray[11] = mvMatrix.m03 * p.m20 + mvMatrix.m13 * p.m21 + mvMatrix.m23 * p.m22 + mvMatrix.m33 * p.m23;
-        
-        transferArray[12] = mvMatrix.m00 * p.m30 + mvMatrix.m10 * p.m31 + mvMatrix.m20 * p.m32 + mvMatrix.m30 * p.m33;
-        transferArray[13] = mvMatrix.m01 * p.m30 + mvMatrix.m11 * p.m31 + mvMatrix.m21 * p.m32 + mvMatrix.m31 * p.m33;
-        transferArray[14] = mvMatrix.m02 * p.m30 + mvMatrix.m12 * p.m31 + mvMatrix.m22 * p.m32 + mvMatrix.m32 * p.m33;
-        transferArray[15] = mvMatrix.m03 * p.m30 + mvMatrix.m13 * p.m31 + mvMatrix.m23 * p.m32 + mvMatrix.m33 * p.m33;
-    }
     
     public static final void setModelViewMatrix(Matrix4f mvMatrix)
     {
@@ -328,17 +296,20 @@ public final class PipelineManager implements IPipelineManager
     
     private static final void updateModelViewMatrix(Matrix4f mvMatrix)
     {
-        loadTransferArray(mvMatrix);
-        
+        mvMatrix.putIntoBuffer(modelViewMatrixBuffer);
+        // PERF - put back?
         // avoid NIO overhead
-        OpenGlHelperExt.fastMatrix4fBufferCopy(transferArray, PipelineManager.modelViewMatrixBufferAddress);
+//        OpenGlHelperExt.fastMatrix4fBufferCopy(transferArray, PipelineManager.modelViewMatrixBufferAddress);
     }
     
     private static final void updateModelViewProjectionMatrix(Matrix4f mvMatrix)
     {
-        loadMVPMatrix(mvMatrix);
-        
+        //FIXME: this almost certainly is flipped in some way
+        transferMatrix.setFromMatrix(mvMatrix);
+        transferMatrixBase.multiply(PipelineManager.projMatrix);
+        transferMatrixBase.putIntoBuffer(modelViewProjectionMatrixBuffer);
+     // PERF - put back?
         // avoid NIO overhead
-        OpenGlHelperExt.fastMatrix4fBufferCopy(transferArray, PipelineManager.modelViewProjectionMatrixBufferAddress);
+//        OpenGlHelperExt.fastMatrix4fBufferCopy(transferArray, PipelineManager.modelViewProjectionMatrixBufferAddress);
     }
 }

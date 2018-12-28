@@ -80,7 +80,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
     /**
      * Will be called from client thread - is where flush/unmap needs to happen.
      */
-    public abstract @Nullable V produceDrawable();
+    public abstract V produceDrawable();
     
     /**
      * Called if {@link #produceDrawable()} will not be called, 
@@ -103,7 +103,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
         }
 
         @Override
-        public @Nullable DrawableChunk.Solid produceDrawable()
+        public DrawableChunk.Solid produceDrawable()
         {
             final int limit = delegates.size();
             for(int i = 0; i < limit; i++)
@@ -120,7 +120,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
         }
 
         @Override
-        public @Nullable DrawableChunk.Translucent produceDrawable()
+        public DrawableChunk.Translucent produceDrawable()
         {
             final int limit = delegates.size();
             for(int i = 0; i < limit; i++)

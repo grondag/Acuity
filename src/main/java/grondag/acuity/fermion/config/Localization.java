@@ -6,4 +6,9 @@ public class Localization
     {
         return key;
     }
+    
+    public static String translate(String key, String... args)
+    {
+        return key;
+    }
 }

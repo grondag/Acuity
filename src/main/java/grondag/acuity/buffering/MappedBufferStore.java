@@ -3,18 +3,18 @@ package grondag.acuity.buffering;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.tuple.Pair;
+
+import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.crash.CrashReport;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.util.crash.CrashReport;
 
 public class MappedBufferStore
 {
@@ -79,7 +79,7 @@ public class MappedBufferStore
         DEFRAG_THREAD.start();
     }
     
-    static @Nullable MappedBuffer getEmptyMapped()
+    static MappedBuffer getEmptyMapped()
     {
         try
         {
@@ -87,7 +87,7 @@ public class MappedBufferStore
         }
         catch (Exception e)
         {
-            Minecraft.getMinecraft().crashed(new CrashReport("Unable to allocate empty GL buffer", e));
+            MinecraftClient.getInstance().printCrashReport(new CrashReport("Unable to allocate empty GL buffer", e));
             return null;
         }
     }
@@ -121,7 +121,7 @@ public class MappedBufferStore
                     releaseRebufferQueue.offer(buff);
                 }
             }
-            OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
+            OpenGlHelperExt.glBindBufferFast(GLX.GL_ARRAY_BUFFER, 0);
         }
     }
     
@@ -159,7 +159,7 @@ public class MappedBufferStore
                 
                 pair = releaseResetQueue.poll();
             }
-            OpenGlHelperExt.glBindBufferFast(OpenGlHelper.GL_ARRAY_BUFFER, 0);
+            OpenGlHelperExt.glBindBufferFast(GLX.GL_ARRAY_BUFFER, 0);
         }
     }
     
@@ -170,7 +170,7 @@ public class MappedBufferStore
     @Environment(EnvType.CLIENT)
     public static void prepareEmpties()
     {
-        assert Minecraft.getMinecraft().isCallingFromMinecraftThread();
+        assert MinecraftClient.getInstance().isMainThread();
         
         processReleaseRemapQueue();
        

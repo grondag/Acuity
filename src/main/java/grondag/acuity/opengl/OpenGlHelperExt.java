@@ -14,33 +14,19 @@ import java.nio.IntBuffer;
 
 import org.apache.commons.io.IOUtils;
 import org.apache.logging.log4j.Logger;
-import org.lwjgl.BufferChecks;
 import org.lwjgl.BufferUtils;
-import org.lwjgl.MemoryUtil;
-import org.lwjgl.opengl.APPLEFlushBufferRange;
-import org.lwjgl.opengl.APPLEVertexArrayObject;
 import org.lwjgl.opengl.ARBShaderObjects;
 import org.lwjgl.opengl.ARBVertexBufferObject;
-import org.lwjgl.opengl.ContextCapabilities;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL20;
 import org.lwjgl.opengl.GL30;
-import org.lwjgl.opengl.GLContext;
-import org.lwjgl.util.glu.GLU;
-import org.lwjgl.util.vector.Matrix4f;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
 import grondag.acuity.api.PipelineManager;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.OpenGlHelper;
-import net.minecraft.crash.CrashReport;
-import net.minecraft.util.text.translation.I18n;
-import net.minecraftforge.fml.relauncher.Side;
-import net.minecraftforge.fml.relauncher.SideOnly;
+import net.minecraft.client.util.math.Matrix4f;
 
 public class OpenGlHelperExt
 {
@@ -843,31 +829,32 @@ public class OpenGlHelperExt
         }
     }
     
-    private static final float[] LOAD_ARRAY = new float[16];
-    /**
-     * NOT THREAD SAFE
-     */
-    public static void loadTransposeQuickly(FloatBuffer source, Matrix4f dest)
-    {
-        final float[] load = LOAD_ARRAY;
-        source.get(load, 0, 16);
-        dest.m00 = load[0];
-        dest.m10 = load[1];
-        dest.m20 = load[2];
-        dest.m30 = load[3];
-        dest.m01 = load[4];
-        dest.m11 = load[5];
-        dest.m21 = load[6];
-        dest.m31 = load[7];
-        dest.m02 = load[8];
-        dest.m12 = load[9];
-        dest.m22 = load[10];
-        dest.m32 = load[11];
-        dest.m03 = load[12];
-        dest.m13 = load[13];
-        dest.m23 = load[14];
-        dest.m33 = load[15];
-    }
+//    private static final float[] LOAD_ARRAY = new float[16];
+//    /**
+//     * NOT THREAD SAFE
+//     * PERF - consider re-implementing in mixin if profiling shows worthwhile 
+//     */
+//    public static void loadTransposeQuickly(FloatBuffer source, Matrix4f dest)
+//    {
+//        final float[] load = LOAD_ARRAY;
+//        source.get(load, 0, 16);
+//        dest.m00 = load[0];
+//        dest.m10 = load[1];
+//        dest.m20 = load[2];
+//        dest.m30 = load[3];
+//        dest.m01 = load[4];
+//        dest.m11 = load[5];
+//        dest.m21 = load[6];
+//        dest.m31 = load[7];
+//        dest.m02 = load[8];
+//        dest.m12 = load[9];
+//        dest.m22 = load[10];
+//        dest.m32 = load[11];
+//        dest.m03 = load[12];
+//        dest.m13 = load[13];
+//        dest.m23 = load[14];
+//        dest.m33 = load[15];
+//    }
     
     public static final boolean isFastNioCopyEnabled()
     {

@@ -2,14 +2,15 @@ package grondag.acuity.buffering;
 
 import org.lwjgl.opengl.GL11;
 
+import com.mojang.blaze3d.platform.GlStateManager;
+
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.core.PipelineVertexFormat;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import grondag.acuity.opengl.VaoStore;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.renderer.GlStateManager;
-import net.minecraft.client.renderer.vertex.VertexFormatElement;
+import net.minecraft.client.render.VertexFormatElement;
 
 @Environment(EnvType.CLIENT)
 public class DrawableChunkDelegate
@@ -91,7 +92,7 @@ public class DrawableChunkDelegate
                 if(vaoBufferId == -1)
                     vaoBufferId = VaoStore.claimVertexArray();
                 OpenGlHelperExt.glBindVertexArray(vaoBufferId);
-                GlStateManager.glEnableClientState(GL11.GL_VERTEX_ARRAY);
+                GlStateManager.enableClientState(GL11.GL_VERTEX_ARRAY);
                 OpenGlHelperExt.enableAttributesVao(format.attributeCount);
                 bindVertexAttributes(format);
                 return lastBufferId;
@@ -110,7 +111,7 @@ public class DrawableChunkDelegate
     
     private void bindVertexAttributes(PipelineVertexFormat format)
     {
-        OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.EnumType.FLOAT.getGlConstant(), format.stride, bufferDelegate.byteOffset());
+        OpenGlHelperExt.glVertexPointerFast(3, VertexFormatElement.Format.FLOAT.getGlId(), format.stride, bufferDelegate.byteOffset());
         format.bindAttributeLocations(bufferDelegate.byteOffset());
     }
     
