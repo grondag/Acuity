@@ -6,6 +6,7 @@ import java.util.Set;
 
 import org.apache.commons.lang3.tuple.Pair;
 
+import grondag.acuity.extension.AcuityChunkVisibility;
 import it.unimi.dsi.fastutil.ints.IntArrayFIFOQueue;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import net.fabricmc.api.EnvType;
@@ -36,12 +37,12 @@ public class VisibilityHooks
         if (4096 - visgraph.empty < 256)
         {
             setvisibility.setAllVisible(true);
-            ((ISetVisibility)setvisibility).setVisibilityData(DirectionSet.ALL);
+            ((AcuityChunkVisibility)setvisibility).setVisibilityData(DirectionSet.ALL);
         }
         else if (visgraph.empty == 0)
         {
             setvisibility.setAllVisible(false);
-            ((ISetVisibility)setvisibility).setVisibilityData(DirectionSet.NONE);
+            ((AcuityChunkVisibility)setvisibility).setVisibilityData(DirectionSet.NONE);
         }
         else
         {
@@ -62,7 +63,7 @@ public class VisibilityHooks
                         facingMap.setIndex(list.getInt(j), setIndex);
                 }
             }
-            ((ISetVisibility)setvisibility).setVisibilityData(facingMap);
+            ((AcuityChunkVisibility)setvisibility).setVisibilityData(facingMap);
         }
 
         return setvisibility;

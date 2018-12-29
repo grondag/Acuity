@@ -1,4 +1,4 @@
-package grondag.acuity.mixin.old;
+package grondag.acuity.mixin;
 
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -9,12 +9,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import grondag.acuity.core.CompoundBufferBuilder;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.chunk.BlockLayeredBufferBuilder;
 
-@Mixin(RegionRenderCacheBuilder.class)
-public abstract class MixinRegionRenderCacheBuilder
+@Mixin(BlockLayeredBufferBuilder.class)
+public abstract class MixinBlockLayeredBufferBuilder
 {
     @Redirect(method = "<init>*", require = 4, 
-            at = @At(value = "NEW", args = "class=net/minecraft/client/renderer/BufferBuilder") )
+            at = @At(value = "NEW", args = "class=net/minecraft/client/render/BufferBuilder") )
     private BufferBuilder newBuferBuilder(int bufferSizeIn)
     {
         return new CompoundBufferBuilder(bufferSizeIn);
@@ -23,6 +24,6 @@ public abstract class MixinRegionRenderCacheBuilder
     @Inject(method = "<init>*", require = 1, at = @At("RETURN"))
     private void onConstructed(CallbackInfo ci)
     {
-        PipelineHooks.linkBuilders((RegionRenderCacheBuilder)(Object)this);
+        PipelineHooks.linkBuilders((BlockLayeredBufferBuilder)(Object)this);
     }
 }

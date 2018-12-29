@@ -15,10 +15,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import grondag.acuity.Acuity;
 import grondag.acuity.buffering.DrawableChunk.Solid;
 import grondag.acuity.buffering.DrawableChunk.Translucent;
+import grondag.acuity.extension.AcuityChunkVisibility;
 import grondag.acuity.hooks.ChunkRebuildHelper;
-import grondag.acuity.hooks.CompiledChunkStore;
+import grondag.acuity.hooks.ChunkRenderDataStore;
 import grondag.acuity.hooks.IRenderChunk;
-import grondag.acuity.hooks.ISetVisibility;
 import grondag.acuity.hooks.PipelineHooks;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
@@ -30,6 +30,7 @@ import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
+import net.minecraft.client.render.chunk.ChunkRenderData;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkCache;
@@ -40,11 +41,11 @@ public abstract class MixinRenderChunk implements IRenderChunk
 {
     @Shadow public static int renderChunksUpdated;
 
-    @Shadow public CompiledChunk compiledChunk;
+    @Shadow public ChunkRenderData compiledChunk;
     @Shadow private BlockPos.Mutable position;
     @Shadow private ChunkCache worldView;
     @Shadow abstract void preRenderBlocks(BufferBuilder bufferBuilderIn, BlockPos pos);
-    @Shadow abstract void postRenderBlocks(BlockRenderLayer layer, float x, float y, float z, BufferBuilder bufferBuilderIn, CompiledChunk compiledChunkIn);
+    @Shadow abstract void postRenderBlocks(BlockRenderLayer layer, float x, float y, float z, BufferBuilder bufferBuilderIn, ChunkRenderData compiledChunkIn);
     @Shadow private ReentrantLock lockCompileTask;
     @Shadow private Set<BlockEntity> setTileEntities;
     @Shadow private RenderGlobal renderGlobal;
@@ -81,20 +82,20 @@ public abstract class MixinRenderChunk implements IRenderChunk
     @Inject(method = "setCompiledChunk", require = 1, 
             at = @At(value = "FIELD", opcode = Opcodes.PUTFIELD,
             target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;compiledChunk:Lnet/minecraft/client/renderer/chunk/CompiledChunk;"))
-    private void onSetCompiledChunk(CompiledChunk compiledChunkIn, CallbackInfo ci)
+    private void onSetCompiledChunk(ChunkRenderData compiledChunkIn, CallbackInfo ci)
     {
-        if(compiledChunk == null || compiledChunk == CompiledChunk.DUMMY || compiledChunkIn == compiledChunk)
+        if(compiledChunk == null || compiledChunk == ChunkRenderData.EMPTY || compiledChunkIn == compiledChunk)
             return;
 
-        ((ISetVisibility)compiledChunk.setVisibility).releaseVisibilityData();
-        CompiledChunkStore.release(compiledChunk);
+        ((AcuityChunkVisibility)compiledChunk.setVisibility).releaseVisibilityData();
+        ChunkRenderDataStore.release(compiledChunk);
     }
 
     // shouldn't be necessary if rebuild chunk hook works, but insurance if not
     @Redirect(method = "rebuildChunk", require = 1,       
             at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;setVisibility(Lnet/minecraft/client/renderer/chunk/SetVisibility;)V"))       
-    private void onSetVisibility(CompiledChunk compiledChunk, SetVisibility setVisibility)       
+    private void onSetVisibility(ChunkRenderData compiledChunk, SetVisibility setVisibility)       
     {        
         compiledChunk.setVisibility(setVisibility);      
         PipelineHooks.mergeRenderLayers(compiledChunk);      
@@ -104,11 +105,11 @@ public abstract class MixinRenderChunk implements IRenderChunk
             target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;compiledChunk:Lnet/minecraft/client/renderer/chunk/CompiledChunk;"))
     private void onStopCompiledChunk(CallbackInfo ci)
     {
-        if(compiledChunk == null || compiledChunk == CompiledChunk.DUMMY)
+        if(compiledChunk == null || compiledChunk == ChunkRenderData.EMPTY)
             return;
 
-        ((ISetVisibility)compiledChunk.setVisibility).releaseVisibilityData();
-        CompiledChunkStore.release(compiledChunk);
+        ((AcuityChunkVisibility)compiledChunk.setVisibility).releaseVisibilityData();
+        ChunkRenderDataStore.release(compiledChunk);
     }
 
     @Override
@@ -148,7 +149,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
         final ChunkRebuildHelper help = ChunkRebuildHelper.get();
         help.clear();
 
-        final CompiledChunk compiledChunk = CompiledChunkStore.claim();
+        final ChunkRenderData compiledChunk = ChunkRenderDataStore.claim();
         final BlockPos.Mutable minPos = this.position;
 
         generator.getLock().lock();

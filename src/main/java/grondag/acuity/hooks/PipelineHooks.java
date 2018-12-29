@@ -27,9 +27,12 @@ import net.minecraft.client.render.VertexFormatElement;
 import net.minecraft.client.render.block.BlockModelRenderer;
 import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.render.block.FluidRenderer;
+import net.minecraft.client.render.chunk.BlockLayeredBufferBuilder;
+import net.minecraft.client.render.chunk.ChunkRenderData;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.entity.Entity;
+import net.minecraft.fluid.FluidState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.world.ExtendedBlockView;
@@ -86,7 +89,7 @@ public class PipelineHooks
     
     private static boolean didWarnUnhandledFluid = false;
     
-    public static void linkBuilders(RegionRenderCacheBuilder cache)
+    public static void linkBuilders(BlockLayeredBufferBuilder cache)
     {
         linkBuildersInner(cache, BlockRenderLayer.SOLID);
         linkBuildersInner(cache, BlockRenderLayer.CUTOUT);
@@ -94,9 +97,9 @@ public class PipelineHooks
         linkBuildersInner(cache, BlockRenderLayer.TRANSLUCENT);
     }
     
-    private static void linkBuildersInner(RegionRenderCacheBuilder cache, BlockRenderLayer layer)
+    private static void linkBuildersInner(BlockLayeredBufferBuilder cache, BlockRenderLayer layer)
     {
-        CompoundBufferBuilder builder = (CompoundBufferBuilder) cache.getWorldRendererByLayer(layer);
+        CompoundBufferBuilder builder = (CompoundBufferBuilder) cache.get(layer);
         builder.setupLinks(cache, layer);
     }
     
@@ -110,7 +113,7 @@ public class PipelineHooks
      * {@link CompiledChunk#setVisibility(net.minecraft.client.renderer.chunk.SetVisibility)}
      * which is reliably called after the chunks are built in render chunk.<p>
      */
-    public static void mergeRenderLayers(CompiledChunk compiledChunk)
+    public static void mergeRenderLayers(ChunkRenderData compiledChunk)
     {
         if(Acuity.isModEnabled())
         {
@@ -132,7 +135,7 @@ public class PipelineHooks
     /**
      * Performance counting version of {@link #renderFluid(BlockFluidRenderer, IBlockAccess, IBlockState, BlockPos, BufferBuilder)}
      */
-    public static boolean renderFluidDebug(FluidRenderer fluidRenderer, ExtendedBlockView blockAccess, BlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
+    public static boolean renderFluidDebug(FluidRenderer fluidRenderer, ExtendedBlockView blockAccess, FluidState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
     {
         final long start = System.nanoTime();
         final boolean result = renderFluid(fluidRenderer, blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
@@ -154,7 +157,7 @@ public class PipelineHooks
      * Handles vanilla special-case rendering for lava and water.
      * Forge fluids should come as block models instead.
      */
-    public static boolean renderFluid(FluidRenderer fluidRenderer, ExtendedBlockView blockAccess, BlockState blockStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
+    public static boolean renderFluid(FluidRenderer fluidRenderer, ExtendedBlockView blockAccess, FluidState fluidStateIn, BlockPos blockPosIn, BufferBuilder bufferBuilderIn)
     {
         if(Acuity.isModEnabled())
         {
@@ -177,7 +180,7 @@ public class PipelineHooks
             return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, fluidBuilders.get().prepare(target, lighter));
         }
         else
-            return fluidRenderer.renderFluid(blockAccess, blockStateIn, blockPosIn, bufferBuilderIn);
+            return fluidRenderer.renderFluid(blockAccess, blockPosIn, bufferBuilderIn, fluidStateIn);
     }
 
     private static AtomicInteger blockModelCount = new AtomicInteger();
@@ -330,7 +333,7 @@ public class PipelineHooks
             renderChunk.initModelviewMatrix();
     }
 
-    public static boolean shouldUploadLayer(CompiledChunk compiledchunk, BlockRenderLayer blockrenderlayer)
+    public static boolean shouldUploadLayer(ChunkRenderData compiledchunk, BlockRenderLayer blockrenderlayer)
     {
         return Acuity.isModEnabled()
             ? compiledchunk.isLayerStarted(blockrenderlayer) && !compiledchunk.isLayerEmpty(blockrenderlayer)
@@ -359,7 +362,7 @@ public class PipelineHooks
 
     @SuppressWarnings("null")
     public static ListenableFuture<Object> uploadChunk(ChunkRenderDispatcher chunkRenderDispatcher, BlockRenderLayer blockRenderLayer,
-            BufferBuilder bufferBuilder, RenderChunk renderChunk, CompiledChunk compiledChunk, double distanceSq)
+            BufferBuilder bufferBuilder, RenderChunk renderChunk, ChunkRenderData compiledChunk, double distanceSq)
     {
         assert blockRenderLayer == BlockRenderLayer.SOLID || blockRenderLayer == BlockRenderLayer.TRANSLUCENT;
         

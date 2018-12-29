@@ -10,6 +10,7 @@ import net.fabricmc.api.Environment;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.client.render.chunk.BlockLayeredBufferBuilder;
 import net.minecraft.util.math.BlockPos;
 
 @Environment(EnvType.CLIENT)
@@ -41,12 +42,12 @@ public class ChunkRebuildHelper
     public final VisGraph visGraph = new VisGraph();
     private final BufferBuilder[] builders = new BufferBuilder[BLOCK_RENDER_LAYER_COUNT];
     
-    public BufferBuilder[] builders(RegionRenderCacheBuilder regionCache)
+    public BufferBuilder[] builders(BlockLayeredBufferBuilder regionCache)
     {
-        builders[BlockRenderLayer.SOLID.ordinal()] = regionCache.getWorldRendererByLayer(BlockRenderLayer.SOLID);
-        builders[BlockRenderLayer.CUTOUT.ordinal()] = regionCache.getWorldRendererByLayer(BlockRenderLayer.CUTOUT);
-        builders[BlockRenderLayer.MIPPED_CUTOUT.ordinal()] = regionCache.getWorldRendererByLayer(BlockRenderLayer.MIPPED_CUTOUT);
-        builders[BlockRenderLayer.TRANSLUCENT.ordinal()] = regionCache.getWorldRendererByLayer(BlockRenderLayer.TRANSLUCENT);
+        builders[BlockRenderLayer.SOLID.ordinal()] = regionCache.get(BlockRenderLayer.SOLID);
+        builders[BlockRenderLayer.CUTOUT.ordinal()] = regionCache.get(BlockRenderLayer.CUTOUT);
+        builders[BlockRenderLayer.MIPPED_CUTOUT.ordinal()] = regionCache.get(BlockRenderLayer.MIPPED_CUTOUT);
+        builders[BlockRenderLayer.TRANSLUCENT.ordinal()] = regionCache.get(BlockRenderLayer.TRANSLUCENT);
         return builders;
     }
 

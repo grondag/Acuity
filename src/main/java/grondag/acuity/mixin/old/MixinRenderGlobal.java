@@ -15,12 +15,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.google.common.collect.Queues;
 
 import grondag.acuity.Acuity;
+import grondag.acuity.extension.AcuityChunkVisibility;
 import grondag.acuity.hooks.MutableBoundingBox;
 import grondag.acuity.hooks.IRenderGlobal;
-import grondag.acuity.hooks.ISetVisibility;
 import grondag.acuity.hooks.PipelineHooks;
 import grondag.acuity.hooks.VisibilityHooks;
 import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.client.render.chunk.ChunkRenderData;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BoundingBox;
@@ -72,7 +73,7 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
             RenderChunk renderChunk = viewFrustum.getRenderChunk(eyePos);
             if(renderChunk != null)
             {
-                Object visData = ((ISetVisibility)renderChunk.compiledChunk.setVisibility).getVisibilityData();
+                Object visData = ((AcuityChunkVisibility)renderChunk.compiledChunk.setVisibility).getVisibilityData();
                 // unbuilt chunks won't have extended info
                 if(visData != null)
                 {
@@ -84,7 +85,7 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
 
     @Redirect(method = "renderBlockLayer", require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;isLayerStarted(Lnet/minecraft/util/BlockRenderLayer;)Z"))
-    private boolean isLayerStarted(CompiledChunk compiledChunk, BlockRenderLayer layer)
+    private boolean isLayerStarted(ChunkRenderData compiledChunk, BlockRenderLayer layer)
     {
         return PipelineHooks.shouldUploadLayer(compiledChunk, layer);
     }

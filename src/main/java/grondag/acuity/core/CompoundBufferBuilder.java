@@ -13,6 +13,7 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.client.render.chunk.BlockLayeredBufferBuilder;
 
 @Environment(EnvType.CLIENT)
 public class CompoundBufferBuilder extends BufferBuilder
@@ -65,13 +66,13 @@ public class CompoundBufferBuilder extends BufferBuilder
     /**
      * Called at end of RegionRenderCacheBuilder init via ASM.
      */
-    public void setupLinks(RegionRenderCacheBuilder owner, BlockRenderLayer layer)
+    public void setupLinks(BlockLayeredBufferBuilder owner, BlockRenderLayer layer)
     {
         this.layer = layer;
         
         if(this.layer == BlockRenderLayer.CUTOUT || this.layer == BlockRenderLayer.MIPPED_CUTOUT)
         {
-            this.proxy = (CompoundBufferBuilder) owner.getWorldRendererByLayer(BlockRenderLayer.SOLID);
+            this.proxy = (CompoundBufferBuilder) owner.get(BlockRenderLayer.SOLID);
         }
     }
     
