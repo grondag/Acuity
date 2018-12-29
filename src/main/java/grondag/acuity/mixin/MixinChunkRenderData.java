@@ -5,16 +5,16 @@ import java.util.List;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 
-import grondag.acuity.extension.AcuityChunkRenderData;
-import grondag.acuity.extension.AcuityChunkVisibility;
 import grondag.acuity.hooks.ChunkRebuildHelper;
+import grondag.acuity.mixin.extension.ChunkRenderDataExt;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.render.chunk.ChunkRenderData;
 import net.minecraft.client.render.chunk.ChunkVisibility;
 
 @Mixin(ChunkRenderData.class)
-public abstract class MixinChunkRenderData implements AcuityChunkRenderData
+public abstract class MixinChunkRenderData implements ChunkRenderDataExt
 {
     @Shadow private boolean[] hasContent;
     @Shadow private boolean[] isInitialized;
@@ -22,6 +22,9 @@ public abstract class MixinChunkRenderData implements AcuityChunkRenderData
     @Shadow private List<BlockEntity> blockEntities;
     @Shadow private ChunkVisibility chunkVisibility;
     @Shadow private BufferBuilder.State bufferState;
+    
+    @Override
+    @Shadow public abstract void setNonEmpty(BlockRenderLayer blockRenderLayer);
     
     @Override
     public void clear()
@@ -32,6 +35,6 @@ public abstract class MixinChunkRenderData implements AcuityChunkRenderData
         chunkVisibility.set(false);
         bufferState = null;
         blockEntities.clear();
-        ((AcuityChunkVisibility)chunkVisibility).clear();
     }
+    
 }

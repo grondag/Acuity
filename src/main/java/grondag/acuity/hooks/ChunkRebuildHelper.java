@@ -39,7 +39,6 @@ public class ChunkRebuildHelper
     public final HashSet<BlockEntity> tileEntities = Sets.newHashSet();
     public final Set<BlockEntity> tileEntitiesToAdd = Sets.newHashSet();
     public final Set<BlockEntity> tileEntitiesToRemove = Sets.newHashSet();
-    public final VisGraph visGraph = new VisGraph();
     private final BufferBuilder[] builders = new BufferBuilder[BLOCK_RENDER_LAYER_COUNT];
     
     public BufferBuilder[] builders(BlockLayeredBufferBuilder regionCache)
@@ -57,7 +56,5 @@ public class ChunkRebuildHelper
         tileEntities.clear();
         tileEntitiesToAdd.clear();
         tileEntitiesToRemove.clear();
-        visGraph.bitSet.clear();
-        visGraph.empty = 4096;
     }
 }

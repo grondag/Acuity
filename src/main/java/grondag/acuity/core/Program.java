@@ -26,8 +26,8 @@ import grondag.acuity.api.IUniform.IUniformMatrix4f;
 import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
 import grondag.acuity.api.UniformUpdateFrequency;
-import grondag.acuity.extension.AcuityMatrix4f;
 import grondag.acuity.fermion.config.Localization;
+import grondag.acuity.mixin.extension.Matrix4fExt;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import net.fabricmc.api.EnvType;
@@ -239,7 +239,7 @@ public class Program
         @Override
         protected void uploadInner()
         {
-            OpenGlHelper.glUniform3(this.unifID, this.uniformFloatBuffer);
+            GLX.glUniform3(this.unifID, this.uniformFloatBuffer);
        }
     }
     
@@ -279,7 +279,7 @@ public class Program
         @Override
         protected void uploadInner()
         {
-            OpenGlHelper.glUniform4(this.unifID, this.uniformFloatBuffer);
+            GLX.glUniform4(this.unifID, this.uniformFloatBuffer);
         }
     }
     
@@ -345,7 +345,7 @@ public class Program
         @Override
         protected void uploadInner()
         {
-            OpenGlHelper.glUniform1(this.unifID, this.uniformIntBuffer);
+            GLX.glUniform1(this.unifID, this.uniformIntBuffer);
         }
     }
     
@@ -375,7 +375,7 @@ public class Program
         @Override
         protected void uploadInner()
         {
-            OpenGlHelper.glUniform2(this.unifID, this.uniformIntBuffer);
+            GLX.glUniform2(this.unifID, this.uniformIntBuffer);
         }
     }
     
@@ -410,7 +410,7 @@ public class Program
         @Override
         protected void uploadInner()
         {
-            OpenGlHelper.glUniform3(this.unifID, this.uniformIntBuffer);
+            GLX.glUniform3(this.unifID, this.uniformIntBuffer);
         }
     }
     
@@ -450,7 +450,7 @@ public class Program
         @Override
         protected void uploadInner()
         {
-            OpenGlHelper.glUniform4(this.unifID, this.uniformIntBuffer);
+            GLX.glUniform4(this.unifID, this.uniformIntBuffer);
         }
     }
     
@@ -502,7 +502,6 @@ public class Program
         }
     }
     
-    @SuppressWarnings("null")
     private final void updateModelUniformsInner()
     {
         if(this.modelViewUniform != null);
@@ -561,7 +560,7 @@ public class Program
         @Override
         public final void set(Matrix4f matrix)
         {
-            this.set(((AcuityMatrix4f)(Object)matrix).getComponents());
+            this.set(((Matrix4fExt)(Object)matrix).getComponents());
         }
         
         @Override
@@ -627,18 +626,18 @@ public class Program
         try
         {
             if(this.progID > 0)
-                OpenGlHelper.glDeleteProgram(progID);
+                GLX.glDeleteProgram(progID);
             
-            this.progID = OpenGlHelper.glCreateProgram();
+            this.progID = GLX.glCreateProgram();
             
             this.isErrored = this.progID > 0 && !loadInner();
         }
         catch(Exception e)
         {
             if(this.progID > 0)
-                OpenGlHelper.glDeleteProgram(progID);
+                GLX.glDeleteProgram(progID);
             
-            Acuity.INSTANCE.getLog().error(I18n.translateToLocal("misc.error_program_link_failure"), e);
+            Acuity.INSTANCE.getLog().error(Localization.translate("misc.error_program_link_failure"), e);
             this.progID = -1;
         }
         
@@ -668,13 +667,13 @@ public class Program
         if(fragId <= 0)
             return false;
         
-        OpenGlHelper.glAttachShader(programID, vertId);
-        OpenGlHelper.glAttachShader(programID, fragId);
+        GLX.glAttachShader(programID, vertId);
+        GLX.glAttachShader(programID, fragId);
         
         Configurator.lightingModel.vertexFormat(this.textureFormat).bindProgramAttributes(programID);
         
-        OpenGlHelper.glLinkProgram(programID);
-        if(OpenGlHelper.glGetProgrami(programID, OpenGlHelper.GL_LINK_STATUS) == GL11.GL_FALSE)
+        GLX.glLinkProgram(programID);
+        if(GLX.glGetProgrami(programID, GLX.GL_LINK_STATUS) == GL11.GL_FALSE)
         {
             Acuity.INSTANCE.getLog().error(OpenGlHelperExt.getProgramInfoLog(programID));
             return false;

@@ -15,13 +15,20 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.google.common.collect.Queues;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.extension.AcuityChunkVisibility;
+import grondag.acuity.fermion.varia.DirectionHelper;
 import grondag.acuity.hooks.MutableBoundingBox;
 import grondag.acuity.hooks.IRenderGlobal;
 import grondag.acuity.hooks.PipelineHooks;
-import grondag.acuity.hooks.VisibilityHooks;
+import grondag.acuity.mixin.extension.ChunkRenderDispatcherExt;
+import grondag.acuity.mixin.extension.MinecraftClientExt;
+import grondag.acuity.mixin.extension.ChunkRenderDataExt;
+import net.minecraft.class_3689;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.render.chunk.ChunkRenderData;
+import net.minecraft.client.render.chunk.ChunkRenderDispatcher;
+import net.minecraft.client.render.chunk.ChunkRenderer;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BoundingBox;
@@ -31,9 +38,9 @@ import net.minecraft.util.math.MathHelper;
 @Mixin(RenderGlobal.class)
 public abstract class MixinRenderGlobal implements IRenderGlobal
 {
-    @Shadow private ViewFrustum viewFrustum;
-    @Shadow private Minecraft mc;
-    @Shadow private WorldClient world;
+    @Shadow private ChunkRenderDispatcher viewFrustum;
+    @Shadow private MinecraftClient client;
+    @Shadow private ClientWorld world;
     @Shadow private double frustumUpdatePosX;
     @Shadow private double frustumUpdatePosY;
     @Shadow private double frustumUpdatePosZ;
@@ -55,33 +62,11 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
     @Shadow private boolean debugFixTerrainFrustum;
     @Shadow public ChunkRenderDispatcher renderDispatcher;
     
-    @Shadow public abstract Set<EnumFacing> getVisibleFacings(BlockPos pos);
+    @Shadow public abstract Set<Direction> getVisibleFacings(BlockPos pos);
     @Shadow protected abstract Vector3f getViewVector(Entity entityIn, double partialTicks);
     @Shadow public abstract void loadRenderers();
-    @Shadow protected abstract RenderChunk getRenderChunkOffset(BlockPos playerPos, RenderChunk renderChunkBase, EnumFacing facing);
+    @Shadow protected abstract RenderChunk getRenderChunkOffset(BlockPos playerPos, RenderChunk renderChunkBase, Direction facing);
     @Shadow protected abstract void fixTerrainFrustum(double x, double y, double z);
-    
-    /**
-     * Called from {@link RenderGlobal#setupTerrain(net.minecraft.entity.Entity, double, net.minecraft.client.renderer.culling.ICamera, int, boolean)}.
-     * Relies on pre-computed visibility stored during render chunk rebuild vs computing on fly each time.
-     */
-    @Inject(method = "getVisibleFacings", at = @At("HEAD"), cancellable = true, expect = 1)
-    public void onGetVisibleFacings(BlockPos eyePos, CallbackInfoReturnable<Set<EnumFacing>> ci)
-    {
-        if(Acuity.isModEnabled())
-        {
-            RenderChunk renderChunk = viewFrustum.getRenderChunk(eyePos);
-            if(renderChunk != null)
-            {
-                Object visData = ((AcuityChunkVisibility)renderChunk.compiledChunk.setVisibility).getVisibilityData();
-                // unbuilt chunks won't have extended info
-                if(visData != null)
-                {
-                    ci.setReturnValue(VisibilityHooks.getVisibleFacingsExt(visData, eyePos));
-                }
-            }
-        }
-    }
 
     @Redirect(method = "renderBlockLayer", require = 1,
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;isLayerStarted(Lnet/minecraft/util/BlockRenderLayer;)Z"))
@@ -99,12 +84,13 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
     @Override
     public void setupTerrainFast(Entity viewEntity, double partialTicks, ICamera camera, int frameCount, boolean playerSpectator)
     {
+        final class_3689 profiler = ((MinecraftClientExt)mc).profiler();
         if (this.mc.gameSettings.renderDistanceChunks != this.renderDistanceChunks)
         {
             this.loadRenderers();
         }
 
-        this.world.profiler.startSection("camera");
+        profiler.begin("camera");
         double dx = viewEntity.posX - this.frustumUpdatePosX;
         double dy = viewEntity.posY - this.frustumUpdatePosY;
         double dz = viewEntity.posZ - this.frustumUpdatePosZ;
@@ -120,13 +106,13 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
             this.viewFrustum.updateChunkPositions(viewEntity.posX, viewEntity.posZ);
         }
 
-        this.world.profiler.endStartSection("renderlistcamera");
+        profiler.endBegin("renderlistcamera");
         double viewX = viewEntity.lastTickPosX + (viewEntity.posX - viewEntity.lastTickPosX) * partialTicks;
         double viewY = viewEntity.lastTickPosY + (viewEntity.posY - viewEntity.lastTickPosY) * partialTicks;
         double viewZ = viewEntity.lastTickPosZ + (viewEntity.posZ - viewEntity.lastTickPosZ) * partialTicks;
         this.renderContainer.initialize(viewX, viewY, viewZ);
         
-        this.world.profiler.endStartSection("cull");
+        profiler.endBegin("cull");
         if (this.debugFixedClippingHelper != null)
         {
             Frustum frustum = new Frustum(this.debugFixedClippingHelper);
@@ -134,7 +120,7 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
             camera = frustum;
         }
 
-        this.mc.profiler.endStartSection("culling");
+        profiler.endBegin("culling");
         final BlockPos eyePos = this.eyePos.set(viewX, viewY + (double)viewEntity.getEyeHeight(), viewZ);
         final BlockPos viewChunkOrigin = this.viewChunkOrigin.set(MathHelper.floor(viewX / 16.0D) * 16, MathHelper.floor(viewY / 16.0D) * 16, MathHelper.floor(viewZ / 16.0D) * 16);
         RenderChunk eyeRenderChunk = this.viewFrustum.getRenderChunk(eyePos);
@@ -147,7 +133,7 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
         this.lastViewEntityYaw = (double)viewEntity.rotationYaw;
         boolean haveDebugFixedClippingHelper = this.debugFixedClippingHelper != null;
         
-        this.mc.profiler.endStartSection("update");
+        profiler.endBegin("update");
 
         if (!haveDebugFixedClippingHelper && this.displayListEntitiesDirty)
         {
@@ -163,7 +149,7 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
             {
                 boolean renderEyeChunk = false;
                 RenderGlobal.ContainerLocalRenderInformation eyeRenderInfo = ((RenderGlobal)(Object)(this)).new ContainerLocalRenderInformation(eyeRenderChunk, null, 0);
-                Set<EnumFacing> eyeFacings = this.getVisibleFacings(eyePos);
+                Set<Direction> eyeFacings = this.getVisibleFacings(eyePos);
 
                 if (eyeFacings.size() == 1)
                 {
@@ -214,20 +200,20 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
                 }
             }
 
-            this.mc.profiler.startSection("iteration");
+            profiler.begin("iteration");
 
             while (!queue.isEmpty())
             {
                 final RenderGlobal.ContainerLocalRenderInformation info = queue.poll();
                 final RenderChunk infoChunk = info.renderChunk;
-                final EnumFacing infoFace = info.facing;
+                final Direction infoFace = info.facing;
                 this.renderInfos.add(info);
                 if(infoChunk.needsUpdate())
                     this.chunksToUpdate.add(infoChunk);
                 
                 for(int i = 0; i < 6; i++)
                 {
-                    final EnumFacing checkFace = EnumFacing.VALUES[i];
+                    final Direction checkFace = DirectionHelper.fromOrdinal(i);
                     final RenderChunk checkChunk = this.getRenderChunkOffset(viewChunkOrigin, infoChunk, checkFace);
 
                     if ((!renderMany || !info.hasDirection(checkFace.getOpposite())) && (!renderMany || infoFace == null || infoChunk.getCompiledChunk().isVisible(infoFace.getOpposite(), checkFace)) && checkChunk != null && checkChunk.setFrameIndex(frameCount) && camera.isBoundingBoxInFrustum(checkChunk.boundingBox))
@@ -239,12 +225,12 @@ public abstract class MixinRenderGlobal implements IRenderGlobal
                 }
             }
 
-            this.mc.profiler.endSection();
+            profiler.end();
         }
         
         this.displayListEntitiesDirty = displayListEntitiesDirty || !this.chunksToUpdate.isEmpty();
 
-        this.mc.profiler.endStartSection("captureFrustum");
+        profiler.endBegin("captureFrustum");
 
         if (this.debugFixTerrainFrustum)
         {

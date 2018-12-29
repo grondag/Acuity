@@ -8,6 +8,8 @@ import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.TextureFormat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.MinecraftClient;
+import net.minecraft.client.render.VertexFormat;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 
@@ -88,7 +90,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     @Override
     public void setAmbientOcclusion(boolean enableAmbientOcclusion)
     {
-        this.enableAmbientOcclusion = enableAmbientOcclusion && Minecraft.isAmbientOcclusionEnabled();
+        this.enableAmbientOcclusion = enableAmbientOcclusion && MinecraftClient.isAmbientOcclusionEnabled();
     }
     
     @SuppressWarnings("null")
@@ -120,7 +122,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.skyLightMap = 0;
         this.enableDiffuse = true;
         this.glowMask = (2 << quad.getPipeline().textureFormat().layerCount()) - 1;
-        this.enableAmbientOcclusion = Minecraft.isAmbientOcclusionEnabled();
+        this.enableAmbientOcclusion = MinecraftClient.isAmbientOcclusionEnabled();
     }
     
     public VertexFormat getVertexFormat()

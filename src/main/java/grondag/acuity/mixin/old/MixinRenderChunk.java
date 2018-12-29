@@ -15,11 +15,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import grondag.acuity.Acuity;
 import grondag.acuity.buffering.DrawableChunk.Solid;
 import grondag.acuity.buffering.DrawableChunk.Translucent;
-import grondag.acuity.extension.AcuityChunkVisibility;
 import grondag.acuity.hooks.ChunkRebuildHelper;
 import grondag.acuity.hooks.ChunkRenderDataStore;
 import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.hooks.PipelineHooks;
+import grondag.acuity.mixin.extension.ChunkRenderDataExt;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
@@ -31,6 +31,7 @@ import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.chunk.ChunkRenderData;
+import net.minecraft.client.render.chunk.ChunkVisibility;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkCache;
@@ -87,7 +88,6 @@ public abstract class MixinRenderChunk implements IRenderChunk
         if(compiledChunk == null || compiledChunk == ChunkRenderData.EMPTY || compiledChunkIn == compiledChunk)
             return;
 
-        ((AcuityChunkVisibility)compiledChunk.setVisibility).releaseVisibilityData();
         ChunkRenderDataStore.release(compiledChunk);
     }
 
@@ -95,9 +95,9 @@ public abstract class MixinRenderChunk implements IRenderChunk
     @Redirect(method = "rebuildChunk", require = 1,       
             at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/chunk/CompiledChunk;setVisibility(Lnet/minecraft/client/renderer/chunk/SetVisibility;)V"))       
-    private void onSetVisibility(ChunkRenderData compiledChunk, SetVisibility setVisibility)       
+    private void onSetVisibility(ChunkRenderData compiledChunk, ChunkVisibility setVisibility)       
     {        
-        compiledChunk.setVisibility(setVisibility);      
+        compiledChunk.setChunkVisibility(setVisibility);      
         PipelineHooks.mergeRenderLayers(compiledChunk);      
     }
     @Inject(method = "stopCompileTask", require = 1, 
@@ -108,7 +108,6 @@ public abstract class MixinRenderChunk implements IRenderChunk
         if(compiledChunk == null || compiledChunk == ChunkRenderData.EMPTY)
             return;
 
-        ((AcuityChunkVisibility)compiledChunk.setVisibility).releaseVisibilityData();
         ChunkRenderDataStore.release(compiledChunk);
     }
 
@@ -166,7 +165,6 @@ public abstract class MixinRenderChunk implements IRenderChunk
             generator.getLock().unlock();
         }
 
-        final VisGraph visGraph = help.visGraph;
         final HashSet<BlockEntity> tileEntities = help.tileEntities;
 
         if (!this.worldView.isEmpty())
@@ -223,9 +221,9 @@ public abstract class MixinRenderChunk implements IRenderChunk
 
                             if (block.getDefaultState().getRenderType() != BlockRenderType.INVISIBLE)
                             {
-                                if (!compiledChunk.isLayerStarted(layer))
+                                if (!compiledChunk.isInitialized(layer))
                                 {
-                                    compiledChunk.setLayerStarted(layer);
+                                    compiledChunk.setInitialized(layer);
                                     this.preRenderBlocks(builders[i], minPos);
                                 }
 
@@ -243,9 +241,9 @@ public abstract class MixinRenderChunk implements IRenderChunk
             {
                 final BlockRenderLayer layer = help.layers[i];
                 if (layerFlags[i])
-                    compiledChunk.setLayerUsed(layer);
+                    ((ChunkRenderDataExt)compiledChunk).setNonEmpty(layer);
 
-                if (compiledChunk.isLayerStarted(layer))
+                if (compiledChunk.isInitialized(layer))
                     this.postRenderBlocks(layer, x, y, z, builders[i], compiledChunk);
             }
         }

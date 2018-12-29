@@ -1,6 +1,6 @@
-package grondag.acuity.extension;
+package grondag.acuity.mixin.extension;
 
-public interface AcuityFogHelper
+public interface FogHelperExt
 {
     float fogColorRed();
     

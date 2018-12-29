@@ -10,6 +10,7 @@ import grondag.acuity.fermion.varia.DirectionHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
@@ -66,7 +67,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     
     public CompoundVertexLighter()
     {
-        this.blockInfo = (IBlockInfo)(new BlockInfo(Minecraft.getMinecraft().getBlockColors()));
+        this.blockInfo = (IBlockInfo)(new BlockInfo(MinecraftClient.getInstance().getBlockColorMap()));
     }
     
     protected abstract PipelinedVertexLighter createChildLighter(RenderPipeline pipeline);

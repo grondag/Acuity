@@ -10,6 +10,10 @@ import net.minecraft.class_856;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.entity.Entity;
 
+// PERF: restore visibility hooks if profiling shows worthwhile
+// Computation is in class_852
+// See forge branch MixinVisGraph.onComputeVisibility for details
+
 @Mixin(WorldRenderer.class)
 public abstract class MixinWorldRenderer
 {

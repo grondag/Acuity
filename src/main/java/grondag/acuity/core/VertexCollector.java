@@ -144,7 +144,6 @@ public class VertexCollector
             }
         };
         
-        @SuppressWarnings("null")
         private void doSort(VertexCollector caller, double x, double y, double z)
         {
          // works because 4 bytes per int
@@ -217,7 +216,6 @@ public class VertexCollector
         return dx * dx + dy * dy + dz * dz;
     }
     
-    @SuppressWarnings("null")
     public boolean hasUnpackedSortedQuads()
     {
         return this.perQuadDistance != null && this.sortReadIndex < this.perQuadDistance.length;
@@ -226,7 +224,6 @@ public class VertexCollector
     /**
      * Will return {@link Double#MIN_VALUE} if no unpacked quads remaining.
      */
-    @SuppressWarnings("null")
     public double firstUnpackedDistance()
     {
         return hasUnpackedSortedQuads() ? this.perQuadDistance[this.sortReadIndex] : Double.MIN_VALUE;
@@ -239,7 +236,6 @@ public class VertexCollector
      * 
      * (All distances are actually squared distances, to be clear.)
      */
-    @SuppressWarnings("null")
     public int unpackUntilDistance(double minDistanceSquared)
     {
         if(!hasUnpackedSortedQuads())

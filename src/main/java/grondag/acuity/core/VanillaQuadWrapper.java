@@ -9,6 +9,8 @@ import grondag.acuity.api.PipelineManager;
 import grondag.acuity.api.TextureFormat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.client.render.VertexFormat;
+import net.minecraft.client.render.VertexFormatElement;
 import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.util.math.Vector3f;
@@ -62,7 +64,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         for(int i = 0; i < format.getElementCount(); i++)
         {
             VertexFormatElement e = format.getElement(i);
-            switch(e.getUsage())
+            switch(e.getType())
             {
             case NORMAL:
                 normalIndex = i;

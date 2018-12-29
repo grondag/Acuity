@@ -9,9 +9,11 @@ import grondag.acuity.Acuity;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.buffering.UploadableChunk;
+import grondag.acuity.mixin.extension.BufferBuilderExt;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.VertexFormat;
 import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.render.chunk.BlockLayeredBufferBuilder;
 
@@ -47,6 +49,8 @@ public class CompoundBufferBuilder extends BufferBuilder
 
     private CompoundBufferBuilder proxy;
     
+    private BufferBuilderExt accessor;
+    
     private class CompoundState extends State
     {
         private int[][] collectorState;
@@ -61,6 +65,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     public CompoundBufferBuilder(int bufferSizeIn)
     {
         super(limitBufferSize(bufferSizeIn));
+        accessor = (BufferBuilderExt)this;
     }
     
     /**
@@ -102,18 +107,18 @@ public class CompoundBufferBuilder extends BufferBuilder
      * this instance will be removed during {@link #finishDrawingIfNotAlreadyFinished()}.
      */
     @Override
-    public State getVertexState()
+    public State toBufferState()
     {
         if(Acuity.isModEnabled())
         {
             assert this.proxy == null;
             assert this.layer == BlockRenderLayer.TRANSLUCENT;
             
-            State inner = super.getVertexState();
+            State inner = super.toBufferState();
             CompoundState result = loadedState;
             if(result == null)
             {
-                result = new CompoundState(inner.getRawBuffer(), inner.getVertexFormat(), 
+                result = new CompoundState(inner.getRawBuffer(), inner.getFormat(), 
                     collectors.get().getRight().getCollectorState(null));
             }
             else
@@ -124,14 +129,13 @@ public class CompoundBufferBuilder extends BufferBuilder
             return result;
         }
         else
-            return super.getVertexState();
+            return super.toBufferState();
     }
 
-    @SuppressWarnings("null")
     @Override
-    public void setVertexState(State state)
+    public void restoreState(State state)
     {
-        super.setVertexState(state);
+        super.restoreState(state);
         if(Acuity.isModEnabled())
         {
             assert this.proxy == null;
@@ -143,9 +147,9 @@ public class CompoundBufferBuilder extends BufferBuilder
     }
 
     @Override
-    public void reset()
+    public void clear()
     {
-        super.reset();
+        super.clear();
         if(Acuity.isModEnabled())
         {
             assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT;
@@ -169,7 +173,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     
     public void beginIfNotAlreadyDrawing(int glMode, VertexFormat format)
     {
-        if(!this.isDrawing)
+        if(!accessor.isBuilding())
         {
             assert this.layer == BlockRenderLayer.SOLID || this.layer == BlockRenderLayer.TRANSLUCENT || !Acuity.isModEnabled();
             
@@ -187,12 +191,11 @@ public class CompoundBufferBuilder extends BufferBuilder
             beginIfNotAlreadyDrawing(glMode, format);
     }
     
-    @SuppressWarnings("null")
     public void finishDrawingIfNotAlreadyFinished()
     {
-        if(this.isDrawing)
+        if(accessor.isBuilding())
         {
-            super.finishDrawing();
+            super.end();
             
             if(Acuity.isModEnabled())
             {
@@ -226,7 +229,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     }
     
     @Override
-    public void finishDrawing()
+    public void end()
     {
         if(Acuity.isModEnabled() && proxy != null)
         {
@@ -266,7 +269,7 @@ public class CompoundBufferBuilder extends BufferBuilder
 //    }
     
     @Override
-    public void sortVertexData(float x, float y, float z)
+    public void sortQuads(float x, float y, float z)
     {
 //        SORTS.put(chunkOriginPos, System.nanoTime());
         
@@ -274,6 +277,6 @@ public class CompoundBufferBuilder extends BufferBuilder
             // save sort perspective coordinate for use during packing.  Actual sort occurs then.
             collectors.get().getRight().setViewCoordinates(x, y, z);
         else
-            super.sortVertexData(x, y, z);
+            super.sortQuads(x, y, z);
     }
 }

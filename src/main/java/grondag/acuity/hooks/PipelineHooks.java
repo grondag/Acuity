@@ -22,6 +22,7 @@ import grondag.acuity.core.VanillaQuadWrapper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.block.BlockState;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.VertexFormatElement;
 import net.minecraft.client.render.block.BlockModelRenderer;
@@ -312,11 +313,6 @@ public class PipelineHooks
         return index == 0 || usage == VertexFormatElement.Type.UV || usage == VertexFormatElement.Type.GENERIC;
     }
 
-    public static boolean useVbo()
-    {
-        return Acuity.isModEnabled() || (OpenGlHelper.vboSupported && Minecraft.getMinecraft().gameSettings.useVbo);
-    }
-
     /**
      * When Acuity is enabled the per-chunk matrix is never used, so is wasteful to update when frustum moves.
      * Matters more when lots of block updates or other high-throughput because adds to contention.
@@ -336,8 +332,8 @@ public class PipelineHooks
     public static boolean shouldUploadLayer(ChunkRenderData compiledchunk, BlockRenderLayer blockrenderlayer)
     {
         return Acuity.isModEnabled()
-            ? compiledchunk.isLayerStarted(blockrenderlayer) && !compiledchunk.isLayerEmpty(blockrenderlayer)
-            : compiledchunk.isLayerStarted(blockrenderlayer);
+            ? compiledchunk.isInitialized(blockrenderlayer) && !compiledchunk.isEmpty(blockrenderlayer)
+            : compiledchunk.isInitialized(blockrenderlayer);
     }
     
     public static int renderBlockLayer(RenderGlobal renderGlobal, BlockRenderLayer blockLayerIn, double partialTicks, int pass, Entity entityIn)
@@ -366,7 +362,7 @@ public class PipelineHooks
     {
         assert blockRenderLayer == BlockRenderLayer.SOLID || blockRenderLayer == BlockRenderLayer.TRANSLUCENT;
         
-        if (Minecraft.getMinecraft().isCallingFromMinecraftThread())
+        if (MinecraftClient.getInstance().isMainThread())
         {
             if(blockRenderLayer == BlockRenderLayer.SOLID)
                 ((IRenderChunk)renderChunk).setSolidDrawable((Solid) ((CompoundBufferBuilder)bufferBuilder).produceDrawable());

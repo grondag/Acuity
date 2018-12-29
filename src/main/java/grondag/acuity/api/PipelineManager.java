@@ -11,11 +11,11 @@ import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.Configurator;
 import grondag.acuity.core.PipelineShaderManager;
-import grondag.acuity.extension.AcuityFogHelper;
-import grondag.acuity.extension.AcuityGameRenderer;
-import grondag.acuity.extension.AcuityMatrix4f;
 import grondag.acuity.mixin.MixinFogState;
 import grondag.acuity.mixin.MixinGlStateManager;
+import grondag.acuity.mixin.extension.FogHelperExt;
+import grondag.acuity.mixin.extension.GameRendererExt;
+import grondag.acuity.mixin.extension.Matrix4fExt;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.Matrix4f;
 import net.minecraft.entity.Entity;
@@ -217,7 +217,7 @@ public final class PipelineManager implements IPipelineManager
         
         pipeline.uniform3f("u_fogColor", UniformUpdateFrequency.PER_TICK, u -> 
         {
-            AcuityFogHelper fh = (AcuityFogHelper)((AcuityGameRenderer)MinecraftClient.getInstance().worldRenderer).fogHelper();
+            FogHelperExt fh = (FogHelperExt)((GameRendererExt)MinecraftClient.getInstance().worldRenderer).fogHelper();
             u.set(fh.fogColorRed(), fh.fogColorGreen(), fh.fogColorBlue());
         });
         
@@ -282,7 +282,7 @@ public final class PipelineManager implements IPipelineManager
     }
 
     private static final Matrix4f transferMatrixBase = new Matrix4f();
-    private static final AcuityMatrix4f transferMatrix = (AcuityMatrix4f)(Object)transferMatrixBase;
+    private static final Matrix4fExt transferMatrix = (Matrix4fExt)(Object)transferMatrixBase;
     
     
     public static final void setModelViewMatrix(Matrix4f mvMatrix)

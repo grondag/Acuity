@@ -16,7 +16,6 @@ public class VertexCollectorList
 {
     private static final Comparator<VertexCollector> vertexCollectionComparator = new Comparator<VertexCollector>() 
     {
-        @SuppressWarnings("null")
         @Override
         public int compare(VertexCollector o1, VertexCollector o2)
         {

@@ -23,7 +23,7 @@ public class SolidRenderCube implements Consumer<DrawableChunkDelegate>
     }
 
     @Override
-    public void accept(@SuppressWarnings("null") DrawableChunkDelegate d)
+    public void accept(DrawableChunkDelegate d)
     {
         pipelineLists[d.getPipeline().getIndex()].add(d);   
     }

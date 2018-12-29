@@ -2,7 +2,7 @@ package grondag.acuity.hooks;
 
 import java.util.concurrent.ArrayBlockingQueue;
 
-import grondag.acuity.extension.AcuityChunkRenderData;
+import grondag.acuity.mixin.extension.ChunkRenderDataExt;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.chunk.ChunkRenderData;
@@ -23,7 +23,7 @@ public class ChunkRenderDataStore
     
     public static void release(ChunkRenderData chunkRenderData)
     {
-        ((AcuityChunkRenderData)chunkRenderData).clear();
+        ((ChunkRenderDataExt)chunkRenderData).clear();
         chunkDataPool.offer(chunkRenderData);
     }
 }
