@@ -4,23 +4,23 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
-public interface IPipelineManager
+public interface PipelineManager
 {
     /**
      * Will return null if pipeline limit would be exceeded.
      */
-    IRenderPipeline createPipeline(TextureFormat textureFormat, String vertexShader, String fragmentShader);  
+    RenderPipeline createPipeline(TextureDepth textureFormat, String vertexShader, String fragmentShader);  
     
     /**
      * Use when you want standard rendering.
      */
-    IRenderPipeline getDefaultPipeline(TextureFormat textureFormat);
+    RenderPipeline getDefaultPipeline(TextureDepth textureFormat);
 
-    IRenderPipeline getWaterPipeline();
+    RenderPipeline getWaterPipeline();
 
-    IRenderPipeline getLavaPipeline();
+    RenderPipeline getLavaPipeline();
 
-    IRenderPipeline getPipelineByIndex(int index);
+    RenderPipeline getPipelineByIndex(int index);
 
     /**
      * The number of seconds this world has been rendering since the last render reload,

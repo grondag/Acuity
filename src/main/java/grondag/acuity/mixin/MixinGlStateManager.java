@@ -8,5 +8,5 @@ import com.mojang.blaze3d.platform.GlStateManager;
 @Mixin(GlStateManager.class)
 public class MixinGlStateManager
 {
-    @Shadow public static final MixinFogState FOG = null;
+    @Shadow public static final AccessFogState FOG = null;
 }

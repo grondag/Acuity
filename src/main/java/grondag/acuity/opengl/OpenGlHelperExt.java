@@ -26,7 +26,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
-import grondag.acuity.api.PipelineManager;
+import grondag.acuity.api.PipelineManagerImpl;
 import grondag.acuity.fermion.config.Localization;
 
 public class OpenGlHelperExt
@@ -125,7 +125,7 @@ public class OpenGlHelperExt
     
     public static ByteBuffer readFileAsString(String filename) throws Exception
     {
-        InputStream in = PipelineManager.class.getResourceAsStream(filename);
+        InputStream in = PipelineManagerImpl.class.getResourceAsStream(filename);
     
         if(in == null)
             return null;

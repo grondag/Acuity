@@ -2,7 +2,8 @@ package grondag.acuity.core;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.client.render.chunk.ChunkRenderer;
 
 @Environment(EnvType.CLIENT)
 public class PipelinedRenderList extends AbstractPipelinedRenderList
@@ -13,9 +14,9 @@ public class PipelinedRenderList extends AbstractPipelinedRenderList
     }
 
     @Override
-    public final void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
+    public final void add(ChunkRenderer renderChunkIn, BlockRenderLayer layer)
     {
-        super.addRenderChunk(renderChunkIn, layer);
+        super.add(renderChunkIn, layer);
     }
 
     @Override

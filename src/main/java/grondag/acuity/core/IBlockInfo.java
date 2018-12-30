@@ -1,4 +1,4 @@
-package grondag.acuity.api;
+package grondag.acuity.core;
 
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

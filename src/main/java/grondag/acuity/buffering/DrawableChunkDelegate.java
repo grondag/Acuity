@@ -4,10 +4,10 @@ import org.lwjgl.opengl.GL11;
 
 import com.mojang.blaze3d.platform.GlStateManager;
 
-import grondag.acuity.api.RenderPipeline;
-import grondag.acuity.core.PipelineVertexFormat;
+import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import grondag.acuity.opengl.VaoStore;
+import grondag.acuity.pipeline.PipelineVertexFormat;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.VertexFormatElement;
@@ -16,7 +16,7 @@ import net.minecraft.client.render.VertexFormatElement;
 public class DrawableChunkDelegate
 {
     private MappedBufferDelegate bufferDelegate;
-    private final RenderPipeline pipeline;
+    private final RenderPipelineImpl pipeline;
     final int vertexCount;
     /**
      * VAO Buffer name if enabled and initialized.
@@ -26,7 +26,7 @@ public class DrawableChunkDelegate
     
     private boolean isReleased = false;
     
-    public DrawableChunkDelegate(MappedBufferDelegate bufferDelegate, RenderPipeline pipeline, int vertexCount)
+    public DrawableChunkDelegate(MappedBufferDelegate bufferDelegate, RenderPipelineImpl pipeline, int vertexCount)
     {
         this.bufferDelegate = bufferDelegate;
         this.pipeline = pipeline;
@@ -64,7 +64,7 @@ public class DrawableChunkDelegate
     /**
      * The pipeline (and vertex format) associated with this delegate.
      */
-    public RenderPipeline getPipeline()
+    public RenderPipelineImpl getPipeline()
     {
         return this.pipeline;
     }

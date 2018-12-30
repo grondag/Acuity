@@ -5,8 +5,8 @@ import org.apache.logging.log4j.Logger;
 
 import com.mojang.blaze3d.platform.GLX;
 
-import grondag.acuity.api.AcuityRuntime;
-import grondag.acuity.api.PipelineManager;
+import grondag.acuity.api.AcuityRuntimeImpl;
+import grondag.acuity.api.PipelineManagerImpl;
 import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.fabricmc.api.ModInitializer;
@@ -26,6 +26,8 @@ public class Acuity implements ModInitializer
 	@Override
     public void onInitialize()
     {
+	    AcuityRuntimeImpl.initialize();
+	    
         if(!GLX.usePostProcess)
         {
             getLog().warn(Localization.translate("misc.fail_no_shaders"));
@@ -64,13 +66,13 @@ public class Acuity implements ModInitializer
                 @Override
                 public void onResourceReload(ResourceManager resourceManager)
                 {
-                    AcuityRuntime.INSTANCE.forceReload();
+                    AcuityRuntimeImpl.INSTANCE.forceReload();
                 }});
         }
         
         ClientTickEvent.CLIENT.register(mc -> 
         {
-            PipelineManager.INSTANCE.onGameTick(mc);
+            PipelineManagerImpl.INSTANCE.onGameTick(mc);
         });
     }
 	

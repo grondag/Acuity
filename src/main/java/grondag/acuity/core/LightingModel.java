@@ -1,8 +1,9 @@
 package grondag.acuity.core;
 
-import static grondag.acuity.core.PipelineVertexFormat.*;
+import static grondag.acuity.pipeline.PipelineVertexFormat.*;
 
-import grondag.acuity.api.TextureFormat;
+import grondag.acuity.api.TextureDepth;
+import grondag.acuity.pipeline.PipelineVertexFormat;
 
 public enum LightingModel
 {
@@ -24,7 +25,7 @@ public enum LightingModel
     
     private final PipelineVertexFormat[] formatMap;
     
-    public PipelineVertexFormat vertexFormat(TextureFormat textureFormat)
+    public PipelineVertexFormat vertexFormat(TextureDepth textureFormat)
     {
         return formatMap[textureFormat.ordinal()];
     }

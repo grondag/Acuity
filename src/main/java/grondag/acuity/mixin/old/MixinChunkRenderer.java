@@ -17,28 +17,30 @@ import grondag.acuity.buffering.DrawableChunk.Solid;
 import grondag.acuity.buffering.DrawableChunk.Translucent;
 import grondag.acuity.hooks.ChunkRebuildHelper;
 import grondag.acuity.hooks.ChunkRenderDataStore;
-import grondag.acuity.hooks.IRenderChunk;
 import grondag.acuity.hooks.PipelineHooks;
 import grondag.acuity.mixin.extension.ChunkRenderDataExt;
+import grondag.acuity.mixin.extension.ChunkRendererExt;
 import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderLayer;
 import net.minecraft.block.BlockRenderType;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
-import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.client.render.block.BlockRenderManager;
 import net.minecraft.client.render.block.entity.BlockEntityRenderDispatcher;
 import net.minecraft.client.render.block.entity.BlockEntityRenderer;
 import net.minecraft.client.render.chunk.ChunkRenderData;
+import net.minecraft.client.render.chunk.ChunkRenderer;
 import net.minecraft.client.render.chunk.ChunkVisibility;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.ChunkCache;
 import net.minecraft.world.chunk.WorldChunk;
 
-@Mixin(RenderChunk.class)
-public abstract class MixinRenderChunk implements IRenderChunk
+@Mixin(ChunkRenderer.class)
+public abstract class MixinChunkRenderer implements ChunkRendererExt
 {
     @Shadow public static int renderChunksUpdated;
 
@@ -49,7 +51,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
     @Shadow abstract void postRenderBlocks(BlockRenderLayer layer, float x, float y, float z, BufferBuilder bufferBuilderIn, ChunkRenderData compiledChunkIn);
     @Shadow private ReentrantLock lockCompileTask;
     @Shadow private Set<BlockEntity> setTileEntities;
-    @Shadow private RenderGlobal renderGlobal;
+    @Shadow private WorldRenderer renderer;
 
     Solid solidDrawable;
     Translucent translucentDrawable;
@@ -69,7 +71,7 @@ public abstract class MixinRenderChunk implements IRenderChunk
     @Redirect(method = "setPosition", require = 1,
             at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/chunk/RenderChunk;initModelviewMatrix()V"))
-    private void onInitModelviewMatrix(RenderChunk renderChunk)
+    private void onInitModelviewMatrix(ChunkRenderer renderChunk)
     {
         PipelineHooks.renderChunkInitModelViewMatrix(renderChunk);
     }

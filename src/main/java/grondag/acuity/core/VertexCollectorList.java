@@ -4,8 +4,8 @@ import java.util.Comparator;
 import java.util.PriorityQueue;
 import java.util.function.Consumer;
 
-import grondag.acuity.api.PipelineManager;
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.PipelineManagerImpl;
+import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.buffering.UploadableChunk;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -44,7 +44,7 @@ public class VertexCollectorList
     /**
      * Fast lookup of buffers by pipeline index. Null in CUTOUT layer buffers.
      */
-    private VertexCollector[] vertexCollectors  = new VertexCollector[PipelineManager.INSTANCE.pipelineCount()];
+    private VertexCollector[] vertexCollectors  = new VertexCollector[PipelineManagerImpl.INSTANCE.pipelineCount()];
 
     private int maxIndex = -1;
 
@@ -65,7 +65,7 @@ public class VertexCollectorList
     VertexCollectorList()
     {
         for(int i = 0; i < vertexCollectors.length; i++)
-            vertexCollectors[i] = new VertexCollector(PipelineManager.INSTANCE.getPipeline(i), this);
+            vertexCollectors[i] = new VertexCollector(PipelineManagerImpl.INSTANCE.getPipeline(i), this);
     }
 
     /**
@@ -141,7 +141,7 @@ public class VertexCollectorList
         return vertexCollectors[pipelineIndex];
     }
 
-    public final VertexCollector get(RenderPipeline pipeline)
+    public final VertexCollector get(RenderPipelineImpl pipeline)
     {
         final int index = pipeline.getIndex();
         if(index > maxIndex)

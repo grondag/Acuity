@@ -2,10 +2,11 @@ package grondag.acuity.core;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.buffering.DrawableChunk;
-import grondag.acuity.hooks.IRenderChunk;
+import grondag.acuity.mixin.extension.ChunkRendererExt;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.client.render.chunk.ChunkRenderer;
 
 @Environment(EnvType.CLIENT)
 public class PipelinedRenderListDebug extends AbstractPipelinedRenderList
@@ -25,17 +26,17 @@ public class PipelinedRenderListDebug extends AbstractPipelinedRenderList
     protected long maxNanos = 0;
     
     @Override
-    public final void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
+    public final void add(ChunkRenderer renderChunkIn, BlockRenderLayer layer)
     {
         chunkCounter++;
         DrawableChunk vertexbuffer = layer == BlockRenderLayer.SOLID
-                ? ((IRenderChunk)renderChunkIn).getSolidDrawable()
-                : ((IRenderChunk)renderChunkIn).getTranslucentDrawable();
+                ? ((ChunkRendererExt)renderChunkIn).getSolidDrawable()
+                : ((ChunkRendererExt)renderChunkIn).getTranslucentDrawable();
         if(vertexbuffer == null)
             return;
         drawCounter += vertexbuffer.drawCount();
         quadCounter += vertexbuffer.quadCount();
-        super.addRenderChunk(renderChunkIn, layer);
+        super.add(renderChunkIn, layer);
     }
 
     @Override

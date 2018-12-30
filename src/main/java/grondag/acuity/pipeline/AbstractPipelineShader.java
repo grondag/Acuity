@@ -1,4 +1,4 @@
-package grondag.acuity.core;
+package grondag.acuity.pipeline;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -11,8 +11,8 @@ import com.google.common.io.CharStreams;
 import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.PipelineManager;
-import grondag.acuity.api.TextureFormat;
+import grondag.acuity.api.PipelineManagerImpl;
+import grondag.acuity.api.TextureDepth;
 import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.fabricmc.api.EnvType;
@@ -24,14 +24,14 @@ abstract class AbstractPipelineShader
     public final String fileName;
     
     private final int shaderType;
-    public final TextureFormat textureFormat;
+    public final TextureDepth textureFormat;
     public final boolean isSolidLayer;
 
     private int glId = -1;
     private boolean needsLoad = true;
     private boolean isErrored = false;
     
-    AbstractPipelineShader(String fileName, int shaderType, TextureFormat textureFormat, boolean isSolidLayer)
+    AbstractPipelineShader(String fileName, int shaderType, TextureDepth textureFormat, boolean isSolidLayer)
     {
         this.fileName = fileName;
         this.shaderType = shaderType;
@@ -113,7 +113,7 @@ abstract class AbstractPipelineShader
     
     public static String getShaderSource(String fileName)
     {
-        InputStream in = PipelineManager.class.getResourceAsStream(fileName);
+        InputStream in = PipelineManagerImpl.class.getResourceAsStream(fileName);
         
         if(in == null)
             return "";

@@ -1,6 +1,6 @@
 package grondag.acuity.core;
 
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.RenderPipelineImpl;
 
 public class DummyPackingList extends VertexPackingList
 {
@@ -31,7 +31,7 @@ public class DummyPackingList extends VertexPackingList
     }
 
     @Override
-    public void addPacking(RenderPipeline pipeline, int vertexCount)
+    public void addPacking(RenderPipelineImpl pipeline, int vertexCount)
     {
         throw new UnsupportedOperationException();
     }

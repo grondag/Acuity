@@ -2,7 +2,7 @@ package grondag.acuity.core;
 
 import java.util.function.Consumer;
 
-import grondag.acuity.api.PipelineManager;
+import grondag.acuity.api.PipelineManagerImpl;
 import grondag.acuity.buffering.DrawableChunkDelegate;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 
@@ -12,7 +12,7 @@ public class SolidRenderCube implements Consumer<DrawableChunkDelegate>
     
     public SolidRenderCube()
     {
-        final int size = PipelineManager.INSTANCE.pipelineCount();
+        final int size = PipelineManagerImpl.INSTANCE.pipelineCount();
         @SuppressWarnings("unchecked")
         ObjectArrayList<DrawableChunkDelegate>[] buffers = new ObjectArrayList[size];
         for(int i = 0; i < size; i++)

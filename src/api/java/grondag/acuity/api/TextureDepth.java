@@ -4,13 +4,13 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
-public enum TextureFormat
+public enum TextureDepth
 {
     SINGLE,
     DOUBLE,
     TRIPLE;
 
-    public int layerCount()
+    public final int layerCount()
     {
         return this.ordinal() + 1;
     }

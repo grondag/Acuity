@@ -9,10 +9,13 @@ import grondag.acuity.LoadingConfig;
 import grondag.acuity.core.AbstractPipelinedRenderList;
 import grondag.acuity.core.PipelinedRenderList;
 import grondag.acuity.core.PipelinedRenderListDebug;
-import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.client.render.chunk.AbstractRenderList;
+import net.minecraft.client.render.chunk.ChunkRenderer;
+import net.minecraft.client.render.chunk.VboRenderList;
 
 @Mixin(VboRenderList.class)
-public abstract class MixinVboRenderList extends ChunkRenderContainer
+public abstract class MixinVboRenderList extends AbstractRenderList
 {
     private AbstractPipelinedRenderList ext;
     
@@ -25,12 +28,12 @@ public abstract class MixinVboRenderList extends ChunkRenderContainer
     }
     
     @Override
-    public void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
+    public void add(ChunkRenderer renderChunkIn, BlockRenderLayer layer)
     {
         if(ext.isAcuityEnabled)
-            ext.addRenderChunk(renderChunkIn, layer);
+            ext.add(renderChunkIn, layer);
         else
-            super.addRenderChunk(renderChunkIn, layer);
+            super.add(renderChunkIn, layer);
     }
     
     

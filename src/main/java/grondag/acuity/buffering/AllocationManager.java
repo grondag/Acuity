@@ -3,7 +3,7 @@ package grondag.acuity.buffering;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.function.Consumer;
 
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.RenderPipelineImpl;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
@@ -23,7 +23,7 @@ public class AllocationManager
      * If more than one buffer is needed, break(s) will be at a boundary compatible with all vertex formats.
      * All vertices in the buffer(s) will share the same pipeline (and thus vertex format).
      */
-    public static void claimAllocation(RenderPipeline pipeline, int byteCount, Consumer<MappedBufferDelegate> consumer)
+    public static void claimAllocation(RenderPipelineImpl pipeline, int byteCount, Consumer<MappedBufferDelegate> consumer)
     {
         while(byteCount >= MappedBuffer.CAPACITY_BYTES)
         {

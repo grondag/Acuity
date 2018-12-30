@@ -1,8 +1,8 @@
-package grondag.acuity.hooks;
+package grondag.acuity.mixin.extension;
 
 import grondag.acuity.buffering.DrawableChunk;
 
-public interface IRenderChunk
+public interface ChunkRendererExt
 {
     void setSolidDrawable(DrawableChunk.Solid drawable);
     void setTranslucentDrawable(DrawableChunk.Translucent drawable);

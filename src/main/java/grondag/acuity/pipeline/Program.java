@@ -1,4 +1,4 @@
-package grondag.acuity.core;
+package grondag.acuity.pipeline;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -13,18 +13,18 @@ import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
-import grondag.acuity.api.IUniform;
-import grondag.acuity.api.IUniform.IUniform1f;
-import grondag.acuity.api.IUniform.IUniform1i;
-import grondag.acuity.api.IUniform.IUniform2f;
-import grondag.acuity.api.IUniform.IUniform2i;
-import grondag.acuity.api.IUniform.IUniform3f;
-import grondag.acuity.api.IUniform.IUniform3i;
-import grondag.acuity.api.IUniform.IUniform4f;
-import grondag.acuity.api.IUniform.IUniform4i;
-import grondag.acuity.api.IUniform.IUniformMatrix4f;
-import grondag.acuity.api.PipelineManager;
-import grondag.acuity.api.TextureFormat;
+import grondag.acuity.api.PipelineUniform;
+import grondag.acuity.api.PipelineUniform.Uniform1f;
+import grondag.acuity.api.PipelineUniform.Uniform1i;
+import grondag.acuity.api.PipelineUniform.Uniform2f;
+import grondag.acuity.api.PipelineUniform.Uniform2i;
+import grondag.acuity.api.PipelineUniform.Uniform3f;
+import grondag.acuity.api.PipelineUniform.Uniform3i;
+import grondag.acuity.api.PipelineUniform.Uniform4f;
+import grondag.acuity.api.PipelineUniform.Uniform4i;
+import grondag.acuity.api.PipelineUniform.UniformMatrix4f;
+import grondag.acuity.api.PipelineManagerImpl;
+import grondag.acuity.api.TextureDepth;
 import grondag.acuity.api.UniformUpdateFrequency;
 import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.mixin.extension.Matrix4fExt;
@@ -50,7 +50,7 @@ public class Program
 
     public final PipelineVertexShader vertexShader;
     public final PipelineFragmentShader fragmentShader;
-    public final TextureFormat textureFormat;
+    public final TextureDepth textureFormat;
     public final boolean isSolidLayer;
  
     private final ObjectArrayList<Uniform<?>> uniforms = new ObjectArrayList<>();
@@ -65,7 +65,7 @@ public class Program
      */
     private int lastViewMatrixVersion = 0;
     
-    public abstract class Uniform<T extends IUniform>
+    public abstract class Uniform<T extends PipelineUniform>
     {
         protected static final int FLAG_NEEDS_UPLOAD = 1;
         protected static final int FLAG_NEEDS_INITIALIZATION = 2;
@@ -142,7 +142,7 @@ public class Program
         protected abstract void uploadInner();
     }
     
-    protected abstract class UniformFloat<T extends IUniform> extends Uniform<T>
+    protected abstract class UniformFloat<T extends PipelineUniform> extends Uniform<T>
     {
         protected final FloatBuffer uniformFloatBuffer;
         
@@ -153,9 +153,9 @@ public class Program
         }
     }
     
-    public class Uniform1f extends UniformFloat<IUniform1f> implements IUniform1f
+    public class Uniform1fImpl extends UniformFloat<Uniform1f> implements Uniform1f
     {
-        protected Uniform1f(String name, Consumer<IUniform1f> initializer, UniformUpdateFrequency frequency)
+        protected Uniform1fImpl(String name, Consumer<Uniform1f> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 1);
         }
@@ -178,9 +178,9 @@ public class Program
         }
     }
     
-    public class Uniform2f extends UniformFloat<IUniform2f> implements IUniform2f
+    public class Uniform2fImpl extends UniformFloat<Uniform2f> implements Uniform2f
     {
-        protected Uniform2f(String name, Consumer<IUniform2f> initializer, UniformUpdateFrequency frequency)
+        protected Uniform2fImpl(String name, Consumer<Uniform2f> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 2);
         }
@@ -208,9 +208,9 @@ public class Program
         }
     }
     
-    public class Uniform3f extends UniformFloat<IUniform3f> implements IUniform3f
+    public class Uniform3fImpl extends UniformFloat<Uniform3f> implements Uniform3f
     {
-        protected Uniform3f(String name, Consumer<IUniform3f> initializer, UniformUpdateFrequency frequency)
+        protected Uniform3fImpl(String name, Consumer<Uniform3f> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 3);
         }
@@ -243,9 +243,9 @@ public class Program
        }
     }
     
-    public class Uniform4f extends UniformFloat<IUniform4f> implements IUniform4f
+    public class Uniform4fImpl extends UniformFloat<Uniform4f> implements Uniform4f
     {
-        protected Uniform4f(String name, Consumer<IUniform4f> initializer, UniformUpdateFrequency frequency)
+        protected Uniform4fImpl(String name, Consumer<Uniform4f> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 4);
         }
@@ -293,27 +293,27 @@ public class Program
         return toAdd;
     }
     
-    public IUniform1f uniform1f(String name, UniformUpdateFrequency frequency, Consumer<IUniform1f> initializer)
+    public Uniform1f uniform1f(String name, UniformUpdateFrequency frequency, Consumer<Uniform1f> initializer)
     {
-        return addUniform(new Uniform1f(name, initializer, frequency));
+        return addUniform(new Uniform1fImpl(name, initializer, frequency));
     }
     
-    public IUniform2f uniform2f(String name, UniformUpdateFrequency frequency, Consumer<IUniform2f> initializer)
+    public Uniform2f uniform2f(String name, UniformUpdateFrequency frequency, Consumer<Uniform2f> initializer)
     {
-        return addUniform(new Uniform2f(name, initializer, frequency));
+        return addUniform(new Uniform2fImpl(name, initializer, frequency));
     }
     
-    public IUniform3f uniform3f(String name, UniformUpdateFrequency frequency, Consumer<IUniform3f> initializer)
+    public Uniform3f uniform3f(String name, UniformUpdateFrequency frequency, Consumer<Uniform3f> initializer)
     {
-        return addUniform(new Uniform3f(name, initializer, frequency));
+        return addUniform(new Uniform3fImpl(name, initializer, frequency));
     }
     
-    public IUniform4f uniform4f(String name, UniformUpdateFrequency frequency, Consumer<IUniform4f> initializer)
+    public Uniform4f uniform4f(String name, UniformUpdateFrequency frequency, Consumer<Uniform4f> initializer)
     {
-        return addUniform(new Uniform4f(name, initializer, frequency));
+        return addUniform(new Uniform4fImpl(name, initializer, frequency));
     }
     
-    protected abstract class UniformInt<T extends IUniform> extends Uniform<T>
+    protected abstract class UniformInt<T extends PipelineUniform> extends Uniform<T>
     {
         protected final IntBuffer uniformIntBuffer;
         
@@ -324,9 +324,9 @@ public class Program
         }
     }
     
-    public class Uniform1i extends UniformInt<IUniform1i> implements IUniform1i
+    public class Uniform1iImpl extends UniformInt<Uniform1i> implements Uniform1i
     {
-        protected Uniform1i(String name, Consumer<IUniform1i> initializer, UniformUpdateFrequency frequency)
+        protected Uniform1iImpl(String name, Consumer<Uniform1i> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 1);
         }
@@ -349,9 +349,9 @@ public class Program
         }
     }
     
-    public class Uniform2i extends UniformInt<IUniform2i> implements IUniform2i
+    public class Uniform2iImpl extends UniformInt<Uniform2i> implements Uniform2i
     {
-        protected Uniform2i(String name, Consumer<IUniform2i> initializer, UniformUpdateFrequency frequency)
+        protected Uniform2iImpl(String name, Consumer<Uniform2i> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 2);
         }
@@ -379,9 +379,9 @@ public class Program
         }
     }
     
-    public class Uniform3i extends UniformInt<IUniform3i> implements IUniform3i
+    public class Uniform3iImpl extends UniformInt<Uniform3i> implements Uniform3i
     {
-        protected Uniform3i(String name, Consumer<IUniform3i> initializer, UniformUpdateFrequency frequency)
+        protected Uniform3iImpl(String name, Consumer<Uniform3i> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 3);
         }
@@ -414,9 +414,9 @@ public class Program
         }
     }
     
-    public class Uniform4i extends UniformInt<IUniform4i> implements IUniform4i
+    public class Uniform4iImpl extends UniformInt<Uniform4i> implements Uniform4i
     {
-        protected Uniform4i(String name, Consumer<IUniform4i> initializer, UniformUpdateFrequency frequency)
+        protected Uniform4iImpl(String name, Consumer<Uniform4i> initializer, UniformUpdateFrequency frequency)
         {
             super(name, initializer, frequency, 4);
         }
@@ -454,27 +454,27 @@ public class Program
         }
     }
     
-    public IUniform1i uniform1i(String name, UniformUpdateFrequency frequency, Consumer<IUniform1i> initializer)
+    public Uniform1i uniform1i(String name, UniformUpdateFrequency frequency, Consumer<Uniform1i> initializer)
     {
-        return addUniform(new Uniform1i(name, initializer, frequency));
+        return addUniform(new Uniform1iImpl(name, initializer, frequency));
     }
     
-    public IUniform2i uniform2i(String name, UniformUpdateFrequency frequency, Consumer<IUniform2i> initializer)
+    public Uniform2i uniform2i(String name, UniformUpdateFrequency frequency, Consumer<Uniform2i> initializer)
     {
-        return addUniform(new Uniform2i(name, initializer, frequency));
+        return addUniform(new Uniform2iImpl(name, initializer, frequency));
     }
     
-    public IUniform3i uniform3i(String name, UniformUpdateFrequency frequency, Consumer<IUniform3i> initializer)
+    public Uniform3i uniform3i(String name, UniformUpdateFrequency frequency, Consumer<Uniform3i> initializer)
     {
-        return addUniform(new Uniform3i(name, initializer, frequency));
+        return addUniform(new Uniform3iImpl(name, initializer, frequency));
     }
     
-    public IUniform4i uniform4i(String name, UniformUpdateFrequency frequency, Consumer<IUniform4i> initializer)
+    public Uniform4i uniform4i(String name, UniformUpdateFrequency frequency, Consumer<Uniform4i> initializer)
     {
-        return addUniform(new Uniform4i(name, initializer, frequency));
+        return addUniform(new Uniform4iImpl(name, initializer, frequency));
     }
     
-    public Program(PipelineVertexShader vertexShader, PipelineFragmentShader fragmentShader, TextureFormat textureFormat, boolean isSolidLayer)
+    public Program(PipelineVertexShader vertexShader, PipelineFragmentShader fragmentShader, TextureDepth textureFormat, boolean isSolidLayer)
     {
         this.vertexShader = vertexShader;
         this.fragmentShader = fragmentShader;
@@ -495,10 +495,10 @@ public class Program
      */
     private final void updateModelUniforms()
     {
-        if(lastViewMatrixVersion != PipelineManager.viewMatrixVersionCounter)
+        if(lastViewMatrixVersion != PipelineManagerImpl.viewMatrixVersionCounter)
         {
             updateModelUniformsInner();
-            lastViewMatrixVersion = PipelineManager.viewMatrixVersionCounter;
+            lastViewMatrixVersion = PipelineManagerImpl.viewMatrixVersionCounter;
         }
     }
     
@@ -535,14 +535,14 @@ public class Program
         this.updateModelUniforms();
     }
     
-    public class UniformMatrix4f extends Uniform<IUniformMatrix4f> implements IUniformMatrix4f
+    public class UniformMatrix4fImpl extends Uniform<UniformMatrix4f> implements UniformMatrix4f
     {
         protected final FloatBuffer uniformFloatBuffer;
         protected final long bufferAddress;
         
         protected final float[] lastValue = new float[16];
         
-        protected UniformMatrix4f(String name, Consumer<IUniformMatrix4f> initializer, UniformUpdateFrequency frequency)
+        protected UniformMatrix4fImpl(String name, Consumer<UniformMatrix4f> initializer, UniformUpdateFrequency frequency)
         {
             this(name, initializer, frequency, BufferUtils.createFloatBuffer(16));
         }
@@ -550,7 +550,7 @@ public class Program
         /**
          * Use when have a shared direct buffer
          */
-        protected UniformMatrix4f(String name, Consumer<IUniformMatrix4f> initializer, UniformUpdateFrequency frequency, FloatBuffer uniformFloatBuffer)
+        protected UniformMatrix4fImpl(String name, Consumer<UniformMatrix4f> initializer, UniformUpdateFrequency frequency, FloatBuffer uniformFloatBuffer)
         {
             super(name, initializer, frequency);
             this.uniformFloatBuffer = uniformFloatBuffer;
@@ -607,14 +607,14 @@ public class Program
         }
     }
     
-    public UniformMatrix4f uniformMatrix4f(String name, UniformUpdateFrequency frequency, Consumer<IUniformMatrix4f> initializer)
+    public UniformMatrix4fImpl uniformMatrix4f(String name, UniformUpdateFrequency frequency, Consumer<UniformMatrix4f> initializer)
     {
-        return addUniform(new UniformMatrix4f(name, initializer, frequency));
+        return addUniform(new UniformMatrix4fImpl(name, initializer, frequency));
     }
     
-    public UniformMatrix4f uniformMatrix4f(String name, UniformUpdateFrequency frequency, FloatBuffer floatBuffer, Consumer<IUniformMatrix4f> initializer)
+    public UniformMatrix4fImpl uniformMatrix4f(String name, UniformUpdateFrequency frequency, FloatBuffer floatBuffer, Consumer<UniformMatrix4f> initializer)
     {
-        return addUniform(new UniformMatrix4f(name, initializer, frequency, floatBuffer));
+        return addUniform(new UniformMatrix4fImpl(name, initializer, frequency, floatBuffer));
     }
     
     private final void load()
@@ -701,16 +701,16 @@ public class Program
         }
     }
     
-    public UniformMatrix4f modelViewUniform;
-    public UniformMatrix4f modelViewProjectionUniform;
-    public UniformMatrix4f projectionMatrixUniform;
+    public UniformMatrix4fImpl modelViewUniform;
+    public UniformMatrix4fImpl modelViewProjectionUniform;
+    public UniformMatrix4fImpl projectionMatrixUniform;
     
     public final void setupModelViewUniforms()
     {
         if(containsUniformSpec("mat4", "u_modelView"))
         {
             this.modelViewUniform = this.uniformMatrix4f("u_modelView", UniformUpdateFrequency.ON_LOAD, 
-                    PipelineManager.modelViewMatrixBuffer, u -> 
+                    PipelineManagerImpl.modelViewMatrixBuffer, u -> 
             {
                 this.modelViewUniform.setDirty();
             });
@@ -719,7 +719,7 @@ public class Program
         if(containsUniformSpec("mat4", "u_modelViewProjection"))
         {
             this.modelViewProjectionUniform = this.uniformMatrix4f("u_modelViewProjection", UniformUpdateFrequency.ON_LOAD,
-                    PipelineManager.modelViewProjectionMatrixBuffer, u -> 
+                    PipelineManagerImpl.modelViewProjectionMatrixBuffer, u -> 
             {
                 this.modelViewProjectionUniform.setDirty();
             });
@@ -729,7 +729,7 @@ public class Program
         {
             // on load because handled directly
             this.projectionMatrixUniform = this.uniformMatrix4f("u_projection", UniformUpdateFrequency.ON_LOAD, 
-                    PipelineManager.projectionMatrixBuffer, u -> 
+                    PipelineManagerImpl.projectionMatrixBuffer, u -> 
             {
                 this.projectionMatrixUniform.setDirty();
             });

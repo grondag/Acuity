@@ -7,26 +7,31 @@ import java.util.function.Consumer;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.buffering.MappedBufferStore;
-import grondag.acuity.core.PipelineShaderManager;
 import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.hooks.PipelineHooks;
+import grondag.acuity.pipeline.PipelineShaderManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 @Environment(EnvType.CLIENT)
-public final class AcuityRuntime implements IAcuityRuntime
+public final class AcuityRuntimeImpl extends AcuityRuntime
 {
-    public static final AcuityRuntime INSTANCE = new AcuityRuntime();
-
-    private ArrayList<WeakReference<IAcuityListener>> listeners = new ArrayList<WeakReference<IAcuityListener>>();
+    public static final AcuityRuntimeImpl INSTANCE = new AcuityRuntimeImpl();
     
-    private AcuityRuntime() {};
+    public static void initialize()
+    {
+        AcuityRuntime.instance = INSTANCE;
+    }
+    
+    private ArrayList<WeakReference<AcuityListener>> listeners = new ArrayList<WeakReference<AcuityListener>>();
+    
+    private AcuityRuntimeImpl() {};
     
     
     @Override
-    public final IPipelineManager getPipelineManager()
+    public final PipelineManager getPipelineManager()
     {
-        return PipelineManager.INSTANCE;
+        return PipelineManagerImpl.INSTANCE;
     }
 
     @Override
@@ -40,25 +45,25 @@ public final class AcuityRuntime implements IAcuityRuntime
         Acuity.INSTANCE.getLog().info(Localization.translate("misc.info_reloading"));
         Acuity.recomputeEnabledStatus();
         PipelineShaderManager.INSTANCE.forceReload();
-        PipelineManager.INSTANCE.forceReload();
+        PipelineManagerImpl.INSTANCE.forceReload();
         PipelineHooks.forceReload();
         MappedBufferStore.forceReload();
-        AcuityRuntime.INSTANCE.forEachListener(c -> c.onRenderReload());
+        forEachListener(c -> c.onRenderReload());
     }
 
     @Override
-    public void registerListener(IAcuityListener listener)
+    public void registerListener(AcuityListener listener)
     {
-        this.listeners.add(new WeakReference<IAcuityListener>(listener));
+        this.listeners.add(new WeakReference<AcuityListener>(listener));
     }
     
-    public void forEachListener(Consumer<IAcuityListener> c)
+    public void forEachListener(Consumer<AcuityListener> c)
     {
-        Iterator<WeakReference<IAcuityListener>> it = this.listeners.iterator();
+        Iterator<WeakReference<AcuityListener>> it = this.listeners.iterator();
         while(it.hasNext())
         {
-            WeakReference<IAcuityListener> ref = it.next();
-            IAcuityListener listener = ref.get();
+            WeakReference<AcuityListener> ref = it.next();
+            AcuityListener listener = ref.get();
             if(listener == null)
                 it.remove();
             else

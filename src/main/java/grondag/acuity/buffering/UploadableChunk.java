@@ -2,7 +2,7 @@ package grondag.acuity.buffering;
 
 import java.nio.IntBuffer;
 
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.core.VertexCollectorList;
 import grondag.acuity.core.VertexPackingList;
 import grondag.acuity.core.VertexPackingList.VertexPackingConsumer;
@@ -29,7 +29,7 @@ public abstract class UploadableChunk<V extends DrawableChunk>
         }
         
         @Override
-        public void accept(RenderPipeline pipeline, int vertexCount)
+        public void accept(RenderPipelineImpl pipeline, int vertexCount)
         {
             final int stride = pipeline.piplineVertexFormat().stride;
             // array offset will be zero unless multiple buffers are needed

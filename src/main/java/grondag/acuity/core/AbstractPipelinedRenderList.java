@@ -10,14 +10,14 @@ import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.AcuityRuntime;
-import grondag.acuity.api.IAcuityListener;
-import grondag.acuity.api.PipelineManager;
+import grondag.acuity.api.AcuityListener;
+import grondag.acuity.api.AcuityRuntimeImpl;
+import grondag.acuity.api.PipelineManagerImpl;
 import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.buffering.DrawableChunkDelegate;
-import grondag.acuity.hooks.IRenderChunk;
-import grondag.acuity.mixin.extension.Matrix4fExt;
+import grondag.acuity.mixin.extension.ChunkRendererExt;
 import grondag.acuity.opengl.OpenGlHelperExt;
+import grondag.acuity.pipeline.Program;
 import it.unimi.dsi.fastutil.Arrays;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
@@ -27,16 +27,17 @@ import it.unimi.dsi.fastutil.objects.ObjectArrayList;
 import it.unimi.dsi.fastutil.objects.ObjectIterator;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.client.render.chunk.ChunkRenderer;
 import net.minecraft.client.util.math.Matrix4f;
 import net.minecraft.util.math.BlockPos;
 
 @Environment(EnvType.CLIENT)
-public class AbstractPipelinedRenderList implements IAcuityListener
+public class AbstractPipelinedRenderList implements AcuityListener
 {
     public boolean isAcuityEnabled = Acuity.isModEnabled();
     
-    protected final ObjectArrayList<RenderChunk> chunks = new ObjectArrayList<RenderChunk>();
+    protected final ObjectArrayList<ChunkRenderer> chunks = new ObjectArrayList<ChunkRenderer>();
     
     /**
      * Each entry is for a single 256^3 render cube.<br>
@@ -70,7 +71,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     
     public AbstractPipelinedRenderList()
     {
-        AcuityRuntime.INSTANCE.registerListener(this);
+        AcuityRuntimeImpl.INSTANCE.registerListener(this);
     }
 
     public void initialize(double viewEntityXIn, double viewEntityYIn, double viewEntityZIn)
@@ -80,7 +81,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         this.viewEntityZ = viewEntityZIn;
     }
     
-    public void addRenderChunk(RenderChunk renderChunkIn, BlockRenderLayer layer)
+    public void add(ChunkRenderer renderChunkIn, BlockRenderLayer layer)
     {
         if(layer == BlockRenderLayer.TRANSLUCENT)
             this.chunks.add(renderChunkIn);
@@ -96,9 +97,9 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         return result;
     }
     
-    private void addSolidChunk(RenderChunk renderChunkIn)
+    private void addSolidChunk(ChunkRenderer renderChunkIn)
     {
-        final long cubeKey = RenderCube.getPackedOrigin(renderChunkIn.getPosition());
+        final long cubeKey = RenderCube.getPackedOrigin(renderChunkIn.origin());
         
         SolidRenderCube buffers = solidCubes.get(cubeKey);
         if(buffers == null)
@@ -109,9 +110,9 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         addSolidChunkToBufferArray(renderChunkIn, buffers);
     }
     
-    private void addSolidChunkToBufferArray(RenderChunk renderChunkIn, SolidRenderCube buffers)
+    private void addSolidChunkToBufferArray(ChunkRenderer renderChunkIn, SolidRenderCube buffers)
     {
-        final DrawableChunk.Solid vertexbuffer = ((IRenderChunk)renderChunkIn).getSolidDrawable();
+        final DrawableChunk.Solid vertexbuffer = ((ChunkRendererExt)renderChunkIn).getSolidDrawable();
         if(vertexbuffer != null)
             vertexbuffer.prepareSolidRender(buffers);
     }
@@ -168,7 +169,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         // If really is necessary, would want to handle some other way.  Per-chunk matrix not initialized when Acuity enabled.
 //        Matrix4f.mul(mvChunk, mvPos, mvPos);
 
-        PipelineManager.setModelViewMatrix(mvPos);
+        PipelineManagerImpl.setModelViewMatrix(mvPos);
     }
     
     private final void preRenderSetup()
@@ -210,7 +211,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         // after camera transform is set up - so call out event handler
         // here as a workaround. Our event handler will only act 1x/frame.
         // Do this even if solid is empty, in case translucent layer needs it.
-        if(PipelineManager.INSTANCE.beforeRenderChunks())
+        if(PipelineManagerImpl.INSTANCE.beforeRenderChunks())
             downloadModelViewMatrix();
         
         if (this.solidCubes.isEmpty()) 
@@ -292,7 +293,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
     
     protected final void renderChunkLayerTranslucent()
     {
-        final ObjectArrayList<RenderChunk> chunks = this.chunks;
+        final ObjectArrayList<ChunkRenderer> chunks = this.chunks;
         final int chunkCount = chunks.size();
 
         if (chunkCount == 0) 
@@ -302,19 +303,17 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         
         for (int i = 0; i < chunkCount; i++)
         {
-            final RenderChunk renderchunk =  chunks.get(i);
-            final DrawableChunk.Translucent drawable = ((IRenderChunk)renderchunk).getTranslucentDrawable();
+            final ChunkRenderer renderchunk =  chunks.get(i);
+            final DrawableChunk.Translucent drawable = ((ChunkRendererExt)renderchunk).getTranslucentDrawable();
             if(drawable == null)
                 continue;
-            updateViewMatrix(renderchunk.getPosition());
+            updateViewMatrix(renderchunk.origin());
             drawable.renderChunkTranslucent();
         }
 
         chunks.clear();
         postRenderCleanup();
     }
-    
-    
     
     private final void postRenderCleanup()
     {
@@ -324,7 +323,7 @@ public class AbstractPipelinedRenderList implements IAcuityListener
         OpenGlHelperExt.resetAttributes();
         GLX.glBindBuffer(GLX.GL_ARRAY_BUFFER, 0);
         Program.deactivate();
-        GlStateManager.resetColor();
+        GlStateManager.clearCurrentColor();
     }
 
     @Override

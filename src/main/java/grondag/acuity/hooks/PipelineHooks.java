@@ -10,26 +10,29 @@ import com.google.common.util.concurrent.ListenableFutureTask;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
-import grondag.acuity.api.IPipelinedBakedModel;
-import grondag.acuity.api.PipelineManager;
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.AcuityModel;
+import grondag.acuity.api.PipelineManagerImpl;
+import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.buffering.DrawableChunk.Solid;
 import grondag.acuity.buffering.DrawableChunk.Translucent;
 import grondag.acuity.core.CompoundBufferBuilder;
 import grondag.acuity.core.CompoundVertexLighter;
 import grondag.acuity.core.FluidBuilder;
 import grondag.acuity.core.VanillaQuadWrapper;
+import grondag.acuity.mixin.extension.ChunkRendererExt;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.block.BlockRenderLayer;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.render.BufferBuilder;
+import net.minecraft.client.render.ChunkRenderDispatcher;
 import net.minecraft.client.render.VertexFormatElement;
 import net.minecraft.client.render.block.BlockModelRenderer;
-import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.render.block.FluidRenderer;
 import net.minecraft.client.render.chunk.BlockLayeredBufferBuilder;
 import net.minecraft.client.render.chunk.ChunkRenderData;
+import net.minecraft.client.render.chunk.ChunkRenderer;
 import net.minecraft.client.render.model.BakedModel;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.entity.Entity;
@@ -162,10 +165,10 @@ public class PipelineHooks
     {
         if(Acuity.isModEnabled())
         {
-            RenderPipeline target;
+            RenderPipelineImpl target;
             if(blockStateIn.getMaterial() == Material.LAVA)
             {
-                target = PipelineManager.INSTANCE.getLavaPipeline();
+                target = PipelineManagerImpl.INSTANCE.getLavaPipeline();
             }
             else
             {
@@ -174,7 +177,7 @@ public class PipelineHooks
                     Acuity.INSTANCE.getLog().warn(I18n.translateToLocal("misc.warn_unknown_fluid_render"));
                     didWarnUnhandledFluid = true;
                 }
-                target = PipelineManager.INSTANCE.getWaterPipeline();
+                target = PipelineManagerImpl.INSTANCE.getWaterPipeline();
             }
             final CompoundVertexLighter lighter = lighters.get();
             lighter.prepare((CompoundBufferBuilder)bufferBuilderIn, MinecraftForgeClient.getRenderLayer(), blockAccess, blockStateIn, blockPosIn, false);
@@ -214,7 +217,7 @@ public class PipelineHooks
     {
         if(Acuity.isModEnabled())
         {
-            if(model instanceof IPipelinedBakedModel)
+            if(model instanceof AcuityModel)
                 return renderModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
             else
                 return renderVanillaModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
@@ -227,7 +230,7 @@ public class PipelineHooks
     {
         try
         {
-            final IPipelinedBakedModel model = (IPipelinedBakedModel)modelIn;
+            final AcuityModel model = (AcuityModel)modelIn;
             final BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
             if(!model.mightRenderInLayer(layer)) 
                 return false;
@@ -317,16 +320,16 @@ public class PipelineHooks
      * When Acuity is enabled the per-chunk matrix is never used, so is wasteful to update when frustum moves.
      * Matters more when lots of block updates or other high-throughput because adds to contention.
      */
-    public static void renderChunkInitModelViewMatrix(RenderChunk renderChunk)
+    public static void renderChunkInitModelViewMatrix(ChunkRenderer renderChunk)
     {
         if(Acuity.isModEnabled())
         {
             // this is called right after setting chunk position because it was moved in the frustum
             // let buffers in the chunk know they are no longer valid and can be released.
-            ((IRenderChunk)renderChunk).releaseDrawables();
+            ((ChunkRendererExt)renderChunk).releaseDrawables();
         }
         else
-            renderChunk.initModelviewMatrix();
+            renderChunk.applyMatrix();
     }
 
     public static boolean shouldUploadLayer(ChunkRenderData compiledchunk, BlockRenderLayer blockrenderlayer)
@@ -358,18 +361,18 @@ public class PipelineHooks
 
     @SuppressWarnings("null")
     public static ListenableFuture<Object> uploadChunk(ChunkRenderDispatcher chunkRenderDispatcher, BlockRenderLayer blockRenderLayer,
-            BufferBuilder bufferBuilder, RenderChunk renderChunk, ChunkRenderData compiledChunk, double distanceSq)
+            BufferBuilder bufferBuilder, ChunkRenderer renderChunk, ChunkRenderData compiledChunk, double distanceSq)
     {
         assert blockRenderLayer == BlockRenderLayer.SOLID || blockRenderLayer == BlockRenderLayer.TRANSLUCENT;
         
         if (MinecraftClient.getInstance().isMainThread())
         {
             if(blockRenderLayer == BlockRenderLayer.SOLID)
-                ((IRenderChunk)renderChunk).setSolidDrawable((Solid) ((CompoundBufferBuilder)bufferBuilder).produceDrawable());
+                ((ChunkRendererExt)renderChunk).setSolidDrawable((Solid) ((CompoundBufferBuilder)bufferBuilder).produceDrawable());
             else
-                ((IRenderChunk)renderChunk).setTranslucentDrawable((Translucent) ((CompoundBufferBuilder)bufferBuilder).produceDrawable());
+                ((ChunkRendererExt)renderChunk).setTranslucentDrawable((Translucent) ((CompoundBufferBuilder)bufferBuilder).produceDrawable());
             
-            bufferBuilder.setTranslation(0.0D, 0.0D, 0.0D);
+            bufferBuilder.setOffset(0.0D, 0.0D, 0.0D);
             return Futures.<Object>immediateFuture((Object)null);
         }
         else

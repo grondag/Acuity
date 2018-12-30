@@ -1,11 +1,10 @@
 package grondag.acuity.core;
 
-import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedVertexConsumer;
-import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.RenderPipeline;
-import grondag.acuity.api.TextureFormat;
+import grondag.acuity.api.RenderPipelineImpl;
+import grondag.acuity.api.TextureDepth;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.MinecraftClient;
@@ -19,7 +18,7 @@ import net.minecraft.util.math.MathHelper;
 @Environment(EnvType.CLIENT)
 public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
 {
-    protected final RenderPipeline pipeline;
+    protected final RenderPipelineImpl pipeline;
     
     protected int glowFlags = 0;
     private int glowMask = 0;
@@ -33,9 +32,9 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     
     protected IPipelinedQuad currentQuad;
     
-    protected PipelinedVertexLighter(IRenderPipeline pipeline)
+    protected PipelinedVertexLighter(RenderPipeline pipeline)
     {
-        this.pipeline = (RenderPipeline) pipeline;
+        this.pipeline = (RenderPipelineImpl) pipeline;
     }
     
     @Override
@@ -121,7 +120,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
         this.blockLightMap = 0;
         this.skyLightMap = 0;
         this.enableDiffuse = true;
-        this.glowMask = (2 << quad.getPipeline().textureFormat().layerCount()) - 1;
+        this.glowMask = (2 << quad.getPipeline().textureDepth().layerCount()) - 1;
         this.enableAmbientOcclusion = MinecraftClient.isAmbientOcclusionEnabled();
     }
     
@@ -155,7 +154,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float v0
             )
     {
-        if(this.pipeline.textureFormat != TextureFormat.SINGLE)
+        if(this.pipeline.textureFormat != TextureDepth.SINGLE)
             throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_vertex_texture_format_mismatch_single"));
         
         startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
@@ -177,7 +176,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float v1
             )
     {
-        if(this.pipeline.textureFormat != TextureFormat.DOUBLE)
+        if(this.pipeline.textureFormat != TextureDepth.DOUBLE)
             throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_vertex_texture_format_mismatch_double"));
         
         VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);
@@ -214,7 +213,7 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
             float v2
             )
     {
-        if(this.pipeline.textureFormat != TextureFormat.TRIPLE)
+        if(this.pipeline.textureFormat != TextureDepth.TRIPLE)
             throw new UnsupportedOperationException(I18n.translateToLocal("misc.error_vertex_texture_format_mismatch_triple"));
         
         VertexCollector target = startVertex(posX, posY, posZ, normX, normY, normZ, unlitColorARGB0, u0, v0);

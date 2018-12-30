@@ -3,16 +3,16 @@ package grondag.acuity.core;
 import java.nio.ByteBuffer;
 
 
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.api.IPipelinedQuad;
 import grondag.acuity.api.IPipelinedVertexConsumer;
-import grondag.acuity.api.IRenderPipeline;
+import grondag.acuity.api.RenderPipeline;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.block.BlockRenderLayer;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.util.math.Vector3f;
 import net.minecraft.util.math.BlockPos;
 
@@ -31,7 +31,7 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
     private static final int BLOCK = 1;
     
     private CompoundVertexLighter lighter;
-    private RenderPipeline pipeline;
+    private RenderPipelineImpl pipeline;
     private int vertexCount = 0;
     private final Vector3f[] pos = new Vector3f[4];
     private final int[] color = new int[4];
@@ -48,7 +48,7 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
         pos[3] = new Vector3f();
     }
 
-    public FluidBuilder prepare(RenderPipeline pipeline, CompoundVertexLighter lighter)
+    public FluidBuilder prepare(RenderPipelineImpl pipeline, CompoundVertexLighter lighter)
     {
         this.pipeline = pipeline;
         this.lighter = lighter;
@@ -270,7 +270,7 @@ public class FluidBuilder extends BufferBuilder implements IPipelinedQuad
     }
 
     @Override
-    public IRenderPipeline getPipeline()
+    public RenderPipeline getPipeline()
     {
         return this.pipeline;
     }

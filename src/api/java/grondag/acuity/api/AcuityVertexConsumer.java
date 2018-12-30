@@ -1,11 +1,63 @@
 package grondag.acuity.api;
 
+import java.util.Random;
+
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.block.BlockRenderLayer;
+import net.minecraft.block.BlockState;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Direction;
+import net.minecraft.world.ExtendedBlockView;
 
+/**
+ * Quad must call {@link IPipelinedVertexConsumer#acceptVertex(IPipelinedVertex)} with
+     * its vertex information.<p>
+     * 
+     * For tint, quad (or the model it comes from) is responsible for retrieving and applying block tint 
+     * to the vertex colors.  This is done because lighter has no way to know which colors
+     * should be modified when there is more than one color/texture layer. And many models don't use it.<p>
+     * 
+     * You can retrieve the block color from tint with {@link IPipelinedVertexConsumer#getBlockInfo()} 
+     * and then {@link BlockInfo#getColorMultiplier(int tint)}; *
+ */
 @Environment(EnvType.CLIENT)
-public interface IPipelinedVertexConsumer
+public interface AcuityVertexConsumer
 {
+    /**
+     * If your model has quads co-planar with a block face, then you should
+     * exclude them if this method returns false for that face.<p>
+     * 
+     * This is in lieu of the getQuads(EnumFacing) pattern used in BakedQuad.
+     */
+    public boolean shouldOutputSide(Direction side);
+    
+    /**
+     * Provides access to in-world block position for model customization.
+     */
+    public BlockPos pos();
+    
+    /**
+     * Provides access to block world for model customization.
+     */
+    public ExtendedBlockView world();
+    
+    /**
+     * Provides access to block state for model customization.<br>
+     * Is what normally is passed to IBakedModel and may be an IExtendedBlockState.
+     */
+    public BlockState blockState();
+    
+    /**
+     * Deterministically pseudo-random based on block position.<br>
+     * Will be same as what normally is passed to BakedModel but is computed
+     * lazily - will not be calculated if never retrieved.
+     */
+    public Random random();
+    
+    
+    public void prepare(BlockRenderLayer layer, RenderPipeline pipeline);
+    
     /**
      * For single-layer renders.<p>
      * 
@@ -63,8 +115,6 @@ public interface IPipelinedVertexConsumer
             float u2,
             float v2
             );
-    
-    public IBlockInfo getBlockInfo();
     
     /**
      * Call before calling any of the acceptVertex methods. Emissive will be false at start of each quad.<p>

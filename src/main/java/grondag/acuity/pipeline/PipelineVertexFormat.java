@@ -1,14 +1,14 @@
-package grondag.acuity.core;
+package grondag.acuity.pipeline;
 
-import static grondag.acuity.core.PipelineVertextFormatElement.BASE_RGBA_4UB;
-import static grondag.acuity.core.PipelineVertextFormatElement.BASE_TEX_2F;
-import static grondag.acuity.core.PipelineVertextFormatElement.LIGHTMAPS_4UB;
-import static grondag.acuity.core.PipelineVertextFormatElement.NORMAL_AO_4UB;
-import static grondag.acuity.core.PipelineVertextFormatElement.POSITION_3F;
-import static grondag.acuity.core.PipelineVertextFormatElement.SECONDARY_RGBA_4UB;
-import static grondag.acuity.core.PipelineVertextFormatElement.SECONDARY_TEX_2F;
-import static grondag.acuity.core.PipelineVertextFormatElement.TERTIARY_RGBA_4UB;
-import static grondag.acuity.core.PipelineVertextFormatElement.TERTIARY_TEX_2F;
+import static grondag.acuity.pipeline.PipelineVertextFormatElement.BASE_RGBA_4UB;
+import static grondag.acuity.pipeline.PipelineVertextFormatElement.BASE_TEX_2F;
+import static grondag.acuity.pipeline.PipelineVertextFormatElement.LIGHTMAPS_4UB;
+import static grondag.acuity.pipeline.PipelineVertextFormatElement.NORMAL_AO_4UB;
+import static grondag.acuity.pipeline.PipelineVertextFormatElement.POSITION_3F;
+import static grondag.acuity.pipeline.PipelineVertextFormatElement.SECONDARY_RGBA_4UB;
+import static grondag.acuity.pipeline.PipelineVertextFormatElement.SECONDARY_TEX_2F;
+import static grondag.acuity.pipeline.PipelineVertextFormatElement.TERTIARY_RGBA_4UB;
+import static grondag.acuity.pipeline.PipelineVertextFormatElement.TERTIARY_TEX_2F;
 
 import org.lwjgl.opengl.GL20;
 

@@ -1,6 +1,6 @@
 package grondag.acuity.mixin.extension;
 
-import net.minecraft.client.render.block.BlockRenderLayer;
+import net.minecraft.block.BlockRenderLayer;
 
 public interface ChunkRenderDataExt
 {

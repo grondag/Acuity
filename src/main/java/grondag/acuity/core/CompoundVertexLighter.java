@@ -1,11 +1,10 @@
 package grondag.acuity.core;
 
 
-import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
-import grondag.acuity.api.IPipelinedQuadConsumer;
-import grondag.acuity.api.PipelineManager;
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.AcuityVertexConsumer;
+import grondag.acuity.api.PipelineManagerImpl;
+import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.fermion.varia.DirectionHelper;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -18,11 +17,11 @@ import net.minecraft.util.math.MathHelper;
 import net.minecraft.world.ExtendedBlockView;
 
 @Environment(EnvType.CLIENT)
-public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
+public abstract class CompoundVertexLighter implements AcuityVertexConsumer
 {
     protected final IBlockInfo blockInfo;
     
-    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[PipelineManager.MAX_PIPELINES];
+    private PipelinedVertexLighter[] lighters = new PipelinedVertexLighter[PipelineManagerImpl.MAX_PIPELINES];
 
     protected BlockRenderLayer renderLayer;
     protected CompoundBufferBuilder target;
@@ -62,7 +61,7 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
     public void accept(IPipelinedQuad quad)
     {
         if(quad != null && quad.getRenderLayer() == this.renderLayer)
-            getPipelineLighter((RenderPipeline)quad.getPipeline()).acceptQuad(quad);
+            getPipelineLighter((RenderPipelineImpl)quad.getPipeline()).acceptQuad(quad);
     }
     
     public CompoundVertexLighter()
@@ -70,12 +69,12 @@ public abstract class CompoundVertexLighter implements IPipelinedQuadConsumer
         this.blockInfo = (IBlockInfo)(new BlockInfo(MinecraftClient.getInstance().getBlockColorMap()));
     }
     
-    protected abstract PipelinedVertexLighter createChildLighter(RenderPipeline pipeline);
+    protected abstract PipelinedVertexLighter createChildLighter(RenderPipelineImpl pipeline);
 
-    private PipelinedVertexLighter getPipelineLighter(RenderPipeline pipeline)
+    private PipelinedVertexLighter getPipelineLighter(RenderPipelineImpl pipeline)
     {
         if(pipeline == null)
-            pipeline = PipelineManager.INSTANCE.defaultSinglePipeline;
+            pipeline = PipelineManagerImpl.INSTANCE.defaultSinglePipeline;
         
         @SuppressWarnings("null")
         PipelinedVertexLighter result = lighters[pipeline.getIndex()];

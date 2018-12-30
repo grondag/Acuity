@@ -1,6 +1,6 @@
-package grondag.acuity.core;
+package grondag.acuity.pipeline;
 
-import grondag.acuity.api.TextureFormat;
+import grondag.acuity.api.TextureDepth;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
@@ -30,12 +30,12 @@ public final class PipelineShaderManager
         this.fragmentLibrarySource = commonSource + AbstractPipelineShader.getShaderSource("/assets/acuity/shader/fragment_lib.glsl");
     }
     
-    private String shaderKey(String shaderFileName, TextureFormat textureFormat, boolean isSolidLayer)
+    private String shaderKey(String shaderFileName, TextureDepth textureFormat, boolean isSolidLayer)
     {
         return String.format("%s.%s.%s", shaderFileName, textureFormat, isSolidLayer);
     }
     
-    public PipelineVertexShader getOrCreateVertexShader(String shaderFileName, TextureFormat textureFormat, boolean isSolidLayer)
+    public PipelineVertexShader getOrCreateVertexShader(String shaderFileName, TextureDepth textureFormat, boolean isSolidLayer)
     {
         final String shaderKey = shaderKey(shaderFileName, textureFormat, isSolidLayer);
         
@@ -51,7 +51,7 @@ public final class PipelineShaderManager
         }
     }
 
-    public PipelineFragmentShader getOrCreateFragmentShader(String shaderFileName, TextureFormat textureFormat, boolean isSolidLayer)
+    public PipelineFragmentShader getOrCreateFragmentShader(String shaderFileName, TextureDepth textureFormat, boolean isSolidLayer)
     {
         final String shaderKey = shaderKey(shaderFileName, textureFormat, isSolidLayer);
         

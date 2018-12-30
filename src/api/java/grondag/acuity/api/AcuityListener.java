@@ -8,7 +8,7 @@ import net.fabricmc.api.Environment;
  *
  */
 @Environment(EnvType.CLIENT)
-public interface IAcuityListener
+public interface AcuityListener
 {
     /**
      * Will only be called when the status changes, so you may reliably

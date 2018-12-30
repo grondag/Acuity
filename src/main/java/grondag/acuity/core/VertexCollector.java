@@ -3,7 +3,7 @@ package grondag.acuity.core;
 
 import com.google.common.primitives.Doubles;
 
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.RenderPipelineImpl;
 import it.unimi.dsi.fastutil.Swapper;
 import it.unimi.dsi.fastutil.ints.AbstractIntComparator;
 import net.fabricmc.api.EnvType;
@@ -15,7 +15,7 @@ public class VertexCollector
 {
     private int[] data;
     private int integerSize = 0;
-    private final RenderPipeline pipeline;
+    private final RenderPipelineImpl pipeline;
     private final VertexCollectorList parent; 
     
     /**
@@ -29,7 +29,7 @@ public class VertexCollector
      */
     private int sortReadIndex = 0;
     
-    public VertexCollector(RenderPipeline pipeline, VertexCollectorList parent)
+    public VertexCollector(RenderPipelineImpl pipeline, VertexCollectorList parent)
     {
         data = new int[0x10000];
         this.parent = parent;
@@ -41,7 +41,7 @@ public class VertexCollector
         this.integerSize = 0;
     }
     
-    public RenderPipeline pipeline()
+    public RenderPipelineImpl pipeline()
     {
         return this.pipeline;
     }

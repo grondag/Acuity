@@ -2,19 +2,18 @@ package grondag.acuity.core;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-
 import org.apache.commons.lang3.tuple.Pair;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.buffering.DrawableChunk;
 import grondag.acuity.buffering.UploadableChunk;
-import grondag.acuity.mixin.extension.BufferBuilderExt;
+import grondag.acuity.mixin.AccessBufferBuilder;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
+import net.minecraft.block.BlockRenderLayer;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.VertexFormat;
-import net.minecraft.client.render.block.BlockRenderLayer;
 import net.minecraft.client.render.chunk.BlockLayeredBufferBuilder;
 
 @Environment(EnvType.CLIENT)
@@ -49,7 +48,7 @@ public class CompoundBufferBuilder extends BufferBuilder
 
     private CompoundBufferBuilder proxy;
     
-    private BufferBuilderExt accessor;
+    private AccessBufferBuilder accessor;
     
     private class CompoundState extends State
     {
@@ -65,7 +64,7 @@ public class CompoundBufferBuilder extends BufferBuilder
     public CompoundBufferBuilder(int bufferSizeIn)
     {
         super(limitBufferSize(bufferSizeIn));
-        accessor = (BufferBuilderExt)this;
+        accessor = (AccessBufferBuilder)this;
     }
     
     /**
@@ -161,7 +160,7 @@ public class CompoundBufferBuilder extends BufferBuilder
         }
     }
     
-    public VertexCollector getVertexCollector(RenderPipeline pipeline)
+    public VertexCollector getVertexCollector(RenderPipelineImpl pipeline)
     {
         if(Acuity.isModEnabled() && this.proxy != null)
             return this.proxy.getVertexCollector(pipeline);

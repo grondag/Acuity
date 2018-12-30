@@ -10,18 +10,18 @@ import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.Configurator;
-import grondag.acuity.core.PipelineShaderManager;
-import grondag.acuity.mixin.MixinFogState;
+import grondag.acuity.mixin.AccessFogHelper;
+import grondag.acuity.mixin.AccessFogState;
 import grondag.acuity.mixin.MixinGlStateManager;
-import grondag.acuity.mixin.extension.FogHelperExt;
 import grondag.acuity.mixin.extension.GameRendererExt;
 import grondag.acuity.mixin.extension.Matrix4fExt;
+import grondag.acuity.pipeline.PipelineShaderManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.Matrix4f;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.Vec3d;
 
-public final class PipelineManager implements IPipelineManager
+public final class PipelineManagerImpl implements PipelineManager
 {
     /**
      * Will always be 1, defined to clarify intent in code.
@@ -65,21 +65,21 @@ public final class PipelineManager implements IPipelineManager
     //TODO: remove if not needed
 //    private static final long modelViewProjectionMatrixBufferAddress = MemoryUtil.memAddress(modelViewProjectionMatrixBuffer);
     
-    public static final PipelineManager INSTANCE = new PipelineManager();
+    public static final PipelineManagerImpl INSTANCE = new PipelineManagerImpl();
     
     /**
      * Incremented whenever view matrix changes. Used by programs to know if they must update.
      */
     public static int viewMatrixVersionCounter = Integer.MIN_VALUE;
     
-    private final RenderPipeline[] pipelines = new RenderPipeline[PipelineManager.MAX_PIPELINES];
+    private final RenderPipelineImpl[] pipelines = new RenderPipelineImpl[PipelineManagerImpl.MAX_PIPELINES];
     
     private int pipelineCount = 0;
     
-    private final RenderPipeline[] defaultPipelines = new RenderPipeline[TextureFormat.values().length];
-    private final RenderPipeline waterPipeline;
-    private final RenderPipeline lavaPipeline;
-    public final RenderPipeline defaultSinglePipeline;
+    private final RenderPipelineImpl[] defaultPipelines = new RenderPipelineImpl[TextureDepth.values().length];
+    private final RenderPipelineImpl waterPipeline;
+    private final RenderPipelineImpl lavaPipeline;
+    public final RenderPipelineImpl defaultSinglePipeline;
     
     /**
      * The number of seconds this world has been rendering since the last render reload,
@@ -100,20 +100,20 @@ public final class PipelineManager implements IPipelineManager
      */
     private float fractionalFrameTicks;
     
-    private PipelineManager()
+    private PipelineManagerImpl()
     {
         super();
         
         // add default pipelines
-        for(TextureFormat textureFormat : TextureFormat.values())
+        for(TextureDepth textureFormat : TextureDepth.values())
         {
-            defaultPipelines[textureFormat.ordinal()] = (RenderPipeline) this.createPipeline(
+            defaultPipelines[textureFormat.ordinal()] = (RenderPipelineImpl) this.createPipeline(
                     textureFormat, 
                     PipelineShaderManager.INSTANCE.DEFAULT_VERTEX_SOURCE,
                     PipelineShaderManager.INSTANCE.DEFAULT_FRAGMENT_SOURCE).finish();
         }
-        this.waterPipeline = this.createPipeline(TextureFormat.SINGLE, "/assets/acuity/shader/water.vert", "/assets/acuity/shader/water.frag");
-        this.lavaPipeline = this.createPipeline(TextureFormat.SINGLE, "/assets/acuity/shader/lava.vert", "/assets/acuity/shader/lava.frag");
+        this.waterPipeline = this.createPipeline(TextureDepth.SINGLE, "/assets/acuity/shader/water.vert", "/assets/acuity/shader/water.frag");
+        this.lavaPipeline = this.createPipeline(TextureDepth.SINGLE, "/assets/acuity/shader/lava.vert", "/assets/acuity/shader/lava.frag");
         this.defaultSinglePipeline = defaultPipelines[0];
     }
     
@@ -137,18 +137,18 @@ public final class PipelineManager implements IPipelineManager
     }
     
     @Override
-    public final synchronized RenderPipeline createPipeline(
-            TextureFormat textureFormat, 
+    public final synchronized RenderPipelineImpl createPipeline(
+            TextureDepth textureFormat, 
             String vertexShader, 
             String fragmentShader)
     {
         
-        if(this.pipelineCount >= PipelineManager.MAX_PIPELINES)
+        if(this.pipelineCount >= PipelineManagerImpl.MAX_PIPELINES)
             return null;
         
-        if(this.pipelineCount >= PipelineManager.MAX_PIPELINES)
+        if(this.pipelineCount >= PipelineManagerImpl.MAX_PIPELINES)
             return null;
-        RenderPipeline result = new RenderPipeline(this.pipelineCount++, vertexShader, fragmentShader, textureFormat);
+        RenderPipelineImpl result = new RenderPipelineImpl(this.pipelineCount++, vertexShader, fragmentShader, textureFormat);
         this.pipelines[result.getIndex()] = result;
         
         addStandardUniforms(result);
@@ -156,31 +156,31 @@ public final class PipelineManager implements IPipelineManager
         return result;
     }
     
-    public final RenderPipeline getPipeline(int pipelineIndex)
+    public final RenderPipelineImpl getPipeline(int pipelineIndex)
     {
         return pipelines[pipelineIndex];
     }
 
     @Override
-    public final IRenderPipeline getDefaultPipeline(TextureFormat textureFormat)
+    public final RenderPipeline getDefaultPipeline(TextureDepth textureFormat)
     {
         return pipelines[textureFormat.ordinal()];
     }
     
     @Override
-    public final RenderPipeline getWaterPipeline()
+    public final RenderPipelineImpl getWaterPipeline()
     {
         return Configurator.fancyFluids ? this.waterPipeline : this.defaultSinglePipeline;
     }
     
     @Override
-    public final RenderPipeline getLavaPipeline()
+    public final RenderPipelineImpl getLavaPipeline()
     {
         return Configurator.fancyFluids ? this.lavaPipeline : this.defaultSinglePipeline;
     }
 
     @Override
-    public IRenderPipeline getPipelineByIndex(int index)
+    public RenderPipeline getPipelineByIndex(int index)
     {
         return this.pipelines[index];
     }
@@ -193,7 +193,7 @@ public final class PipelineManager implements IPipelineManager
         return this.pipelineCount;
     }
     
-    private void addStandardUniforms(RenderPipeline pipeline)
+    private void addStandardUniforms(RenderPipelineImpl pipeline)
     {
         pipeline.uniform1f("u_time", UniformUpdateFrequency.PER_FRAME, u -> u.set(this.renderSeconds));
         
@@ -209,7 +209,7 @@ public final class PipelineManager implements IPipelineManager
         
         pipeline.uniform3f("u_fogAttributes", UniformUpdateFrequency.PER_TICK, u -> 
         {
-            MixinFogState fogState = MixinGlStateManager.FOG;
+            AccessFogState fogState = MixinGlStateManager.FOG;
             u.set(fogState.getEnd(), fogState.getEnd() - fogState.getStart(), 
                     // zero signals shader to use linear fog
                     fogState.getMode() == GlStateManager.FogMode.LINEAR.glValue ? 0f : fogState.getDensity());
@@ -217,8 +217,8 @@ public final class PipelineManager implements IPipelineManager
         
         pipeline.uniform3f("u_fogColor", UniformUpdateFrequency.PER_TICK, u -> 
         {
-            FogHelperExt fh = (FogHelperExt)((GameRendererExt)MinecraftClient.getInstance().worldRenderer).fogHelper();
-            u.set(fh.fogColorRed(), fh.fogColorGreen(), fh.fogColorBlue());
+            AccessFogHelper fh = (AccessFogHelper)((GameRendererExt)MinecraftClient.getInstance().worldRenderer).fogHelper();
+            u.set(fh.getRed(), fh.getGreen(), fh.getBlue());
         });
         
         pipeline.setupModelViewUniforms();
@@ -232,6 +232,7 @@ public final class PipelineManager implements IPipelineManager
         this.fractionalFrameTicks = fractionalTicks;
         
         //FIXME: probably borked in some way
+        //TODO: use new GlMatrixStateAccessor class that downloads this during render
         projectionMatrixBuffer.position(0);
         GlStateManager.getMatrix(GL11.GL_PROJECTION_MATRIX, projectionMatrixBuffer);
         projMatrix.setFromBuffer(projectionMatrixBuffer, true); // assuming true = transpose
@@ -306,7 +307,7 @@ public final class PipelineManager implements IPipelineManager
     {
         //FIXME: this almost certainly is flipped in some way
         transferMatrix.setFromMatrix(mvMatrix);
-        transferMatrixBase.multiply(PipelineManager.projMatrix);
+        transferMatrixBase.multiply(PipelineManagerImpl.projMatrix);
         transferMatrixBase.putIntoBuffer(modelViewProjectionMatrixBuffer);
      // PERF - put back?
         // avoid NIO overhead

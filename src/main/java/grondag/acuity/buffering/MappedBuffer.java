@@ -15,7 +15,7 @@ import com.mojang.blaze3d.platform.GLX;
 import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.opengl.GLBufferStore;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import it.unimi.dsi.fastutil.objects.ObjectArrayList;
@@ -421,7 +421,7 @@ public class MappedBuffer
         
         retainers.forEach(delegate -> 
         {
-            final RenderPipeline pipeline = delegate.getPipeline();
+            final RenderPipelineImpl pipeline = delegate.getPipeline();
             final int fromByteCount = delegate.bufferDelegate().byteCount();
             final int fromIntCount = fromByteCount / 4;
             final int fromIntOffset = delegate.bufferDelegate().byteOffset() / 4;

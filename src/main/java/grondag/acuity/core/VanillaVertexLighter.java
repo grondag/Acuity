@@ -1,9 +1,8 @@
 package grondag.acuity.core;
 
-import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
-import grondag.acuity.api.IRenderPipeline;
 import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.RenderPipelineImpl;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.util.math.BlockPos;
@@ -15,7 +14,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
     {
         private float combinedShade = 1f;
         
-        protected ChildLighter(IRenderPipeline pipeline)
+        protected ChildLighter(RenderPipeline pipeline)
         {
             super(pipeline);
         }
@@ -188,7 +187,7 @@ public class VanillaVertexLighter extends CompoundVertexLighter
     
     
     @Override
-    protected PipelinedVertexLighter createChildLighter(RenderPipeline pipeline)
+    protected PipelinedVertexLighter createChildLighter(RenderPipelineImpl pipeline)
     {
         return new ChildLighter(pipeline);
     }

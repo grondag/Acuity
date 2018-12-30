@@ -1,12 +1,11 @@
 package grondag.acuity.core;
 
-import grondag.acuity.api.IBlockInfo;
 import grondag.acuity.api.IPipelinedQuad;
-import grondag.acuity.api.IPipelinedQuadConsumer;
+import grondag.acuity.api.AcuityVertexConsumer;
 import grondag.acuity.api.IPipelinedVertexConsumer;
-import grondag.acuity.api.IRenderPipeline;
-import grondag.acuity.api.PipelineManager;
-import grondag.acuity.api.TextureFormat;
+import grondag.acuity.api.RenderPipeline;
+import grondag.acuity.api.PipelineManagerImpl;
+import grondag.acuity.api.TextureDepth;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.render.VertexFormat;
@@ -18,7 +17,7 @@ import net.minecraft.client.util.math.Vector3f;
 @Environment(EnvType.CLIENT)
 public class VanillaQuadWrapper implements IPipelinedQuad
 {
-    private final IRenderPipeline SIMPLE = PipelineManager.INSTANCE.getDefaultPipeline(TextureFormat.SINGLE);
+    private final RenderPipeline SIMPLE = PipelineManagerImpl.INSTANCE.getDefaultPipeline(TextureDepth.SINGLE);
     private BakedQuad wrapped;
     private BlockRenderLayer layer;
     private final float[][] positions = new float[4][3];
@@ -36,7 +35,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
     }
     
     @Override
-    public IRenderPipeline getPipeline()
+    public RenderPipeline getPipeline()
     {
         return SIMPLE;
     }
@@ -147,7 +146,7 @@ public class VanillaQuadWrapper implements IPipelinedQuad
         return this.layer;
     }
 
-    public void wrapAndLight(IPipelinedQuadConsumer lighter, BakedQuad q)
+    public void wrapAndLight(AcuityVertexConsumer lighter, BakedQuad q)
     {
         this.wrapped = q;
         lighter.accept(this); 
