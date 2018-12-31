@@ -1,7 +1,28 @@
+/*******************************************************************************
+ * Copyright (C) 2018 grondag
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ ******************************************************************************/
+
 package grondag.acuity.core;
 
-import grondag.acuity.api.IPipelinedQuad;
-import grondag.acuity.api.IPipelinedVertexConsumer;
+import grondag.acuity.api.BlockVertexConsumer;
 import grondag.acuity.api.RenderPipeline;
 import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.api.TextureDepth;
@@ -12,11 +33,8 @@ import net.minecraft.client.render.VertexFormat;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.MathHelper;
 
-/**
- * A heavily-modified version of Forge vertex lighter that supports multiple render paths in same quad stream.
- */
 @Environment(EnvType.CLIENT)
-public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
+public abstract class PipelinedVertexLighter implements BlockVertexConsumer
 {
     protected final RenderPipelineImpl pipeline;
     
@@ -30,15 +48,10 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     protected boolean isCurrentQuadCutout = false;
     protected boolean isCurrentQuadMipped = true;
     
-    protected IPipelinedQuad currentQuad;
-    
     protected PipelinedVertexLighter(RenderPipeline pipeline)
     {
         this.pipeline = (RenderPipelineImpl) pipeline;
     }
-    
-    @Override
-    public abstract IBlockInfo getBlockInfo();
     
     public abstract VertexCollector getVertexCollector();
     
@@ -57,23 +70,23 @@ public abstract class PipelinedVertexLighter implements IPipelinedVertexConsumer
     }   
 
     @Override
-    public void setBlockLightMap(int blockLightRGBF)
+    public final void setBlockLightMap(int blockLightRGBF)
     {
         this.blockLightMap = blockLightRGBF;
     }
     
     @Override
-    public void setBlockLightMap(int red, int green, int blue, int flicker)
+    public final void setBlockLightMap(int red, int green, int blue, int flicker)
     {
-        this.setBlockLightMap(red | (green << 8) | (blue << 16) |  (flicker << 24));
+        setBlockLightMap(red | (green << 8) | (blue << 16) |  (flicker << 24));
     }
     
     @Override
-    public void setBlockLightMap(float red, float green, float blue, float flicker)
+    public final void setBlockLightMap(float red, float green, float blue, float flicker)
     {
-        this.setBlockLightMap(Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255), Math.round(flicker * 255));
+        setBlockLightMap(Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255), Math.round(flicker * 255));
     }
-
+    
     @Override
     public void setSkyLightMap(int skyLightMap)
     {

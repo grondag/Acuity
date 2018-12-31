@@ -20,13 +20,44 @@
  * SOFTWARE.
  ******************************************************************************/
 
-package grondag.acuity.hooks;
+package grondag.acuity.api;
 
-import net.minecraft.entity.Entity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
-public interface IRenderGlobal
+@Environment(EnvType.CLIENT)
+public abstract class RenderRuntime
 {
-
-    void setupTerrainFast(Entity viewEntity, double partialTicks, ICamera camera, int frameCount, boolean playerSpectator);
-
+    static RenderRuntime instance = new RenderRuntime() {};
+    
+    public static RenderRuntime getInstance()
+    {
+        return instance;
+    }
+    
+    /**
+     * Get this to register your pipelines and access the built-in pipelines.
+     */
+    public PipelineManager getPipelineManager()
+    {
+        return null;
+    }
+    
+    /**
+     * Will be false if any part of ASM modifications failed, render API is missing
+     * or if user has disabled advanced render features in configuration.
+     */
+    public boolean isEnabled()
+    {
+        return false;
+    }
+    
+    /**
+     * Use if you need callbacks for status changes.
+     * Holds a weak reference, so no need to remove listeners that fall out of scope.
+     */
+    public void registerListener(RenderListener lister)
+    {
+        // NO OP
+    }
 }

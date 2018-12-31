@@ -20,13 +20,13 @@
  * SOFTWARE.
  ******************************************************************************/
 
-package grondag.acuity.hooks;
+package grondag.acuity.api;
 
-import net.minecraft.entity.Entity;
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
 
-public interface IRenderGlobal
+@Environment(EnvType.CLIENT)
+public interface BlockVertexProvider
 {
-
-    void setupTerrainFast(Entity viewEntity, double partialTicks, ICamera camera, int frameCount, boolean playerSpectator);
-
+    public void produceBlockQuads(BlockVertexConsumer quadConsumer);
 }

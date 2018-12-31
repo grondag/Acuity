@@ -1,3 +1,25 @@
+/*******************************************************************************
+ * Copyright (C) 2018 grondag
+ * 
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ * 
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ * 
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ ******************************************************************************/
+
 package grondag.acuity.hooks;
 
 import java.util.List;
@@ -10,7 +32,7 @@ import com.google.common.util.concurrent.ListenableFutureTask;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
-import grondag.acuity.api.AcuityModel;
+import grondag.acuity.api.BlockVertexProvider;
 import grondag.acuity.api.PipelineManagerImpl;
 import grondag.acuity.api.RenderPipelineImpl;
 import grondag.acuity.buffering.DrawableChunk.Solid;
@@ -217,7 +239,7 @@ public class PipelineHooks
     {
         if(Acuity.isModEnabled())
         {
-            if(model instanceof AcuityModel)
+            if(model instanceof BlockVertexProvider)
                 return renderModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
             else
                 return renderVanillaModel(blockAccess, model, state, pos, bufferBuilderIn, checkSides);
@@ -230,7 +252,7 @@ public class PipelineHooks
     {
         try
         {
-            final AcuityModel model = (AcuityModel)modelIn;
+            final BlockVertexProvider model = (BlockVertexProvider)modelIn;
             final BlockRenderLayer layer = MinecraftForgeClient.getRenderLayer();
             if(!model.mightRenderInLayer(layer)) 
                 return false;
