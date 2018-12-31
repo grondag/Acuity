@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Mutable;
 import org.spongepowered.asm.mixin.Shadow;
 
-import grondag.acuity.hooks.MutableBoundingBox;
+import grondag.acuity.mixin.extension.MutableBoundingBox;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BoundingBox;
 

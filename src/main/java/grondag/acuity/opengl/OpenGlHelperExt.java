@@ -48,7 +48,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.Configurator;
-import grondag.acuity.api.PipelineManagerImpl;
+import grondag.acuity.api.pipeline.PipelineManagerImpl;
 import grondag.acuity.fermion.config.Localization;
 
 public class OpenGlHelperExt

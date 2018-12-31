@@ -22,7 +22,7 @@
 
 package grondag.acuity;
 
-import grondag.acuity.core.LightingModel;
+import grondag.acuity.api.pipeline.LightingModel;
 
 public class Configurator
 {

@@ -24,7 +24,7 @@ package grondag.acuity.pipeline;
 
 import com.mojang.blaze3d.platform.GLX;
 
-import grondag.acuity.api.TextureDepth;
+import grondag.acuity.api.model.TextureDepth;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 

@@ -28,8 +28,8 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import grondag.acuity.core.CompoundBufferBuilder;
-import grondag.acuity.hooks.PipelineHooks;
+import grondag.acuity.broken.PipelineHooks;
+import grondag.acuity.buffer.CompoundBufferBuilder;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.chunk.BlockLayeredBufferBuilder;
 

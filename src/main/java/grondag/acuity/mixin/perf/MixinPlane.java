@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.Overwrite;
 
 import com.google.common.collect.Iterators;
 
-import grondag.acuity.hooks.PipelineHooks;
+import grondag.acuity.broken.PipelineHooks;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.class_2353;
 

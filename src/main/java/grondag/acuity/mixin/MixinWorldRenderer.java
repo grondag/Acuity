@@ -27,7 +27,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import grondag.acuity.api.AcuityRuntimeImpl;
-import grondag.acuity.api.PipelineManagerImpl;
+import grondag.acuity.api.pipeline.PipelineManagerImpl;
 import net.minecraft.client.render.WorldRenderer;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.math.BoundingBoxTest;

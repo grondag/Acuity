@@ -22,7 +22,7 @@
 
 package grondag.acuity.pipeline;
 
-import grondag.acuity.api.TextureDepth;
+import grondag.acuity.api.model.TextureDepth;
 import it.unimi.dsi.fastutil.objects.Object2ObjectOpenHashMap;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

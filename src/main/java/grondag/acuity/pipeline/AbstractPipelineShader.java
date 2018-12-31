@@ -33,8 +33,8 @@ import com.google.common.io.CharStreams;
 import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.api.PipelineManagerImpl;
-import grondag.acuity.api.TextureDepth;
+import grondag.acuity.api.model.TextureDepth;
+import grondag.acuity.api.pipeline.PipelineManagerImpl;
 import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.fabricmc.api.EnvType;

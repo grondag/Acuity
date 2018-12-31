@@ -28,9 +28,11 @@ import java.util.Iterator;
 import java.util.function.Consumer;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.buffering.MappedBufferStore;
+import grondag.acuity.api.pipeline.PipelineManager;
+import grondag.acuity.api.pipeline.PipelineManagerImpl;
+import grondag.acuity.broken.PipelineHooks;
+import grondag.acuity.buffer.MappedBufferStore;
 import grondag.acuity.fermion.config.Localization;
-import grondag.acuity.hooks.PipelineHooks;
 import grondag.acuity.pipeline.PipelineShaderManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;

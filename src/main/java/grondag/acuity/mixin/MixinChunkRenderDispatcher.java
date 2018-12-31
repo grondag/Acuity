@@ -30,7 +30,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import com.google.common.util.concurrent.ListenableFuture;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.hooks.PipelineHooks;
+import grondag.acuity.broken.PipelineHooks;
 import net.minecraft.block.BlockRenderLayer;
 import net.minecraft.client.render.BufferBuilder;
 import net.minecraft.client.render.ChunkRenderDispatcher;

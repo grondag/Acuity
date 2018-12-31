@@ -34,20 +34,19 @@ import org.lwjgl.system.MemoryUtil;
 import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.Acuity;
-import grondag.acuity.Configurator;
-import grondag.acuity.api.PipelineUniform;
-import grondag.acuity.api.PipelineUniform.Uniform1f;
-import grondag.acuity.api.PipelineUniform.Uniform1i;
-import grondag.acuity.api.PipelineUniform.Uniform2f;
-import grondag.acuity.api.PipelineUniform.Uniform2i;
-import grondag.acuity.api.PipelineUniform.Uniform3f;
-import grondag.acuity.api.PipelineUniform.Uniform3i;
-import grondag.acuity.api.PipelineUniform.Uniform4f;
-import grondag.acuity.api.PipelineUniform.Uniform4i;
-import grondag.acuity.api.PipelineUniform.UniformMatrix4f;
-import grondag.acuity.api.PipelineManagerImpl;
-import grondag.acuity.api.TextureDepth;
-import grondag.acuity.api.UniformUpdateFrequency;
+import grondag.acuity.api.model.TextureDepth;
+import grondag.acuity.api.pipeline.PipelineManagerImpl;
+import grondag.acuity.api.pipeline.PipelineUniform;
+import grondag.acuity.api.pipeline.PipelineUniform.Uniform1f;
+import grondag.acuity.api.pipeline.PipelineUniform.Uniform1i;
+import grondag.acuity.api.pipeline.PipelineUniform.Uniform2f;
+import grondag.acuity.api.pipeline.PipelineUniform.Uniform2i;
+import grondag.acuity.api.pipeline.PipelineUniform.Uniform3f;
+import grondag.acuity.api.pipeline.PipelineUniform.Uniform3i;
+import grondag.acuity.api.pipeline.PipelineUniform.Uniform4f;
+import grondag.acuity.api.pipeline.PipelineUniform.Uniform4i;
+import grondag.acuity.api.pipeline.PipelineUniform.UniformMatrix4f;
+import grondag.acuity.api.pipeline.UniformUpdateFrequency;
 import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.mixin.extension.Matrix4fExt;
 import grondag.acuity.opengl.OpenGlHelperExt;
@@ -72,7 +71,7 @@ public class Program
 
     public final PipelineVertexShader vertexShader;
     public final PipelineFragmentShader fragmentShader;
-    public final TextureDepth textureFormat;
+    public final TextureDepth textureDepth;
     public final boolean isSolidLayer;
  
     private final ObjectArrayList<Uniform<?>> uniforms = new ObjectArrayList<>();
@@ -500,7 +499,7 @@ public class Program
     {
         this.vertexShader = vertexShader;
         this.fragmentShader = fragmentShader;
-        this.textureFormat = textureFormat;
+        this.textureDepth = textureFormat;
         this.isSolidLayer = isSolidLayer;
     }
  
@@ -692,7 +691,7 @@ public class Program
         GLX.glAttachShader(programID, vertId);
         GLX.glAttachShader(programID, fragId);
         
-        Configurator.lightingModel.vertexFormat(this.textureFormat).bindProgramAttributes(programID);
+        textureDepth.vertexFormat.bindProgramAttributes(programID);
         
         GLX.glLinkProgram(programID);
         if(GLX.glGetProgrami(programID, GLX.GL_LINK_STATUS) == GL11.GL_FALSE)
@@ -700,7 +699,6 @@ public class Program
             Acuity.INSTANCE.getLog().error(OpenGlHelperExt.getProgramInfoLog(programID));
             return false;
         }
-
         
         return true;
     }

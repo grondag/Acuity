@@ -22,7 +22,7 @@
 
 package grondag.acuity.mixin.extension;
 
-import grondag.acuity.buffering.DrawableChunk;
+import grondag.acuity.buffer.DrawableChunk;
 
 public interface ChunkRendererExt
 {

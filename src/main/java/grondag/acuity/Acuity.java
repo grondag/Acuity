@@ -28,7 +28,7 @@ import org.apache.logging.log4j.Logger;
 import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.api.AcuityRuntimeImpl;
-import grondag.acuity.api.PipelineManagerImpl;
+import grondag.acuity.api.pipeline.PipelineManagerImpl;
 import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.fabricmc.api.ModInitializer;
