@@ -1,6 +1,6 @@
 # Introduction
 
-**Acuity** offers mod authors the ability to implement multi-layered textures, emissive rendering and fancy visual effects (shaders) for block rendering with good performance on moderate to high-end hardware without creating unecessary block entities.
+**Acuity** offers mod authors the ability to implement multi-layered textures, emissive rendering and fancy visual effects (shaders) with good performance on modern hardware.  The primary focus is to enable special block rendering without block entity renderers, but item rendering is also targeted.
 
 The active version of Acuity is targeting the Fabric toolchain and API. The Forge 1.12 version is still available but was never distributed in a release version.  Given the changes coming in 1.14 is unlikely a Forge version will be available soon.
 
