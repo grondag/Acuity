@@ -31,7 +31,7 @@ import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Axis;
 import net.minecraft.world.ExtendedBlockView;
 
-public class VanillaVertexConsumer extends AbstractVertexConsumer implements BlockVertexConsumer
+public class VanillaBlockConsumer extends BlockVertexConsumerImpl implements BlockVertexConsumer
 {
     private final BlockPos.Mutable lightPos = new BlockPos.Mutable();
     private boolean isModelBlockIsOccluderDoNotUseDirectly = false;
@@ -53,7 +53,7 @@ public class VanillaVertexConsumer extends AbstractVertexConsumer implements Blo
     }
 
     @Override
-    public final boolean isVanillaLightingModel()
+    public final boolean isStandardLightingModel()
     {
         return true;
     }
@@ -69,11 +69,6 @@ public class VanillaVertexConsumer extends AbstractVertexConsumer implements Blo
         
         final boolean useNeighborBrightness = this.isOnBlockFace || this.isModelBlockOccluder();
         
-        final int blockLightOverride = Math.round(
-                        (emissiveLightMap & 0xFF) * 0.2126f
-                      + ((emissiveLightMap >> 8) & 0xFF) * 0.7152f
-                      + ((emissiveLightMap >> 16) & 0xFF) * 0.0722f);
-                      
         int blockLight = 0, skyLight = 0;
         float shade = 1.0f;
         
@@ -99,6 +94,14 @@ public class VanillaVertexConsumer extends AbstractVertexConsumer implements Blo
         
         for(int i = 0; i < QUAD_STRIDE; i += VERTEX_STRIDE)
         {
+            // convert color to luminance
+            int blockLightOverride = vertexData[i + LIGHTMAP];
+            if(blockLightOverride != 0)
+                blockLightOverride = Math.round(
+                            (blockLightOverride & 0xFF) * 0.2126f
+                          + ((blockLightOverride >> 8) & 0xFF) * 0.7152f
+                          + ((blockLightOverride >> 16) & 0xFF) * 0.0722f);
+            
             // compute shifted vertex positions
             final float x = Float.intBitsToFloat(vertexData[i + POS_X]) + offsetX;
             final float y = Float.intBitsToFloat(vertexData[i + POS_Y]) + offsetY; 

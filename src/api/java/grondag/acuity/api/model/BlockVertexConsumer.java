@@ -108,6 +108,9 @@ public interface BlockVertexConsumer extends VertexConsumer
      * If false, the quad will render in the solid render pass.
      * False by default.<p>
      * 
+     * Enabling translucent rendering will clear any pipeline you have set because
+     * translucent render is only available with the default pipelines.<p>
+     * 
      * Translucent rendering comes with a significant performance penalty and should
      * only be used for glass, force fields or similar surfaces that require texture
      * blending with the scene background.<p>

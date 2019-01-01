@@ -57,15 +57,18 @@ import grondag.acuity.api.pipeline.RenderPipeline;
  * 
  * If your quad doesn't have vertex normals it is best to simply omit them, even if you have a face
  * normal already computed. The consumer will compute a face normal in any case.
- * This was done to reduce the number of logic paths, simplify the API and protect against bad inputs.
- * If your shader does not need normals or emissive rendering flags, you can pass custom data to your shader
- * via {@link #setCustomNormalBlendData(int)}.
+ * This was done to reduce the number of logic paths, simplify the API and protect against bad inputs.<p>
  * 
+ * For custom shaders that don't need/use vertex noThese methods will throw an exception if a custom shader isn't active.
+ * Using raw vertices also consumes the bits that would normally be used to control lighting, MipMap and cutout blending.<p>
+ * 
+ * "Raw" methods will throw an exception if you have not enabled a custom pipeline via {@link #setPipeline(RenderPipeline)}.
+ * This check prevent inadvertent use of this feature because default shaders will not render correctly when used.<p>
  */
 public interface VertexConsumer
 {
     /**
-     * For single-layer renders with custom vertex normals.<p>
+     * For single-layer renders with per-vertex normals.<p>
      * 
      * See {@link VertexConsumer} header notes. 
      */
@@ -81,7 +84,7 @@ public interface VertexConsumer
             float v0);
    
     /**
-     * For single-layer renders without custom vertex normals.<p>
+     * For single-layer renders without per-vertex normals.<p>
      * 
      * See {@link VertexConsumer} header notes. 
      */
@@ -94,7 +97,22 @@ public interface VertexConsumer
             float v0);
     
     /**
-     * For double-layer renders with custom vertex normals.<p>
+     * For single-layer renders with custom normals and lighting data. Requires a custom pipeline.<p>
+     * 
+     * See {@link VertexConsumer} header notes. 
+     */
+    public void acceptRawVertex(
+            float posX,
+            float posY,
+            float posZ,
+            int rawNormalData,
+            int rawLightData,
+            int unlitColorARGB0,
+            float u0,
+            float v0);
+    
+    /**
+     * For double-layer renders with per-vertex normals.<p>
      * 
      * See {@link VertexConsumer} header notes. 
      */
@@ -115,7 +133,7 @@ public interface VertexConsumer
     
     
     /**
-     * For double-layer renders without custom vertex normals.<p>
+     * For double-layer renders without per-vertex normals.<p>
      * 
      * See {@link VertexConsumer} header notes. 
      */
@@ -132,7 +150,26 @@ public interface VertexConsumer
             );
     
     /**
-     * For triple-layer renders with custom vertex normals.<p>
+     * For double-layer renders with custom normals and lighting data. Requires a custom pipeline.<p>
+     * 
+     * See {@link VertexConsumer} header notes. 
+     */
+    public void acceptRawVertex(
+            float posX,
+            float posY,
+            float posZ,
+            int rawNormalData,
+            int rawLightData,
+            int unlitColorARGB0,
+            float u0,
+            float v0,
+            int unlitColorARGB1,
+            float u1,
+            float v1
+            );
+    
+    /**
+     * For triple-layer renders with per-vertex normals.<p>
      * 
      * See {@link VertexConsumer} header notes. 
      */
@@ -155,7 +192,7 @@ public interface VertexConsumer
             );
     
     /**
-     * For triple-layer renders without custom vertex normals.<p>
+     * For triple-layer renders without per-vertex normals.<p>
      * 
      * See {@link VertexConsumer} header notes. 
      */
@@ -163,6 +200,28 @@ public interface VertexConsumer
             float posX,
             float posY,
             float posZ,
+            int unlitColorARGB0,
+            float u0,
+            float v0,
+            int unlitColorARGB1,
+            float u1,
+            float v1,
+            int unlitColorARGB2,
+            float u2,
+            float v2
+            );
+    
+    /**
+     * For triple-layer renders with custom normals and lighting data. Requires a custom pipeline.<p>
+     * 
+     * See {@link VertexConsumer} header notes. 
+     */
+    public void acceptRawVertex(
+            float posX,
+            float posY,
+            float posZ,
+            int rawNormalData,
+            int rawLightData,
             int unlitColorARGB0,
             float u0,
             float v0,
@@ -221,25 +280,6 @@ public interface VertexConsumer
      */
     public void setCutout(TextureDepth textureLayer, boolean isCutout);
     
-    /**
-     * If your custom pipeline does not need vertex normals, you can instead provide an
-     * integer value that will be available as a raw value in the shader.<br>
-     * This also consumes the bits that would normally be used to control MimMap and cutout blending.<p>
-     * 
-     * With throw an exception if you have not enabled a custom pipeline via {@link #setPipeline(RenderPipeline)}.
-     * This check prevent inadvertent use of this feature because default shaders will not render correctly when used.<p>
-     * 
-     * The setting applies to the <em>next</em> vertex and remains in effect for all subsequent vertices until changed.<br>
-     * To be extra clear: call this <em>before</em> you call acceptVertex.<br>
-     * Each vertex in a quad can have a different value.
-     */
-    public void setCustomNormalBlendData(int customNormalBlendData);
-    
-    /**
-     * Disables the custom vertex normal/blend data feature enabled by an earlier call to {@link #setCustomNormalBlendData(int)}.<br>
-     * Does nothing if the feature is not enabled.
-     */
-    public void clearCustomNormalBlendData();
     
     /**
      * Use this to control lighting of the texture in the given layer.
@@ -276,25 +316,6 @@ public interface VertexConsumer
      * Version of {@link #setEmissiveLightMap(int, int, int)} that accepts unpacked float components.
      */
     public void setVertexLight(float red, float green, float blue);
-    
-    /**
-     * If your custom pipeline does not use vertex light or light source settings, 
-     * you can instead provide an integer value as a raw value available in the shader.<p>
-     * 
-     * With throw an exception if you have not enabled a custom pipeline via {@link #setPipeline(RenderPipeline)}.
-     * This check prevent inadvertent use of this feature because default shaders will not render correctly when used.<p>
-     * 
-     * The setting applies to the <em>next</em> vertex and remains in effect for all subsequent vertices until changed.<br>
-     * To be extra clear: call this <em>before</em> you call acceptVertex.<br>
-     * Each vertex in a quad can have a different value.
-     */
-    public void setCustomLightData(int lightData);
-    
-    /**
-     * Disables the custom vertex light data feature enabled by an earlier call to {@link #setCustomLightData(int)}.<br>
-     * Does nothing if the feature is not enabled.
-     */
-    public void clearCustomLightData();
     
     /**
      * Returns all settings to default values.

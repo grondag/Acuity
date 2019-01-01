@@ -82,7 +82,7 @@ public abstract class RenderRuntime
     }
     
     /**
-     * Implement and register a listern if you need callbacks for status changes.<p>
+     * Implement and register a listener if you need callbacks for status changes.<p>
      * 
      * Holds a weak reference, so no need to remove listeners that fall out of scope.
      */

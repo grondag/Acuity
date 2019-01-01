@@ -22,40 +22,19 @@
 
 package grondag.acuity.api.model;
 
-import java.util.Random;
-
-import grondag.acuity.api.model.BlendMode;
-import grondag.acuity.api.model.BlockVertexConsumer;
-import grondag.acuity.api.model.TextureDepth;
+import grondag.acuity.api.AcuityRuntimeImpl;
 import grondag.acuity.api.pipeline.RenderPipeline;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.Block.OffsetType;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.ExtendedBlockView;
 
-abstract class AbstractVertexConsumer implements BlockVertexConsumer
+abstract class AbstractVertexConsumer implements VertexConsumer
 {
-    protected BlockPos pos;
-    protected ExtendedBlockView world;
-    protected BlockState blockState;
-    protected final Random rand = new Random();
-    protected boolean doesRandomNeedInitalized = true;
-    protected boolean enableOcclusionFilter = true;
     protected int vertexOffset = 0;
-    protected int emissiveLightMap = BlockVertexConsumer.FULL_BRIGHTNESS_NO_FLICKER;
-    protected BlendMode blendMode;
-    protected boolean hasNormals = true;
-    protected boolean enbleDiffuse = true;
-    protected boolean enableAmbientOcclusion = true;
+    protected int vertexLight = 0;
+    protected int cutoutFlags = 0b000;
     protected int mipMapFlags = 0b111;
-    protected int emissiveFlags = 0b000;
+    protected int lightSourceFlags = 0b000000;
     protected RenderPipeline pipeline = null;
-    protected int sideLookupCompletionFlags = 0;
-    protected int sideLookupResultFlags = 0;
     protected TextureDepth textureDepth = null;
+    protected boolean isRawQuad = false;
     
     protected static final int POS_X = 0;
     protected static final int POS_Y =1;
@@ -86,52 +65,30 @@ abstract class AbstractVertexConsumer implements BlockVertexConsumer
     protected float offsetX = 0;
     protected float offsetY = 0;
     protected float offsetZ = 0;
+
     
-    
-    protected final void prepareInner(BlockPos pos, ExtendedBlockView world, BlockState state)
+    @Override
+    public void clearSettings()
     {
-        this.pos = pos;
-        this.world = world;
-        this.blockState = state;
-        doesRandomNeedInitalized = true;
-        enableOcclusionFilter = true;
         vertexOffset = 0;
-        emissiveLightMap = BlockVertexConsumer.FULL_BRIGHTNESS_NO_FLICKER;
-        blendMode = BlendMode.SOLID;
-        enbleDiffuse = true;
-        enableAmbientOcclusion = true;
+        vertexLight = 0;
         mipMapFlags = 0b111;
-        emissiveFlags = 0b000;
+        cutoutFlags = 0b000;
+        lightSourceFlags = 0b000000;
         pipeline = null;
-        sideLookupCompletionFlags = 0;
-        sideLookupResultFlags = 0;
-        textureDepth = null;
-        
-        if(blockState.getBlock().getOffsetType() == OffsetType.NONE)
-        {
-            offsetX = 0;
-            offsetY = 0;
-            offsetZ = 0;
-        }
-        else
-        {
-            Vec3d offset = blockState().getOffsetPos(world, pos);
-            offsetX = (float) offset.x;
-            offsetY = (float) offset.y;
-            offsetZ = (float) offset.z;
-        }
+        textureDepth = null;        
+        isRawQuad = false;
     }
-    
-    abstract public BlockVertexConsumer prepare(BlockPos pos, ExtendedBlockView world, BlockState state);
-    
+
     abstract protected void lightAndOutputQuad();
     
     private void completeQuad()
     {
-        computeFaceNormal();
+        if(!isRawQuad)
+            computeFaceNormal();
         lightAndOutputQuad();
-        hasNormals = true;
         vertexOffset = 0;
+        isRawQuad = false;
         textureDepth = pipeline == null ? null : pipeline.textureDepth();
     }
     
@@ -176,63 +133,51 @@ abstract class AbstractVertexConsumer implements BlockVertexConsumer
     }
     
     @Override
-    public final BlockPos pos()
-    {
-        return pos;
-    }
-
-    @Override
-    public final ExtendedBlockView world()
-    {
-        return world;
-    }
-
-    @Override
-    public final BlockState blockState()
-    {
-        return blockState;
-    }
-
-    @Override
-    public final Random random()
-    {
-        final Random rand = this.rand;
-        if(doesRandomNeedInitalized)
-        {
-            rand.setSeed(blockState.getRenderingSeed(pos));
-            doesRandomNeedInitalized = false;
-        }
-        return rand;
-    }
-    
-    @Override
     public final void setPipeline(RenderPipeline pipeline)
     {
         this.pipeline = pipeline;
     }
-    
+
     @Override
-    public final void setAutomaticCullingEnabled(boolean isEnabled)
+    public boolean isStandardLightingModel()
     {
-        enableOcclusionFilter = isEnabled;
-    }
-    
-    @Override
-    public final boolean shouldDrawSide(Direction side)
-    {
-        final int mask = 1 << side.ordinal();
-        if((sideLookupCompletionFlags & mask) == 0)
-        {
-            sideLookupCompletionFlags |= mask;
-            boolean result = Block.shouldDrawSide(blockState, world, pos, side);
-            if(result)
-                sideLookupResultFlags |= mask;
-            return result;
-        }
-        else
-            return (sideLookupResultFlags & mask) != 0;
+        return AcuityRuntimeImpl.INSTANCE.isStandardLightingModel();
     }
 
+    @Override
+    public void setLightSource(TextureDepth textureLayer, LightSource lightSource)
+    {
+        final int shift = textureLayer.ordinal() * 2;
+        final int value = lightSource.ordinal() << shift;
+        final int mask = 3 << shift;
+        lightSourceFlags = (lightSourceFlags & ~mask) | value;
+    }
+    
+    private static final LightSource[] LIGHT_SOURCES = LightSource.values();
+    
+    protected LightSource getLightSource(TextureDepth textureLayer)
+    {
+        return LIGHT_SOURCES[lightSourceFlags >> (textureLayer.ordinal() * 2) & 3];
+    }
+
+    @Override
+    public final void setVertexLight(int lightRGB)
+    {
+        vertexLight = lightRGB;
+    }
+
+    @Override
+    public final void setVertexLight(int red, int green, int blue)
+    {
+        setVertexLight(red | (green << 8) | (blue << 16));
+    }
+
+    @Override
+    public final void setVertexLight(float red, float green, float blue)
+    {
+        setVertexLight(Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255));
+    }
+    
     @Override
     public final void setMipMap(TextureDepth textureLayer, boolean isMipMapEnabled)
     {
@@ -244,49 +189,13 @@ abstract class AbstractVertexConsumer implements BlockVertexConsumer
     }
 
     @Override
-    public final void setEmissive(TextureDepth textureLayer, boolean isEmissive)
+    public final void setCutout(TextureDepth textureLayer, boolean isCutout)
     {
         final int mask = 1 << textureLayer.ordinal();
-        if(isEmissive)
-            emissiveFlags |= mask;
+        if(isCutout)
+            cutoutFlags |= mask;
         else
-            emissiveFlags &= ~mask;        
-    }
-
-    @Override
-    public final void setEmissiveLightMap(int lightRGBF)
-    {
-        emissiveLightMap = lightRGBF;
-    }
-
-    @Override
-    public final void setEmissiveLightMap(int red, int green, int blue, int flicker)
-    {
-        setEmissiveLightMap(red | (green << 8) | (blue << 16) |  (flicker << 24));
-    }
-
-    @Override
-    public final void setEmissiveLightMap(float red, float green, float blue, float flicker)
-    {
-        setEmissiveLightMap(Math.round(red * 255), Math.round(green * 255), Math.round(blue * 255), Math.round(flicker * 255));
-    }
-
-    @Override
-    public final void setBlendMode(BlendMode blendMode)
-    {
-        this.blendMode = blendMode;
-    }
-
-    @Override
-    public final void setShading(boolean enableDiffuse)
-    {
-        this.enbleDiffuse = enableDiffuse;
-    }
-
-    @Override
-    public final void setAmbientOcclusion(boolean enableAmbientOcclusion)
-    {
-        this.enableAmbientOcclusion = enableAmbientOcclusion;
+            cutoutFlags &= ~mask;        
     }
 
     private final void startVertex(float posX, float posY, float posZ, float normX, float normY, float normZ, int unlitColorARGB0, float u0, float v0)
@@ -302,7 +211,25 @@ abstract class AbstractVertexConsumer implements BlockVertexConsumer
         vertexData[offset + COLOR_0] = unlitColorARGB0;
         vertexData[offset + U_0] = Float.floatToRawIntBits(u0);
         vertexData[offset + V_0] = Float.floatToRawIntBits(v0);
-        vertexData[offset + LIGHTMAP] = this.emissiveLightMap;
+        vertexData[offset + LIGHTMAP] = this.vertexLight;
+    }
+    
+    private final void startRawVertex(float posX, float posY, float posZ, int rawNormal, int rawLight, int unlitColorARGB0, float u0, float v0)
+    {
+        if(pipeline == null)
+            throw new UnsupportedOperationException("Raw vertices require a custom pipeline");
+        
+        isRawQuad = true;
+        final int offset = this.vertexOffset;
+        final int[] vertexData = this.vertexData;
+        vertexData[offset + POS_X] = Float.floatToRawIntBits(posX);
+        vertexData[offset + POS_Y] = Float.floatToRawIntBits(posY);
+        vertexData[offset + POS_Z] = Float.floatToRawIntBits(posZ);
+        vertexData[offset + NORM_X] = rawNormal;
+        vertexData[offset + COLOR_0] = unlitColorARGB0;
+        vertexData[offset + U_0] = Float.floatToRawIntBits(u0);
+        vertexData[offset + V_0] = Float.floatToRawIntBits(v0);
+        vertexData[offset + LIGHTMAP] = rawLight;
     }
     
     private void finishVertex()
@@ -328,7 +255,17 @@ abstract class AbstractVertexConsumer implements BlockVertexConsumer
     public final void acceptVertex(float posX, float posY, float posZ, int unlitColorARGB0, float u0, float v0)
     {
         acceptVertex(posX, posY, posZ, Float.NaN, Float.NaN, Float.NaN, unlitColorARGB0, u0, v0);
-        hasNormals = false;
+    }
+
+    @Override
+    public void acceptRawVertex(float posX, float posY, float posZ, int rawNormalData, int rawLightData, int unlitColorARGB0, float u0, float v0)
+    {
+        if(textureDepth == null)
+            textureDepth = TextureDepth.SINGLE;
+        else if(textureDepth != TextureDepth.SINGLE)
+            throw new UnsupportedOperationException("Vertex texture depth mismatch within quad.");
+        startRawVertex(posX, posY, posZ, rawNormalData, rawLightData, unlitColorARGB0, u0, v0);
+        finishVertex();
     }
 
     @Override
@@ -354,7 +291,23 @@ abstract class AbstractVertexConsumer implements BlockVertexConsumer
     {
         acceptVertex(posX, posY, posZ, Float.NaN, Float.NaN, Float.NaN, unlitColorARGB0, u0, v0, 
                 unlitColorARGB1, u1, v1);
-        hasNormals = false;        
+    }
+
+    @Override
+    public void acceptRawVertex(float posX, float posY, float posZ, int rawNormalData, int rawLightData, int unlitColorARGB0, float u0, float v0,
+            int unlitColorARGB1, float u1, float v1)
+    {
+        if(textureDepth == null)
+            textureDepth = TextureDepth.SINGLE;
+        else if(textureDepth != TextureDepth.SINGLE)
+            throw new UnsupportedOperationException("Vertex texture depth mismatch within quad.");
+        startRawVertex(posX, posY, posZ, rawNormalData, rawLightData, unlitColorARGB0, u0, v0);
+        final int offset = this.vertexOffset;
+        final int[] vertexData = this.vertexData;
+        vertexData[offset + COLOR_1] = unlitColorARGB1;
+        vertexData[offset + U_1] = Float.floatToRawIntBits(u1);
+        vertexData[offset + V_1] = Float.floatToRawIntBits(v1);
+        finishVertex();        
     }
 
     @Override
@@ -384,6 +337,25 @@ abstract class AbstractVertexConsumer implements BlockVertexConsumer
     {
         acceptVertex(posX, posY, posZ, Float.NaN, Float.NaN, Float.NaN, unlitColorARGB0, u0, v0, 
                 unlitColorARGB1, u1, v1, unlitColorARGB2, u2, v2);
-        hasNormals = false;        
+    }
+    
+    @Override
+    public void acceptRawVertex(float posX, float posY, float posZ, int rawNormalData, int rawLightData, int unlitColorARGB0, float u0, float v0,
+            int unlitColorARGB1, float u1, float v1, int unlitColorARGB2, float u2, float v2)
+    {
+        if(textureDepth == null)
+            textureDepth = TextureDepth.SINGLE;
+        else if(textureDepth != TextureDepth.SINGLE)
+            throw new UnsupportedOperationException("Vertex texture depth mismatch within quad.");
+        startRawVertex(posX, posY, posZ, rawNormalData, rawLightData, unlitColorARGB0, u0, v0);
+        final int offset = this.vertexOffset;
+        final int[] vertexData = this.vertexData;
+        vertexData[offset + COLOR_1] = unlitColorARGB1;
+        vertexData[offset + U_1] = Float.floatToRawIntBits(u1);
+        vertexData[offset + V_1] = Float.floatToRawIntBits(v1);
+        vertexData[offset + COLOR_2] = unlitColorARGB2;
+        vertexData[offset + U_2] = Float.floatToRawIntBits(u2);
+        vertexData[offset + V_2] = Float.floatToRawIntBits(v2);
+        finishVertex();              
     }
 }

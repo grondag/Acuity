@@ -33,5 +33,7 @@ public enum LightSource
      * Can be used with an empty lightmap to disable AO and shading with world lighting,
      * if that is somehow useful. Probably not, but we were already using two bits, so here it is.
      */
-    VERTEX_UNSHADED
+    VERTEX_UNSHADED;
+    
+    
 }

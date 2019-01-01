@@ -56,5 +56,4 @@ public interface PipelineManager
      * Use if you somehow need to know what world time is being sent to shader uniforms.
      */
     float renderSeconds();
-    
 }
