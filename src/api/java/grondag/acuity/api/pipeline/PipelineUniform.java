@@ -26,6 +26,12 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.util.math.Matrix4f;
 
+/**
+ * Defines the methods used to refresh uniform values.  
+ * You need these to construct consumers for uniform initialization.
+ * There is no need to have a reference to these - they will only 
+ * be used inside the consumers you provide when uniforms are created.
+ */
 @Environment(EnvType.CLIENT)
 public interface PipelineUniform
 {

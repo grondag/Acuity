@@ -43,6 +43,9 @@ public interface PipelineManager
 
     RenderPipeline getLavaPipeline();
 
+    /**
+     * See {@link RenderPipeline#getIndex()}
+     */
     RenderPipeline getPipelineByIndex(int index);
 
     /**

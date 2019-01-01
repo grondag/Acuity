@@ -38,31 +38,74 @@ import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
 /**
- * Type-safe reference to a rendering pipeline.
+ * Type-safe reference to a rendering pipeline. <p>
+ * 
+ * You need this to create uniforms (for pipelines you create)
+ * and to specify pipeline for quads that you are sending to VertexConsumer.<p>
+ * 
+ * Currently there is no pipeline registry and thus no built-in way
+ * for mods to share pipelines.  If this is needed, open an issue or PR.
  */
 @Environment(EnvType.CLIENT)
 public interface RenderPipeline
 {
+    /**
+     * Unique identifier. Transient - may change in subsequent game sessions.<p>
+     * 
+     * Use this if you need to serialize a pipeline reference into a primitive value.
+     * You can then use {@link PipelineManager#getPipelineByIndex(int)} to retrieve it.
+     * Again, remember the ID is transient and thus not suitable for world saves.
+     */
     int getIndex();
     
+    /**
+     * Defines how many texture layers are expected by this pipeline. Implies {@link PipelineVertexFormat}
+     */
     TextureDepth textureDepth();
     
+    /**
+     * Creates a new uniform for this pipeline. See {@link UniformUpdateFrequency} for additional info.
+     */
     void uniform1f(String name, UniformUpdateFrequency frequency, Consumer<Uniform1f> initializer);
 
+    /**
+     * Creates a new uniform for this pipeline. See {@link UniformUpdateFrequency} for additional info.
+     */
     void uniform2f(String name, UniformUpdateFrequency frequency, Consumer<Uniform2f> initializer);
 
+    /**
+     * Creates a new uniform for this pipeline. See {@link UniformUpdateFrequency} for additional info.
+     */
     void uniform3f(String name, UniformUpdateFrequency frequency, Consumer<Uniform3f> initializer);
 
+    /**
+     * Creates a new uniform for this pipeline. See {@link UniformUpdateFrequency} for additional info.
+     */
     void uniform4f(String name, UniformUpdateFrequency frequency, Consumer<Uniform4f> initializer);
 
+    /**
+     * Creates a new uniform for this pipeline. See {@link UniformUpdateFrequency} for additional info.
+     */
     void uniform1i(String name, UniformUpdateFrequency frequency, Consumer<Uniform1i> initializer);
 
+    /**
+     * Creates a new uniform for this pipeline. See {@link UniformUpdateFrequency} for additional info.
+     */
     void uniform2i(String name, UniformUpdateFrequency frequency, Consumer<Uniform2i> initializer);
 
+    /**
+     * Creates a new uniform for this pipeline. See {@link UniformUpdateFrequency} for additional info.
+     */
     void uniform3i(String name, UniformUpdateFrequency frequency, Consumer<Uniform3i> initializer);
 
+    /**
+     * Creates a new uniform for this pipeline. See {@link UniformUpdateFrequency} for additional info.
+     */
     void uniform4i(String name, UniformUpdateFrequency frequency, Consumer<Uniform4i> initializer);
 
+    /**
+     * Creates a new uniform for this pipeline. See {@link UniformUpdateFrequency} for additional info.
+     */
     void uniformMatrix4f(String name, UniformUpdateFrequency frequency, Consumer<UniformMatrix4f> initializer);
 
     /**
