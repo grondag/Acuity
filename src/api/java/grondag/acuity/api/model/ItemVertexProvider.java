@@ -22,26 +22,14 @@
 
 package grondag.acuity.api.model;
 
-public enum BlendMode
+import net.fabricmc.api.EnvType;
+import net.fabricmc.api.Environment;
+
+/**
+* Placeholder for future BlockEntity model hook.
+*/
+@Environment(EnvType.CLIENT)
+public interface ItemVertexProvider
 {
-    SOLID,
-    CUTOUT,
-    
-    /**
-     * Render quads in the translucent render layer.<p>
-     * 
-     * Translucent rendering comes with a significant performance penalty and should
-     * only be used for glass, force fields or similar surfaces that require texture
-     * blending with the scene background.<p>
-     * 
-     * Rendered alpha value will be texture alpha multiplied by (interpolated) vertex color alpha.<br>
-     * Both of those values should be greater than zero (or nothing will render) and at least
-     * one should be less than 1.0 or there is no point to a translucent render.<p>
-     * 
-     * The same guidance applies to multi-texture quads.  Texture layers will be blended with each
-     * other first and then blended with the scene background.  Secondary and tertiary layers will
-     * be blended on "top" of lower texture layers. <p>
-     * 
-     */
-    TRANSLUCENT
+    public void produceItemQuads(ItemVertexConsumer consumer);
 }

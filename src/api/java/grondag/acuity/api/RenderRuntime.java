@@ -26,18 +26,38 @@ import grondag.acuity.api.pipeline.PipelineManager;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
+/**
+ * Provids access to the Render API runtime.<p>
+ * 
+ * You only need this if you want to register custom pipelines or
+ * have special handling that depends on availability of render API
+ * or render configuration.<p>
+ *
+ */
 @Environment(EnvType.CLIENT)
 public abstract class RenderRuntime
 {
     static RenderRuntime instance = new RenderRuntime() {};
     
+    /**
+     * Will always return a non-null value.<p>
+     * 
+     * If Render API is missing will return a dummy implementation 
+     * that reports {@link #isEnabled()} == false;
+     */
     public static RenderRuntime getInstance()
     {
         return instance;
     }
     
     /**
-     * Get this to register your pipelines and access the built-in pipelines.
+     * Get this to register your pipelines and access the built-in pipelines.<p>
+     * 
+     * Will return null if Render API is missing.<p>
+     * 
+     * If the Render API is present but disabled, you will get the pipeline 
+     * manager and be able to register pipelines.  They simply won't do anything
+     * until the API is re-enabled.
      */
     public PipelineManager getPipelineManager()
     {
@@ -54,7 +74,16 @@ public abstract class RenderRuntime
     }
     
     /**
-     * Use if you need callbacks for status changes.
+     * True if the normal Minecraft lighting model is active.
+     */
+    public boolean isStandardLightingModel()
+    {
+        return true;
+    }
+    
+    /**
+     * Implement and register a listern if you need callbacks for status changes.<p>
+     * 
      * Holds a weak reference, so no need to remove listeners that fall out of scope.
      */
     public void registerListener(RenderListener lister)

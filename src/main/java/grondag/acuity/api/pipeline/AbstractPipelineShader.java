@@ -20,7 +20,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-package grondag.acuity.pipeline;
+package grondag.acuity.api.pipeline;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,7 +34,6 @@ import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.model.TextureDepth;
-import grondag.acuity.api.pipeline.PipelineManagerImpl;
 import grondag.acuity.fermion.config.Localization;
 import grondag.acuity.opengl.OpenGlHelperExt;
 import net.fabricmc.api.EnvType;

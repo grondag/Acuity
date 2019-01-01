@@ -41,7 +41,6 @@ import grondag.acuity.mixin.AccessFogState;
 import grondag.acuity.mixin.MixinGlStateManager;
 import grondag.acuity.mixin.extension.GameRendererExt;
 import grondag.acuity.mixin.extension.Matrix4fExt;
-import grondag.acuity.pipeline.PipelineShaderManager;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.util.math.Matrix4f;
 import net.minecraft.entity.Entity;

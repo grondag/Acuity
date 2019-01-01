@@ -28,6 +28,8 @@ import net.minecraft.client.render.VertexFormatElement.Format;
 
 import static net.minecraft.client.render.VertexFormatElement.Format.*;
 
+import grondag.acuity.api.model.VertexConsumer;
+
 /**
  * Defines all vertex attributes to be used in API vertex bindings.<p>
  * 
@@ -45,16 +47,15 @@ public enum PipelineVertexAttribute
     POSITION_3F(FLOAT, 3, "in_pos", false),
 
     /**
-     * In vanilla lighting model, Two high bytes are standard sky and block lightmap coordinates<br>
-     * 3rd byte is custom block lightmap. In vanilla model this is monochromatic torch light.<br>
-     * Low byte has control flags by layer to control emissive render or use of custom light map.<p>
+     * In standard lighting model, two high bytes are standard sky and block lightmap coordinates<br>
+     * 3rd byte is monochrome custom lightmap. Low byte holds lighting mode for each render layer.<p> 
      * 
-     * In enhanced lighting model, most of this will probably be dedicated to a custom lightmap, 
-     * with the same flags to control emissive render / custom lightmap application. <br>
-     * This assumes world/block lighting will be done in GPU via other means and is just a guess.<p>
+     * In enhanced lighting model, most of this will probably be dedicated to a color lightmap, 
+     * with the low byte still controlling per-layer lighting mode. <br>
+     * Above assumes world/block lighting will be done in GPU and not require per-vertex data.<p>
      * 
-     * If you don't need standard lighting data in your custom shader, use
-     * the appropriate override method on your vertex consumer to pass your custom data.
+     * If you don't need standard lighting data in your shader, use
+     * {@link VertexConsumer#setCustomLightData(int)} to pipe your data to the shader.
      */
     LIGHTMAPS_4UB(UNSIGNED_BYTE, 4, "in_lightmap", false),
 
@@ -67,13 +68,15 @@ public enum PipelineVertexAttribute
      * Low byte contains bit flags to control cutout and mimmap for standard renders.
      * Ideally these flags would be sent 1x per quad but limited to GL2.1 / GLSL 120...<p>
      * 
-     * If you don't need normals or blends flags in your custom shader, use
-     * the appropriate override method on your vertex consumer to pass your custom data.
+     * If you don't need normals or blend flags in your custom shader, use
+     * {@link VertexConsumer#setCustomNormalBlendData(int)} to pass your custom data.
      */
     NORMAL_BLEND_4UB(UNSIGNED_BYTE, 4, "in_normal_blend", false),
     
     /**
-     * Base layer color.  What you get in shader will always be what you send to vertex consumer.
+     * Base layer color.  What you get in shader will be different than what you send to
+     * vertex consumer if the active lighting model does any shading outside the GPU.
+     * If your shader needs raw data, enable the emissive or raw vertex light source.
      */
     BASE_RGBA_4UB(UNSIGNED_BYTE, 4, "in_color_0", false),
     

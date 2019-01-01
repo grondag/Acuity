@@ -35,10 +35,6 @@ import grondag.acuity.api.pipeline.PipelineUniform.Uniform4f;
 import grondag.acuity.api.pipeline.PipelineUniform.Uniform4i;
 import grondag.acuity.api.pipeline.PipelineUniform.UniformMatrix4f;
 import grondag.acuity.fermion.config.Localization;
-import grondag.acuity.pipeline.PipelineFragmentShader;
-import grondag.acuity.pipeline.PipelineShaderManager;
-import grondag.acuity.pipeline.PipelineVertexShader;
-import grondag.acuity.pipeline.Program;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 

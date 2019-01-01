@@ -212,7 +212,7 @@ abstract class AbstractVertexConsumer implements BlockVertexConsumer
     }
     
     @Override
-    public final void setAutomaticOcclusionFilter(boolean isEnabled)
+    public final void setAutomaticCullingEnabled(boolean isEnabled)
     {
         enableOcclusionFilter = isEnabled;
     }

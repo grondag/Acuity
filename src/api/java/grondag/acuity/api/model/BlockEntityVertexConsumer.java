@@ -20,30 +20,13 @@
  * SOFTWARE.
  ******************************************************************************/
 
-package grondag.acuity.api;
-
-import net.fabricmc.api.EnvType;
-import net.fabricmc.api.Environment;
+package grondag.acuity.api.model;
 
 /**
- * Implement and register vis {@link RenderRuntime#registerListener(RenderListener)}
- * to receive notification of render-related events.  
+ * Placeholder for future BlockEntity handler.  Will likely be identical to Block version
+ * except that output goes directly to vertex buffers that are uploaded and drawn per frame.
  */
-@Environment(EnvType.CLIENT)
-public interface RenderListener
+public interface BlockEntityVertexConsumer extends BlockVertexConsumer
 {
-    /**
-     * Will only be called when the status changes, so you may reliably
-     * infer the previous status is the opposite of the new status.
-     */
-    public default void onRenderStatusChange(boolean newEnabledStatus) {};
-    
-    /**
-     * Called when rendered chunks, shaders, etc. are reloaded due to a
-     * configuration change, resource pack change, or user pressing F3 + A.<p>
-     * 
-     * Useful if you need to refresh or invalidate cached data and you
-     * don't already have a handler for those signals.
-     */
-    public default void onRenderReload() {};
+    // NOT IMPLEMENTED
 }

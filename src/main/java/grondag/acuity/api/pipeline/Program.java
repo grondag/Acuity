@@ -20,7 +20,7 @@
  * SOFTWARE.
  ******************************************************************************/
 
-package grondag.acuity.pipeline;
+package grondag.acuity.api.pipeline;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -35,7 +35,6 @@ import com.mojang.blaze3d.platform.GLX;
 
 import grondag.acuity.Acuity;
 import grondag.acuity.api.model.TextureDepth;
-import grondag.acuity.api.pipeline.PipelineManagerImpl;
 import grondag.acuity.api.pipeline.PipelineUniform;
 import grondag.acuity.api.pipeline.PipelineUniform.Uniform1f;
 import grondag.acuity.api.pipeline.PipelineUniform.Uniform1i;

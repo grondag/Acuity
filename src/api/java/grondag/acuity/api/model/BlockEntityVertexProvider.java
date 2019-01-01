@@ -20,25 +20,16 @@
  * SOFTWARE.
  ******************************************************************************/
 
-package grondag.acuity.pipeline;
+package grondag.acuity.api.model;
 
-import com.mojang.blaze3d.platform.GLX;
-
-import grondag.acuity.api.model.TextureDepth;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
+/**
+* Placeholder for future BlockEntity model hook.
+*/
 @Environment(EnvType.CLIENT)
-public final class PipelineVertexShader  extends AbstractPipelineShader
+public interface BlockEntityVertexProvider
 {
-    PipelineVertexShader(String fileName, TextureDepth textureFormat, boolean isSolidLayer)
-    {
-        super(fileName, GLX.GL_VERTEX_SHADER, textureFormat, isSolidLayer);
-    }
-    
-    @Override
-    public String getSource()
-    {
-        return buildSource(PipelineShaderManager.INSTANCE.vertexLibrarySource);
-    }
+    public void produceBlockEntityQuads(BlockEntityVertexConsumer consumer);
 }

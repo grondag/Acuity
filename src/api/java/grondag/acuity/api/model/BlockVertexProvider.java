@@ -28,5 +28,5 @@ import net.fabricmc.api.Environment;
 @Environment(EnvType.CLIENT)
 public interface BlockVertexProvider
 {
-    public void produceBlockQuads(BlockVertexConsumer quadConsumer);
+    public void produceBlockQuads(BlockVertexConsumer consumer);
 }

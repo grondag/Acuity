@@ -20,30 +20,25 @@
  * SOFTWARE.
  ******************************************************************************/
 
-package grondag.acuity.api;
+package grondag.acuity.api.pipeline;
 
+import com.mojang.blaze3d.platform.GLX;
+
+import grondag.acuity.api.model.TextureDepth;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 
-/**
- * Implement and register vis {@link RenderRuntime#registerListener(RenderListener)}
- * to receive notification of render-related events.  
- */
 @Environment(EnvType.CLIENT)
-public interface RenderListener
+public final class PipelineVertexShader  extends AbstractPipelineShader
 {
-    /**
-     * Will only be called when the status changes, so you may reliably
-     * infer the previous status is the opposite of the new status.
-     */
-    public default void onRenderStatusChange(boolean newEnabledStatus) {};
+    PipelineVertexShader(String fileName, TextureDepth textureFormat, boolean isSolidLayer)
+    {
+        super(fileName, GLX.GL_VERTEX_SHADER, textureFormat, isSolidLayer);
+    }
     
-    /**
-     * Called when rendered chunks, shaders, etc. are reloaded due to a
-     * configuration change, resource pack change, or user pressing F3 + A.<p>
-     * 
-     * Useful if you need to refresh or invalidate cached data and you
-     * don't already have a handler for those signals.
-     */
-    public default void onRenderReload() {};
+    @Override
+    public String getSource()
+    {
+        return buildSource(PipelineShaderManager.INSTANCE.vertexLibrarySource);
+    }
 }
