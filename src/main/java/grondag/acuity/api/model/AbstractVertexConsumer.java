@@ -27,11 +27,20 @@ import grondag.acuity.api.pipeline.RenderPipeline;
 
 abstract class AbstractVertexConsumer implements VertexConsumer
 {
+    protected static final int VERTEX_LIGHT_ENABLE_MASK = 0b111;
+    protected static final int WORLD_DIFFUSE_FLAG =  0b0001000;
+    protected static final int VERTEX_DIFFUSE_FLAG = 0b0010000;
+    protected static final int WORLD_AO_FLAG =       0b0100000;
+    protected static final int VERTEX_AO_FLAG =      0b1000000;
+    protected static final int DIFFUSE_MASK = WORLD_DIFFUSE_FLAG | VERTEX_DIFFUSE_FLAG;
+    protected static final int AO_MASK = WORLD_AO_FLAG | VERTEX_AO_FLAG;
+    protected static final int DEFAULT_LIGHT_FLAGS = WORLD_DIFFUSE_FLAG | WORLD_AO_FLAG;
+    
     protected int vertexOffset = 0;
     protected int vertexLight = 0;
     protected int cutoutFlags = 0b000;
     protected int mipMapFlags = 0b111;
-    protected int lightSourceFlags = 0b000000;
+    protected int lightFlags = DEFAULT_LIGHT_FLAGS;
     protected RenderPipeline pipeline = null;
     protected TextureDepth textureDepth = null;
     protected boolean isRawQuad = false;
@@ -71,10 +80,10 @@ abstract class AbstractVertexConsumer implements VertexConsumer
     public void clearSettings()
     {
         vertexOffset = 0;
-        vertexLight = 0;
+        vertexLight = 0xFFFFFF;
         mipMapFlags = 0b111;
         cutoutFlags = 0b000;
-        lightSourceFlags = 0b000000;
+        lightFlags = DEFAULT_LIGHT_FLAGS;
         pipeline = null;
         textureDepth = null;        
         isRawQuad = false;
@@ -143,23 +152,7 @@ abstract class AbstractVertexConsumer implements VertexConsumer
     {
         return AcuityRuntimeImpl.INSTANCE.isStandardLightingModel();
     }
-
-    @Override
-    public void setLightSource(TextureDepth textureLayer, LightSource lightSource)
-    {
-        final int shift = textureLayer.ordinal() * 2;
-        final int value = lightSource.ordinal() << shift;
-        final int mask = 3 << shift;
-        lightSourceFlags = (lightSourceFlags & ~mask) | value;
-    }
     
-    private static final LightSource[] LIGHT_SOURCES = LightSource.values();
-    
-    protected LightSource getLightSource(TextureDepth textureLayer)
-    {
-        return LIGHT_SOURCES[lightSourceFlags >> (textureLayer.ordinal() * 2) & 3];
-    }
-
     @Override
     public final void setVertexLight(int lightRGB)
     {
@@ -179,20 +172,66 @@ abstract class AbstractVertexConsumer implements VertexConsumer
     }
     
     @Override
-    public final void setMipMap(TextureDepth textureLayer, boolean isMipMapEnabled)
+    public final void enableVertexLight(TextureDepth textureLayer, boolean enable)
     {
         final int mask = 1 << textureLayer.ordinal();
-        if(isMipMapEnabled)
+        if(enable)
+            lightFlags |= mask;
+        else
+            lightFlags &= ~mask;
+    }
+    
+    @Override
+    public void enableWorldLightDiffuse(boolean enable)
+    {
+        if(enable)
+            lightFlags |= WORLD_DIFFUSE_FLAG;
+        else
+            lightFlags &= ~WORLD_DIFFUSE_FLAG;        
+    }
+
+    @Override
+    public void enableVertexLightDiffuse(boolean enable)
+    {
+        if(enable)
+            lightFlags |= VERTEX_DIFFUSE_FLAG;
+        else
+            lightFlags &= ~VERTEX_DIFFUSE_FLAG;          
+    }
+
+    @Override
+    public void enableWorldLightAmbientOcclusion(boolean enable)
+    {
+        if(enable)
+            lightFlags |= WORLD_AO_FLAG;
+        else
+            lightFlags &= ~WORLD_AO_FLAG;          
+    }
+
+    @Override
+    public void enableVertexLightAmbientOcclusion(boolean enable)
+    {
+        if(enable)
+            lightFlags |= VERTEX_AO_FLAG;
+        else
+            lightFlags &= ~VERTEX_AO_FLAG;          
+    }
+    
+    @Override
+    public final void enableMipMap(TextureDepth textureLayer, boolean enable)
+    {
+        final int mask = 1 << textureLayer.ordinal();
+        if(enable)
             mipMapFlags |= mask;
         else
             mipMapFlags &= ~mask;
     }
 
     @Override
-    public final void setCutout(TextureDepth textureLayer, boolean isCutout)
+    public final void enableCutout(TextureDepth textureLayer, boolean enable)
     {
         final int mask = 1 << textureLayer.ordinal();
-        if(isCutout)
+        if(enable)
             cutoutFlags |= mask;
         else
             cutoutFlags &= ~mask;        

@@ -26,6 +26,7 @@ import static net.minecraft.util.math.MathHelper.equalsApproximate;
 
 import grondag.acuity.buffer.VertexCollector;
 import net.minecraft.block.BlockState;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Direction;
 import net.minecraft.util.math.Direction.Axis;
@@ -45,9 +46,9 @@ public class VanillaBlockConsumer extends BlockVertexConsumerImpl implements Blo
     }
     
     @Override
-    public final BlockVertexConsumer prepare(BlockPos pos, ExtendedBlockView world, BlockState state)
+    public final BlockVertexConsumer prepare(BlockPos pos, ExtendedBlockView world, BlockState state, BlockEntity blockEntity)
     {
-        super.prepareInner(pos, world, state);
+        super.prepareInner(pos, world, state, blockEntity);
         isOcclusionLookupDirty = true;
         return this;
     }
@@ -67,16 +68,18 @@ public class VanillaBlockConsumer extends BlockVertexConsumerImpl implements Blo
         if(enableOcclusionFilter && isOnBlockFace && !shouldDrawSide(actualDirection))
             return;
         
+        final int encodedShiftedBlendFlags = (mipMapFlags | (cutoutFlags << 3)) << 24;
+        final int encodedShiftedLightFlags = (lightFlags & VERTEX_LIGHT_ENABLE_MASK) << 24;
         final boolean useNeighborBrightness = this.isOnBlockFace || this.isModelBlockOccluder();
         
-        int blockLight = 0, skyLight = 0;
-        float shade = 1.0f;
+        int blockLight = 0;
+        int skyLight = 0;
+        final boolean smoothLight = (lightFlags & AO_MASK) != 0;
         
-        if(enableAmbientOcclusion)
+        if(smoothLight)
             aoCalc.compute(world, blockState, lightPos, actualDirection, aoBounds, useNeighborBrightness, !isAoCubic);
         else
         {
-            // Flat lighting : if on face or this block occludes use block brightness from position opposite face
             lightPos.set(pos);
             if(useNeighborBrightness)
                 lightPos.offset(actualDirection);
@@ -95,12 +98,12 @@ public class VanillaBlockConsumer extends BlockVertexConsumerImpl implements Blo
         for(int i = 0; i < QUAD_STRIDE; i += VERTEX_STRIDE)
         {
             // convert color to luminance
-            int blockLightOverride = vertexData[i + LIGHTMAP];
-            if(blockLightOverride != 0)
-                blockLightOverride = Math.round(
-                            (blockLightOverride & 0xFF) * 0.2126f
-                          + ((blockLightOverride >> 8) & 0xFF) * 0.7152f
-                          + ((blockLightOverride >> 16) & 0xFF) * 0.0722f);
+            int vertexLight = vertexData[i + LIGHTMAP];
+            if(vertexLight != 0)
+                vertexLight = Math.round(
+                            (vertexLight & 0xFF) * 0.2126f
+                          + ((vertexLight >> 8) & 0xFF) * 0.7152f
+                          + ((vertexLight >> 16) & 0xFF) * 0.0722f);
             
             // compute shifted vertex positions
             final float x = Float.intBitsToFloat(vertexData[i + POS_X]) + offsetX;
@@ -126,80 +129,60 @@ public class VanillaBlockConsumer extends BlockVertexConsumerImpl implements Blo
             // and gives a cubic-weighted average in other cases. (sum of normal component squares == 1.0)
             // The (3f + normY) / 4f component gives 0.5 for down face and 1.0 for up face.
             // Min is to handle rounding errors.
-            if(enbleDiffuse)
-                shade = Math.min(normX * normX * 0.6f + normY * normY * ((3f + normY) / 4f) + normZ * normZ * 0.8f, 1f);
+            // Can skip this if no surface wants diffiuse shading
+            final float baseShade = (lightFlags & DIFFUSE_MASK) == 0
+                    ? 1 : Math.min(normX * normX * 0.6f + normY * normY * ((3f + normY) / 4f) + normZ * normZ * 0.8f, 1f);
             
             
-            if(enableAmbientOcclusion)
+            float worldShade = (lightFlags & WORLD_DIFFUSE_FLAG) == 0 ? 1.0f : baseShade;
+            float vertexShade = (lightFlags & VERTEX_DIFFUSE_FLAG) == 0 ? 1.0f : baseShade;
+            
+            // FIX??  Slight inconsistency here in that we use smooth light for all
+            // vertices if any vertex requires AO.  Shouldn't matter for vanilla blocks which are all single layer.
+            if(smoothLight)
             {
                 final int packedLight =  aoCalc.brightness[v];
                 blockLight = ((packedLight >> 4) & 0xF) * 17;
                 skyLight = ((packedLight >> 20) & 0xF) * 17;
-                shade *= aoCalc.colorMultiplier[v++];
             }
             
-            //TODO
-            // apply emissive light values
-//            if(emissiveFlags != 0)
-//            {
-//                this.emissiveLightMap
-//                blockLight = 255;
-//                skyLight = 255;
-//            };
+            if((lightFlags & WORLD_AO_FLAG) != 0)
+                worldShade *= aoCalc.colorMultiplier[v++];
+            
+            if((lightFlags & VERTEX_AO_FLAG) != 0)
+                vertexShade *= aoCalc.colorMultiplier[v++];
             
             output.pos(pos, x, y, z);
         
-            //TODO: not sure if this is right way to handle light maps
-            output.add((emissiveFlags & 1) == 1 
-                    ? ColorHelper.swapRedBlue(vertexData[i + COLOR_0]) 
-                    : ColorHelper.shadeColorAndSwapRedBlue(vertexData[i + COLOR_0], shade));
+            output.add(ColorHelper.shadeColorAndSwapRedBlue(vertexData[i + COLOR_0], 
+                    (lightFlags & 1) == 1 ? vertexShade : worldShade));
             
             output.add(Float.intBitsToFloat(vertexData[i + U_0]));
             output.add(Float.intBitsToFloat(vertexData[i + V_0]));
             
-            // Normal not used in vanilla model
-//            int normAo = Math.round(normX * 127 + 127);
-//            normAo |= (Math.round(normY * 127 + 127) << 8);
-//            normAo |= (Math.round(normZ * 127 + 127) << 16);
-//            // AO 1UB
-//            normAo |= (ao << 24);
-//            output.add(normAo);
+            int normBlend = Math.round(normX * 127 + 127);
+            normBlend |= (Math.round(normY * 127 + 127) << 8);
+            normBlend |= (Math.round(normZ * 127 + 127) << 16);
+            output.add(encodedShiftedBlendFlags | normBlend);
             
-            output.add(Math.max(blockLight, blockLightOverride) | (skyLight << 8) | (encodeFlags() << 16));
+            output.add(blockLight | (skyLight << 8) | (vertexLight << 16) | encodedShiftedLightFlags);
             
             if(textureDepth != TextureDepth.SINGLE)
             {
-                output.add((emissiveFlags & 2) == 2 
-                        ? ColorHelper.swapRedBlue(vertexData[i + COLOR_1]) 
-                        : ColorHelper.shadeColorAndSwapRedBlue(vertexData[i + COLOR_1], shade));
+                output.add(ColorHelper.shadeColorAndSwapRedBlue(vertexData[i + COLOR_1], 
+                        (lightFlags & 2) == 2 ? vertexShade : worldShade));
                 output.add(Float.intBitsToFloat(vertexData[i + U_1]));
                 output.add(Float.intBitsToFloat(vertexData[i + V_1]));
                 
                 if(textureDepth == TextureDepth.TRIPLE)
                 {
-                    output.add((emissiveFlags & 4) == 4 
-                            ? ColorHelper.swapRedBlue(vertexData[i + COLOR_2]) 
-                            : ColorHelper.shadeColorAndSwapRedBlue(vertexData[i + COLOR_2], shade));
+                    output.add(ColorHelper.shadeColorAndSwapRedBlue(vertexData[i + COLOR_2], 
+                            (lightFlags & 4) == 4 ? vertexShade : worldShade));
                     output.add(Float.intBitsToFloat(vertexData[i + U_2]));
                     output.add(Float.intBitsToFloat(vertexData[i + V_2]));
                 }
             }
         }
-    }
-
-    private int encodeFlags()
-    {
-        int result = this.emissiveFlags; // bits 0-2
-        
-        //TODO
-        // send cutout and mipped indicators
-//        if(!this.isCurrentQuadMipped)
-//            result |= 0b00001000;
-//        
-//        if(this.isCurrentQuadCutout)
-//            result |= 0b00010000;
-        
-        return result;
     }
 
     private VertexCollector getVertexCollector()
@@ -263,7 +246,7 @@ public class VanillaBlockConsumer extends BlockVertexConsumerImpl implements Blo
                maxZ = z;
         }
 
-        if(enableAmbientOcclusion)
+        if((lightFlags & AO_MASK) != 0)
         {
             aoBounds[Direction.WEST.getId()] = minX;
             aoBounds[Direction.EAST.getId()] = maxX;

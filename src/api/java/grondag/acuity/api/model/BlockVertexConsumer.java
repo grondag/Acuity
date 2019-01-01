@@ -125,7 +125,7 @@ public interface BlockVertexConsumer extends VertexConsumer
      * be blended on "top" of lower texture layers. <p>
      * 
      * Note that you can do cutout renders in <em>both</em> solid and translucent passes and you 
-     * do not need to enable translucency for cutout textures.  See {@link #setCutout(TextureDepth, boolean)}. 
+     * do not need to enable translucency for cutout textures.  See {@link #enableCutout(TextureDepth, boolean)}. 
      *
      * Will be false when {@link BlockVertexProvider#produceQuads(AcuityVertexConsumer)} is called.<br>
      * Changes apply to all subsequent quads until changed.<p>

@@ -47,8 +47,9 @@ public enum PipelineVertexAttribute
     POSITION_3F(FLOAT, 3, "in_pos", false),
 
     /**
-     * In standard lighting model, two high bytes are standard sky and block lightmap coordinates<br>
-     * 3rd byte is monochrome custom lightmap. Low byte holds lighting mode for each render layer.<p> 
+     * In standard lighting model, low byte holds block lightmap, 2nd byte holds sky lightmap. 
+     * 3rd byte is monochrome custom lightmap. High byte holds flags for each render layer
+     * that indicate use of the custom lightmap.<p> 
      * 
      * In enhanced lighting model, most of this will probably be dedicated to a color lightmap, 
      * with the low byte still controlling per-layer lighting mode. <br>
@@ -60,12 +61,12 @@ public enum PipelineVertexAttribute
     LIGHTMAPS_4UB(UNSIGNED_BYTE, 4, "in_lightmap", false),
 
     /**
-     * Three high bytes contain low-precision vertex normals packed as bytes.<br>
+     * Three low bytes contain low-precision vertex normals packed as bytes.<br>
      * Vertex normals aren't needed in vanilla lighting model, but always sent to 
      * provide consistency for custom shaders across lighting models.
      * If you do not provide vertex normals these will be computed face normals. <p>
      * 
-     * Low byte contains bit flags to control cutout and mimmap for standard renders.
+     * High byte contains bit flags to control cutout and mimmap for standard renders.
      * Ideally these flags would be sent 1x per quad but limited to GL2.1 / GLSL 120...<p>
      * 
      * If you don't need normals or blend flags in your custom shader, use

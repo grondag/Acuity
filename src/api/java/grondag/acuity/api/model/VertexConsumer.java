@@ -265,7 +265,7 @@ public interface VertexConsumer
      * 
      * Applies to the next completed quad and remains in effect for all subsequent quads until changed.
      */
-    public void setMipMap(TextureDepth textureLayer, boolean isMimMapEnabled);
+    public void enableMipMap(TextureDepth textureLayer, boolean enable);
     
     /**
      * Enables or disables cutout blending for the texture in the given layer.<p>
@@ -278,17 +278,66 @@ public interface VertexConsumer
      * 
      * Applies to the next completed quad and remains in effect for all subsequent quads until changed.
      */
-    public void setCutout(TextureDepth textureLayer, boolean isCutout);
-    
+    public void enableCutout(TextureDepth textureLayer, boolean enable);
     
     /**
      * Use this to control lighting of the texture in the given layer.
-     * See {@link LightSource} for explanation of the available modes. 
-     * Will be {@link LightSource#WORLD} by default.<p>
+     * If enabled, the vertex light set by {@link #setVertexLight(int)} will be added
+     * to world light for this texture layer. This result in full emissive rendering if 
+     * vertex light is set to white (the default.)  However, more subtle lighting effects
+     * are possible with other lightmap colors.<p>
+     * 
+     * Lighting occurs before texture blending if texture layers use different lighting.<p>
      * 
      * New value will apply to the next completed quad and remain in effect for all subsequent quads until changed.
      */
-    public void setLightSource(TextureDepth textureLayer, LightSource lightSource);
+    public void enableVertexLight(TextureDepth textureLayer, boolean enable);
+    
+    /**
+     * If enabled, textures lit by world light will have diffuse shading applied 
+     * based on face/vertex normals.  In the standard lighting model shading is 
+     * arbitrary (doesn't reflect movement of the sun, for example) but enhanced lighting
+     * models will shade differently.
+     * 
+     * Enabled by default. Rarely used in world lighting but may be useful for some cutout
+     * textures (vines, for example) that are pre-shaded or which render poorly with shading.<p>
+     * 
+     * New value will apply to the next completed quad and remain in effect for all subsequent quads until changed.
+     */
+    public void enableWorldLightDiffuse(boolean enable);
+    
+    /**
+     * Works the same as {@link #enableWorldLightDiffuse(boolean)}, but applies
+     * to surfaces lit by the provided vertex light color. (See {@link #enableVertexLight(TextureDepth, boolean)}.)<p>
+     * 
+     * Disabled by default.  Most textures with vertex lighting will be fully emissive
+     * and it will not make sense to shade them. But this could be useful for partially 
+     * illuminated surfaces. <p>
+     * 
+     * New value will apply to the next completed quad and remain in effect for all subsequent quads until changed.
+     */
+    public void enableVertexLightDiffuse(boolean enable);
+    
+    /**
+     * If enabled, textures lit by world light will have ambient occlusion applied. 
+     * 
+     * Enabled by default and changes are rarely needed in world lighting.<p>
+     * 
+     * New value will apply to the next completed quad and remain in effect for all subsequent quads until changed.
+     */
+    public void enableWorldLightAmbientOcclusion(boolean enable);
+    
+    /**
+     * Works the same as {@link #enableWorldLightAmbientOcclusion(boolean)}, but applies
+     * to surfaces lit by the provided vertex light color. (See {@link #enableVertexLight(TextureDepth, boolean)}.)<p>
+     * 
+     * Disabled by default.  Most textures with vertex lighting will be fully emissive
+     * and it will not make sense to shade them. But this could be useful for partially 
+     * illuminated surfaces. <p>
+     * 
+     * New value will apply to the next completed quad and remain in effect for all subsequent quads until changed.
+     */
+    public void enableVertexLightAmbientOcclusion(boolean enable);
     
     /**
      * Accepts a light value in the form of an RGB color value to be used as the minimum block light
@@ -302,7 +351,7 @@ public interface VertexConsumer
      * boosted blue component. (Clamped to full white brightness.)  In direct sunlight dim vertex light probably
      * won't be noticeable.<p>
      * 
-     * Will be zero when {@link BlockVertexProvider#produceQuads(AcuityVertexConsumer)} is called.<br>
+     * Will be full brightness (0xFFFFFF) when {@link BlockVertexProvider#produceQuads(AcuityVertexConsumer)} is called.<br>
      * Changes apply to all subsequent vertices until changed.<p>
      */
     public void setVertexLight(int lightRGB);
